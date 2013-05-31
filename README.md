@@ -1,2 +1,3 @@
 Module for Cassandra Data Access.
-Will include implementations that use the DataStax Java Driver and the Hector Thrift client.
+
+Contains separate interfaces for CQL access with implementation using the DataStax Java Driver and for using Thrift with the Hector client.
