@@ -12,6 +12,7 @@
 
     <properties>
         <testng.version>6.8.5</testng.version>
+        <jackson.version>1.9.11</jackson.version>
     </properties>
 
     <modules>
@@ -26,5 +27,17 @@
             <version>${testng.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
     </dependencies>
 </project>
