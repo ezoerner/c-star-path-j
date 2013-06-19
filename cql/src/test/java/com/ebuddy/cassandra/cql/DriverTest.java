@@ -1,12 +1,5 @@
 package com.ebuddy.cassandra.cql;
 
-import com.datastax.driver.core.*;
-
-import org.apache.log4j.Logger;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -15,6 +8,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.apache.log4j.Logger;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Query;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 /**
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
@@ -69,15 +79,32 @@ public class DriverTest {
     }
 
 
-    @Test
+    @Test(groups = {"system"})
     public void testBoundStatements() throws Exception {
         loadDataUsingBoundStatements();
         testQueries();
     }
 
+    @Test(groups = {"system"})
+    public void testAsyncExecution() throws Exception {
+        loadDataUsingBoundStatements();
+        Query query = QueryBuilder.select().all().from("simplex", "songs");
+        ResultSetFuture results = session.executeAsync(query);
+        for (Row row : results.getUninterruptibly()) {
+            String artist = row.getString("artist");
+            String title = row.getString("title");
+            String album = row.getString("album");
+            assertEquals(title, "La Petite Tonkinoise'");
+            assertEquals(album, "Bye Bye Blackbird'");
+            assertEquals(artist, "Joséphine Baker");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("%s: %s / %s\n", artist, title, album));
+            }
+        }
+    }
+
 
 ///////////// Private Methods /////////////
-
 
     private void createSchema() {
         session.execute("CREATE KEYSPACE simplex WITH replication " + "= {'class':'SimpleStrategy', " +
