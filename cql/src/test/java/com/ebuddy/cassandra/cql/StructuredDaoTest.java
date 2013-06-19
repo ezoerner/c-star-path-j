@@ -13,6 +13,7 @@ import static org.testng.Assert.assertTrue;
 /**
  */
 public class StructuredDaoTest {
+
     @Test
     public void testJsonNumbers() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
