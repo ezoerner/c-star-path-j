@@ -1,6 +1,7 @@
 package com.ebuddy.cassandra.cql;
 
 import com.datastax.driver.core.*;
+
 import org.apache.log4j.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -10,10 +11,12 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
- *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class DriverTest {
@@ -29,21 +32,16 @@ public class DriverTest {
     public void setUp() throws Exception {
         cluster = Cluster.builder().addContactPoint(NODE).build();
         session = cluster.connect();
+        createSchema();
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
+        session.execute("drop keyspace simplex");
         cluster.shutdown();
     }
 
-    // execute once to initialize data in database
-    @Test(enabled = false)
-    public void initData() {
-        createSchema();
-        loadData();
-    }
-
-    @Test
+    @Test(groups = {"system"})
     public void testMetadata() throws Exception {
         Metadata metadata = cluster.getMetadata();
         assertTrue(metadata.getClusterName().length() > 0);
@@ -51,26 +49,111 @@ public class DriverTest {
             LOG.debug(String.format("Connected to cluster: %s\n", metadata.getClusterName()));
         }
         assertTrue(metadata.getAllHosts().size() > 0);
-        for ( Host host : metadata.getAllHosts() ) {
+        for (Host host : metadata.getAllHosts()) {
             assertTrue(host.getDatacenter().length() > 0);
             assertNotNull(host.getAddress());
             assertTrue(host.getRack().length() > 0);
             if (LOG.isDebugEnabled()) {
                 LOG.debug(String.format("Datacenter: %s; Host: %s; Rack: %s\n",
-                        host.getDatacenter(), host.getAddress(), host.getRack()));
+                                        host.getDatacenter(),
+                                        host.getAddress(),
+                                        host.getRack()));
             }
         }
     }
 
+    @Test(groups = {"system"})
+    public void testUnboundStatements() throws Exception {
+        loadData();
+        testQueries();
+    }
+
+
     @Test
-    public void testQuery() throws Exception {
-        ResultSet results = session.execute("SELECT * FROM simplex.playlists WHERE id = 2cc9ccb7-6221-4ccb-8387-f22b6a1b354d;");
+    public void testBoundStatements() throws Exception {
+        loadDataUsingBoundStatements();
+        testQueries();
+    }
+
+
+///////////// Private Methods /////////////
+
+
+    private void createSchema() {
+        session.execute("CREATE KEYSPACE simplex WITH replication " + "= {'class':'SimpleStrategy', " +
+                                "'replication_factor':1};");
+
+        session.execute("CREATE TABLE simplex.songs (" +
+                                "id uuid PRIMARY KEY," +
+                                "title text," +
+                                "album text," +
+                                "artist text," +
+                                "tags set<text>," +
+                                "data blob" +
+                                ");");
+        session.execute("CREATE TABLE simplex.playlists (" +
+                                "id uuid," +
+                                "title text," +
+                                "album text, " +
+                                "artist text," +
+                                "song_id uuid," +
+                                "PRIMARY KEY (id, title, album, artist)" +
+                                ");");
+    }
+
+    private void loadData() {
+        session.execute("INSERT INTO simplex.songs (id, title, album, artist, tags) " +
+                                "VALUES (" +
+                                "756716f7-2e54-4715-9f00-91dcbea6cf50," +
+                                "'La Petite Tonkinoise'," +
+                                "'Bye Bye Blackbird'," +
+                                "'Joséphine Baker'," +
+                                "{'jazz', '2013'})" +
+                                ";");
+        session.execute("INSERT INTO simplex.playlists (id, song_id, title, album, artist) " +
+                                "VALUES (" +
+                                "2cc9ccb7-6221-4ccb-8387-f22b6a1b354d," +
+                                "756716f7-2e54-4715-9f00-91dcbea6cf50," +
+                                "'La Petite Tonkinoise'," +
+                                "'Bye Bye Blackbird'," +
+                                "'Joséphine Baker'" +
+                                ");");
+
+    }
+
+    private void loadDataUsingBoundStatements() {
+        PreparedStatement statement = session.prepare(
+                "INSERT INTO simplex.songs (id, title, album, artist, tags)  VALUES (?, ?, ?, ?, ?);");
+        BoundStatement boundStatement = new BoundStatement(statement);
+        Set<String> tags = new HashSet<String>();
+        tags.add("jazz");
+        tags.add("2013");
+        session.execute(boundStatement.bind(UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
+                                            "La Petite Tonkinoise'",
+                                            "Bye Bye Blackbird'",
+                                            "Joséphine Baker",
+                                            tags));
+        statement = session.prepare("INSERT INTO simplex.playlists " +
+                                            "(id, song_id, title, album, artist) " +
+                                            "VALUES (?, ?, ?, ?, ?);");
+        boundStatement = new BoundStatement(statement);
+        session.execute(boundStatement.bind(UUID.fromString("2cc9ccb7-6221-4ccb-8387-f22b6a1b354d"),
+                                            UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
+                                            "La Petite Tonkinoise",
+                                            "Bye Bye Blackbird",
+                                            "Joséphine Baker"));
+
+    }
+
+    private void testQueries() {
+        ResultSet results = session.execute(
+                "SELECT * FROM simplex.playlists WHERE id = 2cc9ccb7-6221-4ccb-8387-f22b6a1b354d;");
         List<Row> rows = results.all();
         assertEquals(rows.size(), 1);
         assertTrue(results.isExhausted());
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("%-30s\t%-20s\t%-20s","title", "album", "artist"));
+            LOG.debug(String.format("%-30s\t%-20s\t%-20s", "title", "album", "artist"));
             LOG.debug("-------------------------------+-----------------------+--------------------");
         }
         for (Row row : rows) {
@@ -79,55 +162,11 @@ public class DriverTest {
             assertEquals(row.getString("artist"), "Joséphine Baker");
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug(String.format("%-30s\t%-20s\t%-20s", row.getString("title"), row.getString("album"), row.getString("artist")));
+                LOG.debug(String.format("%-30s\t%-20s\t%-20s",
+                                        row.getString("title"),
+                                        row.getString("album"),
+                                        row.getString("artist")));
             }
         }
-    }
-
-
-    private void createSchema() {
-        session.execute("CREATE KEYSPACE simplex WITH replication " +
-                "= {'class':'SimpleStrategy', 'replication_factor':1};");
-
-        session.execute(
-                "CREATE TABLE simplex.songs (" +
-                        "id uuid PRIMARY KEY," +
-                        "title text," +
-                        "album text," +
-                        "artist text," +
-                        "tags set<text>," +
-                        "data blob" +
-                        ");");
-        session.execute(
-                "CREATE TABLE simplex.playlists (" +
-                        "id uuid," +
-                        "title text," +
-                        "album text, " +
-                        "artist text," +
-                        "song_id uuid," +
-                        "PRIMARY KEY (id, title, album, artist)" +
-                        ");");
-    }
-
-    public void loadData() {
-        session.execute(
-                "INSERT INTO simplex.songs (id, title, album, artist, tags) " +
-                        "VALUES (" +
-                        "756716f7-2e54-4715-9f00-91dcbea6cf50," +
-                        "'La Petite Tonkinoise'," +
-                        "'Bye Bye Blackbird'," +
-                        "'Joséphine Baker'," +
-                        "{'jazz', '2013'})" +
-                        ";");
-        session.execute(
-                "INSERT INTO simplex.playlists (id, song_id, title, album, artist) " +
-                        "VALUES (" +
-                        "2cc9ccb7-6221-4ccb-8387-f22b6a1b354d," +
-                        "756716f7-2e54-4715-9f00-91dcbea6cf50," +
-                        "'La Petite Tonkinoise'," +
-                        "'Bye Bye Blackbird'," +
-                        "'Joséphine Baker'" +
-                        ");");
-
     }
 }
