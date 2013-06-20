@@ -23,67 +23,73 @@ import java.util.Map;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.CallableStatementCallback;
+import org.springframework.jdbc.core.CallableStatementCreator;
+import org.springframework.jdbc.core.PreparedStatementCallback;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 /**
- * Interface specifying a basic set of JDBC operations.
- * Implemented by {@link JdbcTemplate}. Not often used directly, but a useful
- * option to enhance testability, as it can easily be mocked or stubbed.
- *
- * <p>Alternatively, the standard JDBC infrastructure can be mocked.
- * However, mocking this interface constitutes significantly less work.
- * As an alternative to a mock objects approach to testing data access code,
- * consider the powerful integration testing support provided in the
- * <code>org.springframework.test</code> package, shipped in
- * <code>spring-mock.jar</code>.
+ * Interface specifying a basic set of CQL operations.
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
- * @see JdbcTemplate
+ * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
+ * @see CqlTemplate
  */
 public interface CqlOperations {
 
-	//-------------------------------------------------------------------------
-	// Methods dealing with a plain java.sql.Connection
+    //-------------------------------------------------------------------------
+    // Methods dealing with a plain com.datastax.driver.core.Cluster
+    //-------------------------------------------------------------------------
+    /**
+     * Execute a CQL data access operation, implemented as callback action
+     * working on a CQL Cluster. This allows for implementing arbitrary
+     * data access operations, within a managed environment:
+     * that is, converting
+     * CQL exceptions into Spring's DataAccessException hierarchy.
+     * <p>The callback action can return a result object, for example a
+     * domain object or a collection of domain objects.
+     * @param action the callback object that specifies the action
+     * @return a result object returned by the action, or <code>null</code>
+     * @throws DataAccessException if there is any problem
+     */
+    <T> T execute(ClusterCallback<T> action) throws DataAccessException;
+
+
+    //-------------------------------------------------------------------------
+	// Methods dealing with a plain com.datastax.driver.core.Session
 	//-------------------------------------------------------------------------
 
 	/**
-	 * Execute a JDBC data access operation, implemented as callback action
-	 * working on a JDBC Connection. This allows for implementing arbitrary
-	 * data access operations, within Spring's managed JDBC environment:
-	 * that is, participating in Spring-managed transactions and converting
-	 * JDBC SQLExceptions into Spring's DataAccessException hierarchy.
+	 * Execute a CQL data access operation, implemented as callback action
+	 * working on a CQL Session. This allows for implementing arbitrary
+	 * data access operations, within a managed environment:
+	 * that is, converting
+	 * CQL exceptions into Spring's DataAccessException hierarchy.
 	 * <p>The callback action can return a result object, for example a
 	 * domain object or a collection of domain objects.
 	 * @param action the callback object that specifies the action
 	 * @return a result object returned by the action, or <code>null</code>
 	 * @throws DataAccessException if there is any problem
 	 */
-	<T> T execute(ConnectionCallback<T> action) throws DataAccessException;
+	<T> T execute(SessionCallback<T> action) throws DataAccessException;
 
 
 	//-------------------------------------------------------------------------
-	// Methods dealing with static SQL (java.sql.Statement)
+	// Methods dealing with static SQL
 	//-------------------------------------------------------------------------
 
 	/**
-	 * Execute a JDBC data access operation, implemented as callback action
-	 * working on a JDBC Statement. This allows for implementing arbitrary data
-	 * access operations on a single Statement, within Spring's managed JDBC
-	 * environment: that is, participating in Spring-managed transactions and
-	 * converting JDBC SQLExceptions into Spring's DataAccessException hierarchy.
-	 * <p>The callback action can return a result object, for example a
-	 * domain object or a collection of domain objects.
-	 * @param action callback object that specifies the action
-	 * @return a result object returned by the action, or <code>null</code>
-	 * @throws DataAccessException if there is any problem
-	 */
-	<T> T execute(StatementCallback<T> action) throws DataAccessException;
-
-	/**
-	 * Issue a single SQL execute, typically a DDL statement.
-	 * @param sql static SQL to execute
+	 * Issue a single CQL execute, typically a DDL statement.
+	 * @param sql static CQL to execute
 	 * @throws DataAccessException if there is any problem
 	 */
 	void execute(String sql) throws DataAccessException;
