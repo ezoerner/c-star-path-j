@@ -34,7 +34,7 @@ public class CqlConnection implements Connection {
 
     @Override
     public Statement createStatement() {
-        throw new UnsupportedOperationException("not yet implemented");  //To change body of implemented methods use File | Settings | File Templates.
+        return new CqlStatement(session);
     }
 
     @Override
