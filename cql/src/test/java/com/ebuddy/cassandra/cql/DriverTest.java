@@ -73,8 +73,8 @@ public class DriverTest {
     }
 
     @Test(groups = {"system"})
-    public void testUnboundStatements() throws Exception {
-        loadData();
+    public void testStaticSql() throws Exception {
+        loadDataUsingStaticSql();
         testQueries();
     }
 
@@ -128,7 +128,7 @@ public class DriverTest {
                                 ");");
     }
 
-    private void loadData() {
+    private void loadDataUsingStaticSql() {
         session.execute("INSERT INTO simplex.songs (id, title, album, artist, tags) " +
                                 "VALUES (" +
                                 "756716f7-2e54-4715-9f00-91dcbea6cf50," +

@@ -1,5 +1,9 @@
 package com.ebuddy.cassandra.cql;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testng.annotations.AfterMethod;
@@ -33,18 +37,42 @@ public class JdbcTemplateTest {
         cluster.shutdown();
     }
 
-    @Test
+    @Test(groups = {"system"})
     public void testLoadData() throws Exception {
-        loadData();
+        loadDataStaticSql();
+    }
+
+    @Test(groups = {"system"})
+    public void testStaticSqlQueries() throws Exception {
+        loadDataStaticSql();
+        testQueries();
     }
 
     ///////////// Private Methods /////////////
 
     private void createSchema() {
-        //To change body of created methods use File | Settings | File Templates.
+        template.execute("CREATE KEYSPACE simplex WITH replication " + "= {'class':'SimpleStrategy', " +
+                                "'replication_factor':1};");
+
+        template.execute("CREATE TABLE simplex.songs (" +
+                                "id uuid PRIMARY KEY," +
+                                "title text," +
+                                "album text," +
+                                "artist text," +
+                                "tags set<text>," +
+                                "data blob" +
+                                ");");
+        template.execute("CREATE TABLE simplex.playlists (" +
+                                "id uuid," +
+                                "title text," +
+                                "album text, " +
+                                "artist text," +
+                                "song_id uuid," +
+                                "PRIMARY KEY (id, title, album, artist)" +
+                                ");");
     }
 
-    private void loadData() {
+    private void loadDataStaticSql() {
         template.execute("INSERT INTO simplex.songs (id, title, album, artist, tags) " +
                                  "VALUES (" +
                                  "756716f7-2e54-4715-9f00-91dcbea6cf50," +
@@ -61,5 +89,28 @@ public class JdbcTemplateTest {
                                  "'Bye Bye Blackbird'," +
                                  "'Joséphine Baker'" +
                                  ");");
+    }
+
+    private void testQueries() {
+        Map<String,Object> results = template.queryForMap(
+                "SELECT * FROM simplex.playlists WHERE id = 2cc9ccb7-6221-4ccb-8387-f22b6a1b354d;");
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(String.format("%-30s\t%-20s\t%-20s", "title", "album", "artist"));
+            LOG.debug("-------------------------------+-----------------------+--------------------");
+        }
+        String title = (String)results.get("title");
+        String album = (String)results.get("album");
+        String artist = (String)results.get("artist");
+        assertEquals(title, "La Petite Tonkinoise");
+        assertEquals(album, "Bye Bye Blackbird");
+        assertEquals(artist, "Joséphine Baker");
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(String.format("%-30s\t%-20s\t%-20s",
+                                    title,
+                                    album,
+                                    artist));
+        }
     }
 }
