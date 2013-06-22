@@ -23,16 +23,6 @@ import java.util.Map;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.CallableStatementCallback;
-import org.springframework.jdbc.core.CallableStatementCreator;
-import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowCallbackHandler;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 
@@ -89,10 +79,10 @@ public interface CqlOperations {
 
 	/**
 	 * Issue a single CQL execute, typically a DDL statement.
-	 * @param sql static CQL to execute
+	 * @param cql static CQL to execute
 	 * @throws DataAccessException if there is any problem
 	 */
-	void execute(String sql) throws DataAccessException;
+	void execute(String cql) throws DataAccessException;
 
 	/**
 	 * Execute a query given static SQL, reading the ResultSet with a
