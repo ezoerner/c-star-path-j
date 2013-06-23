@@ -23,6 +23,8 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 
 /**
@@ -31,11 +33,13 @@ import com.datastax.driver.core.Row;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class CqlResultSet implements ResultSet {
+    private final com.datastax.driver.core.ResultSet dataStaxResultSet;
     private final Iterator<Row> rowIterator;
     private Row currentRow;
 
-    public CqlResultSet(com.datastax.driver.core.ResultSet resultSet) {
-        rowIterator = resultSet.iterator();
+    public CqlResultSet(com.datastax.driver.core.ResultSet dataStaxResultSet) {
+        this.dataStaxResultSet = dataStaxResultSet;
+        rowIterator = dataStaxResultSet.iterator();
     }
 
     @Override
@@ -234,17 +238,52 @@ public class CqlResultSet implements ResultSet {
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented"); 
+        return new CqlResultSetMetaData(dataStaxResultSet);
     }
 
+    @SuppressWarnings("fallthrough")
     @Override
     public Object getObject(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented"); 
+        int index = columnIndex - 1;
+        // unfortunately I don't see any alternative for a nasty switch in this version of the DataStax driver
+        DataType type = dataStaxResultSet.getColumnDefinitions().getType(index);
+        switch (type.getName()) {
+            case ASCII:
+                return currentRow.getString(index);
+            case BIGINT:
+            case COUNTER:
+                return currentRow.getLong(index);
+            case BLOB:
+                return currentRow.getBytes(index);
+            case BOOLEAN:
+                return currentRow.getBool(index);
+            case DECIMAL:
+                return currentRow.getDecimal(index);
+            case DOUBLE:
+                return currentRow.getDouble(index);
+            case FLOAT:
+                return currentRow.getFloat(index);
+            case INET:
+                return currentRow.
+            case INT:
+            case TEXT:
+            case TIMESTAMP:
+            case UUID:
+            case VARCHAR:
+            case VARINT:
+            case TIMEUUID:
+            case LIST:
+            case SET:
+            case MAP:
+            case CUSTOM:
+            default:
+                // some new type we don't know about?
+        }
     }
 
     @Override
     public Object getObject(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented"); 
+        return getObject(getIndex(columnLabel));
     }
 
     @Override
@@ -977,13 +1016,32 @@ public class CqlResultSet implements ResultSet {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        if (iface.isInstance(this)) {
+            return (T)this;
+        }
+        if (iface.isInstance(dataStaxResultSet)) {
+            return (T)dataStaxResultSet;
+        }
+        throw new SQLException("ResultSet of type [" + getClass().getName() +
+                                       "] cannot be unwrapped as [" + iface.getName() + "]");
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return iface.isInstance(this) || iface.isInstance(dataStaxResultSet);
+    }
+
+    private int getIndex(String name) {
+        ColumnDefinitions columnDefinitions = dataStaxResultSet.getColumnDefinitions();
+        for (int i = 1; i <= columnDefinitions.size()) {
+            // TODO handle case sensitive column names
+            if (columnDefinitions.getName(i - 1).equalsIgnoreCase(name)) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException(name + " is not a column defined in this result set");
     }
 }
