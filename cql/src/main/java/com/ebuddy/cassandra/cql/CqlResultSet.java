@@ -20,7 +20,10 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.Map;
+
+import com.datastax.driver.core.Row;
 
 /**
  * // TODO: Class description.
@@ -28,15 +31,20 @@ import java.util.Map;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class CqlResultSet implements ResultSet {
-    private final com.datastax.driver.core.ResultSet resultSet;
+    private final Iterator<Row> rowIterator;
+    private Row currentRow;
 
     public CqlResultSet(com.datastax.driver.core.ResultSet resultSet) {
-        this.resultSet = resultSet;
+        rowIterator = resultSet.iterator();
     }
 
     @Override
     public boolean next() throws SQLException {
-        throw new UnsupportedOperationException("not yet implemented");
+        if (rowIterator.hasNext()) {
+            currentRow = rowIterator.next();
+            return true;
+        }
+        return false;
     }
 
     @Override
