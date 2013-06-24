@@ -249,7 +249,7 @@ public class CqlResultSet implements ResultSet {
 
     @Override
     public Object getObject(String columnLabel) throws SQLException {
-        // unfortunately I don't see any alternative for a nasty switch in this version of the DataStax driver
+        // unfortunately I don't see any alternative for a nasty switch with this version of the DataStax driver
         DataType type = dataStaxResultSet.getColumnDefinitions().getType(columnLabel);
         switch (type.getName()) {
             case ASCII:
