@@ -244,27 +244,31 @@ public class CqlResultSet implements ResultSet {
     @SuppressWarnings("fallthrough")
     @Override
     public Object getObject(int columnIndex) throws SQLException {
-        int index = columnIndex - 1;
+        return getObject(dataStaxResultSet.getColumnDefinitions().getName(columnIndex - 1));
+    }
+
+    @Override
+    public Object getObject(String columnLabel) throws SQLException {
         // unfortunately I don't see any alternative for a nasty switch in this version of the DataStax driver
-        DataType type = dataStaxResultSet.getColumnDefinitions().getType(index);
+        DataType type = dataStaxResultSet.getColumnDefinitions().getType(columnLabel);
         switch (type.getName()) {
             case ASCII:
-                return currentRow.getString(index);
+                return currentRow.getString(columnLabel);
             case BIGINT:
             case COUNTER:
-                return currentRow.getLong(index);
+                return currentRow.getLong(columnLabel);
             case BLOB:
-                return currentRow.getBytes(index);
+                return currentRow.getBytes(columnLabel);
             case BOOLEAN:
-                return currentRow.getBool(index);
+                return currentRow.getBool(columnLabel);
             case DECIMAL:
-                return currentRow.getDecimal(index);
+                return currentRow.getDecimal(columnLabel);
             case DOUBLE:
-                return currentRow.getDouble(index);
+                return currentRow.getDouble(columnLabel);
             case FLOAT:
-                return currentRow.getFloat(index);
+                return currentRow.getFloat(columnLabel);
             case INET:
-                return currentRow.
+                return currentRow.getInet(columnLabel);
             case INT:
             case TEXT:
             case TIMESTAMP:
@@ -279,11 +283,6 @@ public class CqlResultSet implements ResultSet {
             default:
                 // some new type we don't know about?
         }
-    }
-
-    @Override
-    public Object getObject(String columnLabel) throws SQLException {
-        return getObject(getIndex(columnLabel));
     }
 
     @Override
@@ -1032,16 +1031,5 @@ public class CqlResultSet implements ResultSet {
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return iface.isInstance(this) || iface.isInstance(dataStaxResultSet);
-    }
-
-    private int getIndex(String name) {
-        ColumnDefinitions columnDefinitions = dataStaxResultSet.getColumnDefinitions();
-        for (int i = 1; i <= columnDefinitions.size()) {
-            // TODO handle case sensitive column names
-            if (columnDefinitions.getName(i - 1).equalsIgnoreCase(name)) {
-                return i;
-            }
-        }
-        throw new IllegalArgumentException(name + " is not a column defined in this result set");
     }
 }
