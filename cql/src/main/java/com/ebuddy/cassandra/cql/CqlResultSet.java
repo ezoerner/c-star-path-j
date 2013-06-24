@@ -23,7 +23,8 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.datastax.driver.core.ColumnDefinitions;
+import org.apache.log4j.Logger;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 
@@ -33,6 +34,7 @@ import com.datastax.driver.core.Row;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class CqlResultSet implements ResultSet {
+    private static final Logger logger = Logger.getLogger(CqlResultSet.class);
     private final com.datastax.driver.core.ResultSet dataStaxResultSet;
     private final Iterator<Row> rowIterator;
     private Row currentRow;
@@ -241,18 +243,20 @@ public class CqlResultSet implements ResultSet {
         return new CqlResultSetMetaData(dataStaxResultSet);
     }
 
-    @SuppressWarnings("fallthrough")
     @Override
     public Object getObject(int columnIndex) throws SQLException {
         return getObject(dataStaxResultSet.getColumnDefinitions().getName(columnIndex - 1));
     }
 
+    @SuppressWarnings("fallthrough")
     @Override
     public Object getObject(String columnLabel) throws SQLException {
         // unfortunately I don't see any alternative for a nasty switch with this version of the DataStax driver
         DataType type = dataStaxResultSet.getColumnDefinitions().getType(columnLabel);
         switch (type.getName()) {
             case ASCII:
+            case TEXT:
+            case VARCHAR:
                 return currentRow.getString(columnLabel);
             case BIGINT:
             case COUNTER:
@@ -270,18 +274,27 @@ public class CqlResultSet implements ResultSet {
             case INET:
                 return currentRow.getInet(columnLabel);
             case INT:
-            case TEXT:
+                return currentRow.getInt(columnLabel);
             case TIMESTAMP:
+                return currentRow.getDate(columnLabel);
             case UUID:
-            case VARCHAR:
-            case VARINT:
             case TIMEUUID:
+                return currentRow.getUUID(columnLabel);
+            case VARINT:
+                return currentRow.getVarint(columnLabel);
             case LIST:
+                return currentRow.getList(columnLabel, Object.class);
             case SET:
+                return currentRow.getSet(columnLabel, Object.class);
             case MAP:
+                return currentRow.getMap(columnLabel, Object.class, Object.class);
             case CUSTOM:
+                // for custom types, just return the raw ByteBuffer
+                return currentRow.getBytesUnsafe(columnLabel);
             default:
                 // some new type we don't know about?
+                logger.warn("unknown type encountered for column " + columnLabel + ", returning the ByteBuffer");
+                return currentRow.getBytesUnsafe(columnLabel);
         }
     }
 
