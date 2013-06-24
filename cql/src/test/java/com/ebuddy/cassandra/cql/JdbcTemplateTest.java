@@ -45,7 +45,7 @@ public class JdbcTemplateTest {
     @Test(groups = {"system"})
     public void testStaticSqlQueries() throws Exception {
         loadDataStaticSql();
-        testQueries();
+        testQueryForMap();
     }
 
     ///////////// Private Methods /////////////
@@ -91,7 +91,7 @@ public class JdbcTemplateTest {
                                  ");");
     }
 
-    private void testQueries() {
+    private void testQueryForMap() {
         Map<String,Object> results = template.queryForMap(
                 "SELECT * FROM simplex.playlists WHERE id = 2cc9ccb7-6221-4ccb-8387-f22b6a1b354d;");
 
