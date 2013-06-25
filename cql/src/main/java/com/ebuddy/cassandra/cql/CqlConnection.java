@@ -39,7 +39,7 @@ public class CqlConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        throw new UnsupportedOperationException("not yet implemented");  //To change body of implemented methods use File | Settings | File Templates.
+        return new CqlPreparedStatement(session.prepare(sql));
     }
 
     @Override

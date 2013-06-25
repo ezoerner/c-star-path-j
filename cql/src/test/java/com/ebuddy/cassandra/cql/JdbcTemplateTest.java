@@ -2,7 +2,10 @@ package com.ebuddy.cassandra.cql;
 
 import static org.testng.Assert.assertEquals;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,6 +51,12 @@ public class JdbcTemplateTest {
         testQueryForMap();
     }
 
+    @Test(groups = {"system"})
+    public void testBoundStatements() throws Exception {
+        loadDataUsingBoundStatements();
+        testQueryForMap();
+    }
+
     ///////////// Private Methods /////////////
 
     private void createSchema() {
@@ -90,6 +99,31 @@ public class JdbcTemplateTest {
                                  "'Joséphine Baker'" +
                                  ");");
     }
+
+    private void loadDataUsingBoundStatements() {
+        Set<String> tags = new HashSet<String>();
+        tags.add("jazz");
+        tags.add("2013");
+
+        // expect an empty List back
+        template.queryForList("INSERT INTO simplex.songs (id, title, album, artist, tags)  VALUES (?, ?, ?, ?, ?);",
+                               Void.class,
+                               UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
+                               "La Petite Tonkinoise'",
+                               "Bye Bye Blackbird'",
+                               "Joséphine Baker",
+                               tags);
+
+        template.queryForList("INSERT INTO simplex.playlists " +
+                                      "(id, song_id, title, album, artist) " +
+                                      "VALUES (?, ?, ?, ?, ?);",
+                              UUID.fromString("2cc9ccb7-6221-4ccb-8387-f22b6a1b354d"),
+                              UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
+                              "La Petite Tonkinoise",
+                              "Bye Bye Blackbird",
+                              "Joséphine Baker");
+    }
+
 
     private void testQueryForMap() {
         Map<String,Object> results = template.queryForMap(
