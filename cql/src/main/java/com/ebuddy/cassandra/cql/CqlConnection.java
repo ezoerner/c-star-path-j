@@ -39,7 +39,7 @@ public class CqlConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return new CqlPreparedStatement(session.prepare(sql));
+        return new CqlPreparedStatement(session.prepare(sql), session);
     }
 
     @Override

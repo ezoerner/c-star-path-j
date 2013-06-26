@@ -117,6 +117,7 @@ public class JdbcTemplateTest {
         template.queryForList("INSERT INTO simplex.playlists " +
                                       "(id, song_id, title, album, artist) " +
                                       "VALUES (?, ?, ?, ?, ?);",
+                              Void.class,
                               UUID.fromString("2cc9ccb7-6221-4ccb-8387-f22b6a1b354d"),
                               UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
                               "La Petite Tonkinoise",

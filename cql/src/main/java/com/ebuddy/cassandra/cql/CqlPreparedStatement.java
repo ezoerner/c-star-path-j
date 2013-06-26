@@ -3,7 +3,10 @@ package com.ebuddy.cassandra.cql;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -22,12 +25,15 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-
-import org.apache.commons.lang.Validate;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * // TODO: Add class description here.
@@ -35,15 +41,20 @@ import com.datastax.driver.core.DataType;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class CqlPreparedStatement implements PreparedStatement {
+    private final com.datastax.driver.core.PreparedStatement dataStaxPreparedStatement;
     private final BoundStatement boundStatement;
+    private final Session session;
 
-    public CqlPreparedStatement(com.datastax.driver.core.PreparedStatement dataStaxPreparedStatement) {
+    public CqlPreparedStatement(com.datastax.driver.core.PreparedStatement dataStaxPreparedStatement,
+                                Session session) {
+        this.dataStaxPreparedStatement = dataStaxPreparedStatement;
+        this.session = session;
         boundStatement = new BoundStatement(dataStaxPreparedStatement);
     }
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return new CqlResultSet(session.execute(boundStatement));
     }
 
     @Override
@@ -98,7 +109,7 @@ public class CqlPreparedStatement implements PreparedStatement {
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        boundStatement.setString(parameterIndex - 1, x);
     }
 
     @Override
@@ -146,25 +157,28 @@ public class CqlPreparedStatement implements PreparedStatement {
 
     }
 
+    @SuppressWarnings("fallthrough")
     @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
-        DataType type;
-        if (x instanceof String) {
-            type = DataType.text();
-        } else if (x instanceof UUID) {
-            type = DataType.uuid();
-        } else {
-            throw new UnsupportedOperationException("Not yet implemented");
-        }
-        setObject(parameterIndex, x, type);
-    }
+        int index = parameterIndex - 1;  // convert from 1-based to 0-based
 
-    @SuppressWarnings("fallthrough")
-    private void setObject(int parameterIndex, Object x, DataType dataType) throws SQLException {
-        Validate.notNull(x); // for now don't support null
-        int index = parameterIndex - 1;
-        // unfortunately I don't see any alternative for a nasty switch with this version of the DataStax driver
-        switch (dataType.getName()) {
+        if (x == null) {
+            boundStatement.setBytesUnsafe(index, null);
+            return;
+        }
+
+        DataType columnType = dataStaxPreparedStatement.getVariables().getType(index);
+
+        Class<?> providedClass = x.getClass();
+        Class<?> expectedClass = columnType.getName().asJavaClass();
+        if (!expectedClass.isAssignableFrom(providedClass)) {
+            throw new InvalidTypeException(String.format("Invalid type for CQL type %s, expecting %s but %s provided",
+                                                         columnType,
+                                                         expectedClass,
+                                                         providedClass));
+        }
+
+        switch (columnType.getName()) {
             case ASCII:
             case TEXT:
             case VARCHAR:
@@ -172,47 +186,54 @@ public class CqlPreparedStatement implements PreparedStatement {
                 break;
             case BIGINT:
             case COUNTER:
-                if (x instanceof String) {
-                    boundStatement.setLong(index, Long.valueOf((String)x));
-                } else {
-                    assert x != null;
-                    boundStatement.setLong(index, ((Number)x).longValue());
-                }
+                //noinspection ConstantConditions
+                boundStatement.setLong(index, ((Number)x).longValue());
                 break;
             case BLOB:
-                //return currentRow.getBytes(columnLabel);
+                boundStatement.setBytes(index, (ByteBuffer)x);
+                break;
             case BOOLEAN:
-                //return currentRow.getBool(columnLabel);
+                boundStatement.setBool(index, (Boolean)x);
+                break;
             case DECIMAL:
-                //return currentRow.getDecimal(columnLabel);
+                boundStatement.setDecimal(index, (BigDecimal)x);
+                break;
             case DOUBLE:
-                //return currentRow.getDouble(columnLabel);
+                boundStatement.setDouble(index, ((Number)x).doubleValue());
+                break;
             case FLOAT:
-                //return currentRow.getFloat(columnLabel);
+                boundStatement.setFloat(index, ((Number)x).floatValue());
+                break;
             case INET:
-                //return currentRow.getInet(columnLabel);
+                boundStatement.setInet(index, (InetAddress)x);
+                break;
             case INT:
-                //return currentRow.getInt(columnLabel);
+                boundStatement.setInt(index, ((Number)x).intValue());
+                break;
             case TIMESTAMP:
-                //return currentRow.getDate(columnLabel);
+                boundStatement.setDate(index, (java.util.Date)x);
+                break;
             case UUID:
             case TIMEUUID:
-                //return currentRow.getUUID(columnLabel);
+                boundStatement.setUUID(index, (UUID)x);
+                break;
             case VARINT:
-                //return currentRow.getVarint(columnLabel);
+                boundStatement.setVarint(index, (BigInteger)x);
+                break;
             case LIST:
-                //return currentRow.getList(columnLabel, Object.class);
+                boundStatement.setList(index, (List<?>)x);
+                break;
             case SET:
-                //return currentRow.getSet(columnLabel, Object.class);
+                boundStatement.setSet(index, (Set<?>)x);
+                break;
             case MAP:
-                //return currentRow.getMap(columnLabel, Object.class, Object.class);
+                boundStatement.setMap(index, (Map<?,?>)x);
+                break;
             case CUSTOM:
-                // for custom types, just return the raw ByteBuffer
-                //return currentRow.getBytesUnsafe(columnLabel);
+                boundStatement.setBytesUnsafe(index, (ByteBuffer)x);
             default:
                 // some new type we don't know about?
-                //logger.warn("unknown type encountered for column " + columnLabel + ", returning the ByteBuffer");
-                // currentRow.getBytesUnsafe(columnLabel);
+                throw new UnsupportedOperationException("Don't know about type " + columnType.getName());
         }
     }
 
