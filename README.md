@@ -1,5 +1,15 @@
 cassandra-data-access
 =====================
-Module for Cassandra Data Access.
+Two modules for Cassandra Data Access.
 
-Contains separate Operations interfaces for accessing Cassandra using CQL vs. Thrift, with corresponding Template implementations using the DataStax Java Driver and Hector.
+cql
+---
+Template object, will be either a working JDBCTemplate configured for CQL3, or a CqlTemplate in the style of JDBCTemplate. 
+Uses the Datastax Java Driver for transport and low level operations. 
+
+thrift
+------
+Templates for column and super column family access, using the Hector library and Thrift for transport and low level operations. 
+
+Also planned is support for accessing structured data using hierarchical paths and JSON.
+
