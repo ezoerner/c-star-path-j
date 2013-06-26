@@ -13,6 +13,7 @@
 
     <properties>
         <cassandra.java.driver.version>1.0.0</cassandra.java.driver.version>
+        <spring-version>3.2.3.RELEASE</spring-version>
     </properties>
 
   <dependencies>
@@ -21,5 +22,12 @@
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.java.driver.version}</version>
     </dependency>
+
+      <dependency>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-jdbc</artifactId>
+          <version>${spring-version}</version>
+      </dependency>
+
   </dependencies>
 </project>
