@@ -1,8 +1,10 @@
 package com.ebuddy.cassandra.cql;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -105,24 +107,27 @@ public class JdbcTemplateTest {
         tags.add("jazz");
         tags.add("2013");
 
-        // expect an empty List back
-        template.queryForList("INSERT INTO simplex.songs (id, title, album, artist, tags)  VALUES (?, ?, ?, ?, ?);",
-                               Void.class,
-                               UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
-                               "La Petite Tonkinoise'",
-                               "Bye Bye Blackbird'",
-                               "Joséphine Baker",
-                               tags);
+        // use queryForList since for some reason JdbcTemplate lacks a parameter binding method for execute
+        List<Void> result1 = template.queryForList(
+                "INSERT INTO simplex.songs (id, title, album, artist, tags)  VALUES (?, ?, ?, ?, ?);",
+                Void.class,
+                UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
+                "La Petite Tonkinoise'",
+                "Bye Bye Blackbird'",
+                "Joséphine Baker",
+                tags);
+        assertTrue(result1.isEmpty());
 
-        template.queryForList("INSERT INTO simplex.playlists " +
-                                      "(id, song_id, title, album, artist) " +
-                                      "VALUES (?, ?, ?, ?, ?);",
-                              Void.class,
-                              UUID.fromString("2cc9ccb7-6221-4ccb-8387-f22b6a1b354d"),
-                              UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
-                              "La Petite Tonkinoise",
-                              "Bye Bye Blackbird",
-                              "Joséphine Baker");
+        List<Void> result2 = template.queryForList("INSERT INTO simplex.playlists " +
+                                                          "(id, song_id, title, album, artist) " +
+                                                          "VALUES (?, ?, ?, ?, ?);",
+                                                  Void.class,
+                                                  UUID.fromString("2cc9ccb7-6221-4ccb-8387-f22b6a1b354d"),
+                                                  UUID.fromString("756716f7-2e54-4715-9f00-91dcbea6cf50"),
+                                                  "La Petite Tonkinoise",
+                                                  "Bye Bye Blackbird",
+                                                  "Joséphine Baker");
+        assertTrue(result2.isEmpty());
     }
 
 
