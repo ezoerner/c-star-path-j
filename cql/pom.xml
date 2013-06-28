@@ -13,7 +13,6 @@
 
     <properties>
         <cassandra.java.driver.version>1.0.0</cassandra.java.driver.version>
-        <spring-version>3.2.3.RELEASE</spring-version>
     </properties>
 
     <dependencies>
@@ -26,7 +25,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>${spring-version}</version>
+            <version>${spring.version}</version>
         </dependency>
 
     </dependencies>
