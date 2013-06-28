@@ -148,7 +148,7 @@ public class PropertyValueFactory extends StdDeserializer<PropertyValue<?>> {
                                                            Charset.forName("UTF-8")));
                 case ListValue.HEADER_CHAR:
                     // BUG FIX: Some data was written by a previous version of the code that
-                    // wrote the structured headdre bytes followed by double-quoted string.
+                    // wrote the structured header bytes followed by double-quoted string.
                     // This should be interpreted as a string, not a list
                     return mapper.readValue(ArrayUtils.subarray(storeBytes,
                                                                 ListValue.UTF8_HEADER_BYTES.length,
