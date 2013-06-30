@@ -1,9 +1,9 @@
 package com.ebuddy.cassandra.property;
 
+import java.nio.ByteBuffer;
+
 import org.codehaus.jackson.annotate.JsonValue;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
-
-import java.nio.ByteBuffer;
 
 /**
  * An immutable value that is either a string or a structured object (e.g. a map of maps), and can be converted
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-
+@Deprecated
 @JsonDeserialize(using=PropertyValueFactory.class)
 public interface PropertyValue<T> {
     

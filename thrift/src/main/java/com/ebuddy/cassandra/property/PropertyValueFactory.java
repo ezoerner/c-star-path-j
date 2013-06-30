@@ -29,9 +29,11 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
  * TODO: Get rid of PropertyValues. Although the idea was to make it more strongly typed than "Object"
  * TODO: to only allow certain types, in practice it complicates the API too much
  *
+ * @deprecated just use Objects instead of PropertyValues
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 @SuppressWarnings({"UnusedDeclaration", "unchecked"})
+@Deprecated
 public class PropertyValueFactory extends StdDeserializer<PropertyValue<?>> {
     /**
      * The delimiter character for separating parts of a hierarchical property name.
