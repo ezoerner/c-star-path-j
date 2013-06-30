@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;

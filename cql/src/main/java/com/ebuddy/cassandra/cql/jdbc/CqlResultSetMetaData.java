@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -15,7 +15,7 @@ public class CqlResultSetMetaData implements ResultSetMetaData {
     private final ColumnDefinitions columnDefinitions;
 
     public CqlResultSetMetaData(ResultSet dataStaxResultSet) {
-        this.columnDefinitions = dataStaxResultSet.getColumnDefinitions();
+        columnDefinitions = dataStaxResultSet.getColumnDefinitions();
     }
 
     @Override

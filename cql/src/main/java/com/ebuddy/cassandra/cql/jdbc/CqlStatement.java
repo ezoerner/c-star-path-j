@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
