@@ -15,12 +15,48 @@
         <jackson.version>2.2.2</jackson.version>
         <spring.version>3.2.3.RELEASE</spring.version>
         <mockito.version>1.9.5</mockito.version>
+        <surefire.version>2.14.1</surefire.version>
     </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>artifactory.releases</id>
+            <name>Artifactory Repository - Releases</name>
+            <url>http://svn.ebuddy.net/artifactory/libs-releases-local</url>
+            <layout>default</layout>
+        </repository>
+
+        <snapshotRepository>
+            <id>artifactory.snapshots</id>
+            <name>Artifactory Repository - Snapshots</name>
+            <url>http://svn.ebuddy.net/artifactory/libs-snapshots-local</url>
+            <layout>default</layout>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
 
     <modules>
         <module>thrift</module>
         <module>cql</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>system</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${surefire.version}</version>
+                        <configuration>
+                            <groups>functest,startup,system</groups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -50,6 +86,20 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <parallel>both</parallel>
+                    <threadCount>16</threadCount>
+                    <groups>functest</groups>
+                    <reportFormat>plain</reportFormat>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
