@@ -18,6 +18,13 @@
         <surefire.version>2.14.1</surefire.version>
     </properties>
 
+    <scm>
+        <connection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</developerConnection>
+        <url>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</url>
+        <tag>master</tag>
+    </scm>
+
     <distributionManagement>
         <repository>
             <id>artifactory.releases</id>
