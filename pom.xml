@@ -3,7 +3,7 @@
 
     <groupId>com.ebuddy.cassandra</groupId>
     <artifactId>cassandra-data-access</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>pom</packaging>
     <url>https://github.com/ebuddy/cassandra-data-access</url>
 
@@ -19,7 +19,7 @@
         <connection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</developerConnection>
         <url>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</url>
-        <tag>release-1.0</tag>
+        <tag>v1.0.1</tag>
     </scm>
 
     <distributionManagement>
