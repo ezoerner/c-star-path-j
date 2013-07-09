@@ -38,14 +38,14 @@ public class DriverTest {
     private Session session;
 
 
-    @BeforeMethod
+    @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         cluster = Cluster.builder().addContactPoint(NODE).build();
         session = cluster.connect();
         createSchema();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() throws Exception {
         session.execute("drop keyspace simplex");
         cluster.shutdown();

@@ -29,14 +29,14 @@ public class JdbcTemplateTest {
 
     private JdbcTemplate template;
 
-    @BeforeMethod
+    @BeforeMethod(alwaysRun = true)
     public void setUp() {
         cluster = Cluster.builder().addContactPoint(NODE).build();
         template = new JdbcTemplate(new DataStaxDataSource(cluster));
         createSchema();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() throws Exception {
         template.execute("drop keyspace simplex");
         cluster.shutdown();

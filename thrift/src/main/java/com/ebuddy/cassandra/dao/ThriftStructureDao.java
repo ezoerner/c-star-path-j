@@ -1,5 +1,6 @@
 package com.ebuddy.cassandra.dao;
 
+import com.ebuddy.cassandra.StructureDao;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 /**

@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql.dao;
+package com.ebuddy.cassandra;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 

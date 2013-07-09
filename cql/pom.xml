@@ -17,6 +17,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.ebuddy.cassandra</groupId>
+            <artifactId>api</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.java.driver.version}</version>

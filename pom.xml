@@ -38,6 +38,7 @@
     <modules>
         <module>thrift</module>
         <module>cql</module>
+        <module>api</module>
     </modules>
 
     <profiles>
