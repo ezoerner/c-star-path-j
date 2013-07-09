@@ -64,7 +64,7 @@ class NestedBatchMutation {
      * @param columnFamily the column family
      * @param superColumnName the super column name, or null if this is a regular column family
      */
-    public NestedBatchMutation(CassandraTemplate cassandraTemplate,
+    NestedBatchMutation(CassandraTemplate cassandraTemplate,
                                String keySpace,
                                String rowKey,
                                String columnFamily,
@@ -89,7 +89,7 @@ class NestedBatchMutation {
      * @param value the new String value for the property
      * @return the receiver
      */
-    public NestedBatchMutation addInsertion(String path, String value, String delimiter) {
+    NestedBatchMutation addInsertion(String path, String value, String delimiter) {
         if (partialsApplied) {
             throw new IllegalStateException("cannot insert after getMutationMap() is called");
         }
