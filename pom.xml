@@ -39,6 +39,7 @@
         <module>thrift</module>
         <module>cql</module>
         <module>api</module>
+        <module>core</module>
     </modules>
 
     <profiles>
