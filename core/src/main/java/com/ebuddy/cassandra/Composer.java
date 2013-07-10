@@ -1,7 +1,9 @@
 package com.ebuddy.cassandra;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * Support for decomposing complex objects into paths to simple objects and vice-versa, i.e. composing
@@ -12,6 +14,9 @@ import java.util.Map;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class Composer {
+    private static final Class<?>[] simpleTypes = new Class<?>[] {
+        String.class, Number.class, Boolean.class
+    };
 
     /**
      * Decompose a map arbitrarily complex structured objects into a map of
@@ -25,18 +30,41 @@ public class Composer {
             if (isSimple(structure)) {
                 result.put(path, structure);
                 continue;
-            } 
-            
+            }
+            if (structure instanceof Map) {
+                decomposeMap((Map<?,?>)structure, path, result);
+                continue;
+            }
+            if (structure instanceof List) {
+                decomposeList((List<?>)structure, path, result);
+            }
+            throw new IllegalArgumentException("Unsupported data type: " + structure.getClass().getSimpleName());
         }
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    private boolean isSimple(Object structure) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return result;
     }
 
     public Map<Path,Object> compose(Map<Path,Object> map) {
         throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private void decomposeList(List<?> structure, Path path, Map<Path,Object> result) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private void decomposeMap(Map<?,?> structure, Path path, Map<Path,Object> result) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private boolean isSimple(Object object) {
+        if (object == null) {
+            return true;
+        }
+        for (Class<?> type : simpleTypes) {
+            if (type.isInstance(object)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
