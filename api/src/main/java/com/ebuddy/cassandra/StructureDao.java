@@ -25,8 +25,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public interface StructureDao<K> {
-    char PATH_DELIMITER_CHAR = '|';
-    char LIST_ELEMENT_PREFIX_CHAR = '@';
 
     <T> T readFromPath(K rowKey, String path, TypeReference<T> type);
 
