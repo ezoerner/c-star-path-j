@@ -10,7 +10,7 @@ import java.util.Iterator;
  */
 public class Path {
     private static final char PATH_DELIMITER_CHAR = '|';
-    private static final char LIST_INDEX_CHAR = '@';
+    private static final String LIST_INDEX_PREFIX = "@";
 
     private final String[] pathElements;
 
@@ -29,6 +29,13 @@ public class Path {
         return new Path(newPathElements);
     }
 
+    /**
+     * Return true if the first element in this path is a list index.
+     */
+    public boolean isListIndex() {
+        return pathElements[0].startsWith(LIST_INDEX_PREFIX);
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -44,7 +51,7 @@ public class Path {
     }
 
     public static Path fromIndex(int i) {
-        return new Path(String.valueOf(LIST_INDEX_CHAR) + i);
+        return new Path(LIST_INDEX_PREFIX + i);
     }
 
     public static Path fromObject(Object o) {
