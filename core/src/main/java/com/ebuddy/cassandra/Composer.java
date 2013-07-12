@@ -1,7 +1,6 @@
 package com.ebuddy.cassandra;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -25,66 +24,61 @@ public class Composer {
      */
     public Map<Path,Object> decompose(Map<Path,Object> structures) {
         Map<Path,Object> decomposed = new HashMap<Path,Object>(structures.size());
-        decomposeInPlace(decomposed, structures);
-        return decomposed;
-    }
 
-    private void decomposeInPlace(Map<Path,Object> decomposed, Map<Path,Object> toDo) {
-        while (!toDo.isEmpty()) {
-            for (Iterator<Map.Entry<Path,Object>> iterator = toDo.entrySet().iterator(); iterator.hasNext(); ) {
-                // get next to do entry and remove it from the to do map
-                // TODO: this won't work because we can't modify the map we are iterating over
-                Map.Entry<Path,Object> toDoEntry = iterator.next();
-                iterator.remove();
+        for (Map.Entry<Path,Object> entry : structures.entrySet()) {
 
-                Object structure = toDoEntry.getValue();
-                Path path = toDoEntry.getKey();
+            Object structure = entry.getValue();
+            Path path = entry.getKey();
 
-                if (isSimple(structure)) {
-                    decomposed.put(path, structure);
-                    continue;
-                }
+            if (isSimple(structure)) {
+                decomposed.put(path, structure);
+                continue;
+             }
 
-                Map<String,Object> simplerMap;
-                if (structure instanceof Map) {
-                    simplerMap = simplifyMap((Map<?,?>)structure);
-                } else if (structure instanceof List) {
-                    simplerMap = simplifyList((List<?>)structure);
-                } else {
-                    throw new IllegalArgumentException("Unsupported data type: " +
-                                                               structure.getClass().getSimpleName());
-                }
+            Map<Path,Object> decomposedMap = decomposeStructure(structure);
 
-                for (Map.Entry<String,Object> simplerEntry : simplerMap.entrySet()) {
-                    toDo.put(path.with(simplerEntry.getKey()), simplerEntry.getValue());
-                }
+            for (Map.Entry<Path,Object> decomposedEntry : decomposedMap.entrySet()) {
+                decomposed.put(path.concatenate(decomposedEntry.getKey()), decomposedEntry.getValue());
             }
-            decomposeInPlace(decomposed, toDo);
         }
+        return decomposed;
     }
 
     public Map<Path,Object> compose(Map<Path,Object> map) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    private Map<String,Object> simplifyMap(Map<?,?> map) {
-        Map<String,Object> decomposed = new HashMap<String,Object>(map.size());
+    //////// Private Methods //////////
+
+    private Map<Path,Object> decomposeStructure(Object structure) {
+        Map<Path,Object> decomposedMap;
+        if (structure instanceof Map) {
+            decomposedMap = normalizeMap((Map<?,?>)structure);
+        } else if (structure instanceof List) {
+            decomposedMap = normalizeList((List<?>)structure);
+        } else {
+            throw new IllegalArgumentException("Unsupported data type: " +
+                                                       structure.getClass().getSimpleName());
+        }
+        return decompose(decomposedMap);
+    }
+
+    private Map<Path,Object> normalizeMap(Map<?,?> map) {
+        Map<Path,Object> normalized = new HashMap<Path,Object>(map.size());
         for (Map.Entry<?,?> entry : map.entrySet()) {
-            decomposed.put(toJsonObjectKey(entry.getKey()), entry.getValue());
+            Path key = Path.fromObject(entry.getKey());
+            Object value = entry.getValue();
+            normalized.put(key, value);
         }
-        return decomposed;
+        return normalized;
     }
 
-    private String toJsonObjectKey(Object object) {
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    private Map<String,Object> simplifyList(List<?> list) {
-        Map<String,Object> decomposed = new HashMap<String,Object>(list.size());
+    private Map<Path,Object> normalizeList(List<?> list) {
+        Map<Path,Object> normalized = new HashMap<Path,Object>(list.size());
         for (int i = 0; i < list.size(); i++) {
-            decomposed.put(Path.listIndex(i), list.get(i));
+            normalized.put(Path.fromIndex(i), list.get(i));
         }
-        return decomposed;
+        return normalized;
     }
 
     private boolean isSimple(Object object) {

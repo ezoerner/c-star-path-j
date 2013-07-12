@@ -14,17 +14,22 @@ public class Path {
 
     private final String[] pathElements;
 
-    public Path(Path parent, String child) {
-        int parentLength = parent.pathElements.length;
-        pathElements = new String[parentLength + 1];
-        System.arraycopy(parent.pathElements, 0, pathElements, 0, parentLength);
-        pathElements[parentLength] = child;
+    public Path(String string) {
+        this(new String[]{string});
     }
 
-    public Path with(String child) {
-        return new Path(this, child);
+    private Path(String[] pathElements) {
+        this.pathElements = pathElements;
     }
 
+    public Path concatenate(Path other) {
+        String[] newPathElements = new String[pathElements.length + other.pathElements.length];
+        System.arraycopy(pathElements, 0, newPathElements, 0, pathElements.length);
+        System.arraycopy(other.pathElements, 0, newPathElements, pathElements.length, other.pathElements.length);
+        return new Path(newPathElements);
+    }
+
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         Iterator<String> itr = Arrays.asList(pathElements).iterator();
@@ -38,7 +43,14 @@ public class Path {
         return builder.toString();
     }
 
-    public static String listIndex(int i) {
-        return String.valueOf(LIST_INDEX_CHAR) + i;
+    public static Path fromIndex(int i) {
+        return new Path(String.valueOf(LIST_INDEX_CHAR) + i);
+    }
+
+    public static Path fromObject(Object o) {
+        if (o instanceof Path) {
+            return (Path)o;
+        }
+        return new Path(o.toString());
     }
 }
