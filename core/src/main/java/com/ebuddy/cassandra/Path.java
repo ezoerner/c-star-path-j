@@ -1,9 +1,11 @@
 package com.ebuddy.cassandra;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * // TODO: Add class description here.
+ * A path used as column names in Cassandra for encoding structures and for querying elements of a structured object.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
@@ -11,20 +13,20 @@ public class Path implements Comparable<Path> {
     private static final char PATH_DELIMITER_CHAR = '|';
     private static final String LIST_INDEX_PREFIX = "@";
 
-    private final String[] pathElements;
+    private final List<String> pathElements;
 
     public Path(String string) {
-        this(new String[]{string});
+        this(Arrays.asList(string));
     }
 
-    private Path(String[] pathElements) {
+    private Path(List<String> pathElements) {
         this.pathElements = pathElements;
     }
 
     public Path concatenate(Path other) {
-        String[] newPathElements = new String[pathElements.length + other.pathElements.length];
-        System.arraycopy(pathElements, 0, newPathElements, 0, pathElements.length);
-        System.arraycopy(other.pathElements, 0, newPathElements, pathElements.length, other.pathElements.length);
+        List<String> newPathElements = new LinkedList<String>();
+        newPathElements.addAll(pathElements);
+        newPathElements.addAll(other.pathElements);
         return new Path(newPathElements);
     }
 
@@ -32,7 +34,7 @@ public class Path implements Comparable<Path> {
      * Return true if the head element in this path is a list index.
      */
     public boolean isListIndex() {
-        String head = pathElements[0];
+        String head = pathElements.get(0);
         if (!head.startsWith(LIST_INDEX_PREFIX)) {
             return false;
         }
@@ -54,7 +56,7 @@ public class Path implements Comparable<Path> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        for (String pathElement : Arrays.asList(pathElements)) {
+        for (String pathElement : pathElements) {
             builder.append(pathElement);
             builder.append(PATH_DELIMITER_CHAR);
         }
