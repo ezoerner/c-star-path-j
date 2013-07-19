@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 import com.datastax.driver.core.Cluster;
 
 /**
- * // TODO: Class description.
+ * Tests using a JdbcTemplate with a DataStax DataSource.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */

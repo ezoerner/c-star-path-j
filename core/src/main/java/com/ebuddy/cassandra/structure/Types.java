@@ -1,7 +1,7 @@
 package com.ebuddy.cassandra.structure;
 
 /**
- * // TODO: Add class description here.
+ * Utility methods for working with types within structured objects.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */

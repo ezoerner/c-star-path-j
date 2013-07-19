@@ -7,7 +7,7 @@ import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ResultSet;
 
 /**
- * // TODO: Class description.
+ * java.sql.ResultSetMetaData wrapper around a datastax ResultSetMetaData.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */

@@ -29,7 +29,7 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 
 /**
- * // TODO: Class description.
+ * java.sql.ResultSet wrapper around a datastax ResultSet.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
