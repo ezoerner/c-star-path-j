@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra;
+package com.ebuddy.cassandra.structure;
 
 import java.util.HashMap;
 import java.util.List;

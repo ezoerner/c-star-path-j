@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra;
+package com.ebuddy.cassandra.structure;
 
 /**
  * // TODO: Add class description here.
