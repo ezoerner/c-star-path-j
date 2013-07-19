@@ -5,13 +5,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * A path used as column names in Cassandra for encoding structures and for querying elements of a structured object.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class Path implements Comparable<Path> {
-    private static final char PATH_DELIMITER_CHAR = '|';
+    private static final char PATH_DELIMITER_CHAR = '/';
     private static final String LIST_INDEX_PREFIX = "@";
 
     private final List<String> pathElements;
@@ -55,6 +57,16 @@ public class Path implements Comparable<Path> {
             return (Path)o;
         }
         return new Path(o.toString());
+    }
+
+    public static Path fromPathString(String pathString) {
+        String[] parts = StringUtils.split(pathString, PATH_DELIMITER_CHAR);
+        return new Path(Arrays.asList(parts));
+    }
+
+    // for backward compatibility
+    public static Path fromPathStringWithVerticalBars(String pathString) {
+        return fromPathString(pathString.replace('|', PATH_DELIMITER_CHAR));
     }
 
     @Override
