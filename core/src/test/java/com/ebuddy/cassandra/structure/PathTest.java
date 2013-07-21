@@ -55,4 +55,12 @@ public class PathTest {
         assertEquals(path.toString(), "");
         assertTrue(path.isEmpty());
     }
+
+    @Test(groups = "unit")
+    public void backwardCompatibility() throws Exception {
+        Path path = Path.fromPathStringWithDelimiter("a|b|c|d", '|');
+        assertEquals(path, Path.fromPathString("a/b/c/d/"));
+        assertEquals(Path.fromPathStringWithDelimiter("a|b|c|d", '|'),
+                     Path.fromPathStringWithDelimiter("a|b|c|d|", '|'));
+    }
 }

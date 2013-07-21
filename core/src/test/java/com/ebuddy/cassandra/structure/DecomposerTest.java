@@ -24,6 +24,11 @@ public class DecomposerTest {
         decomposer = new Decomposer();
     }
 
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
+    public void decomposeNull() throws Exception {
+        decomposer.decompose(null);
+    }
+
     @Test(groups = "unit")
     public void decomposeEmptyMap() throws Exception {
         Map<Path,Object> result = decomposer.decompose(new HashMap<Path,Object>());

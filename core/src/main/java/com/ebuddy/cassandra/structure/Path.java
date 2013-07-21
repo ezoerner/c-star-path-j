@@ -60,13 +60,13 @@ public class Path implements Comparable<Path> {
     }
 
     public static Path fromPathString(String pathString) {
-        String[] parts = StringUtils.split(pathString, PATH_DELIMITER_CHAR);
-        return new Path(Arrays.asList(parts));
+        return fromPathStringWithDelimiter(pathString, PATH_DELIMITER_CHAR);
     }
 
-    // for backward compatibility
-    public static Path fromPathStringWithVerticalBars(String pathString) {
-        return fromPathString(pathString.replace('|', PATH_DELIMITER_CHAR));
+    // used for backward compatibility to specify the vertical bar as a delimiter
+    public static Path fromPathStringWithDelimiter(String pathString, char delmiterChar) {
+        String[] parts = StringUtils.split(pathString, delmiterChar);
+        return new Path(Arrays.asList(parts));
     }
 
     @Override
