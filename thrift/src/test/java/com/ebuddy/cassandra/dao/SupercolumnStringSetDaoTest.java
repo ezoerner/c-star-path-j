@@ -40,7 +40,7 @@ public class SupercolumnStringSetDaoTest {
         service = new SupercolumnStringSetDao<String,String>("email", "defaultEmail", operations);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void shouldWriteDefaultEmailAddress() throws Exception {
         service.writeElement(rowKey, "xms", "encrypted-email", true);
         verify(operations).writeColumn(rowKey, "xms", "email:encrypted-email", "", transactionContext);
@@ -48,7 +48,7 @@ public class SupercolumnStringSetDaoTest {
         verify(operations).commit(transactionContext);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void shouldWriteNondefaultEmailAddress() throws Exception {
         service.writeElement(rowKey, "xms", "encrypted-email", false);
         verify(operations).writeColumn(rowKey, "xms", "email:encrypted-email", "", transactionContext);
@@ -60,13 +60,13 @@ public class SupercolumnStringSetDaoTest {
         verify(operations).commit(transactionContext);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void shouldReadDefaultEmailAddress() throws Exception {
         service.readDefaultElement(rowKey, "xms");
         verify(operations).readColumnValue(rowKey, "xms", "defaultEmail");
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void shouldReadEmailAddresses() throws Exception {
         service.readElements(rowKey, "xms");
         verify(operations).readColumns(eq(rowKey),

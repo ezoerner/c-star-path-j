@@ -82,7 +82,7 @@ public class SuperColumnFamilyTemplateTest {
         when(txnContext.getMutator()).thenReturn(mutator);
     }
     
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testReadColumnValue() {
         ColumnSlice columnSlice = mock(ColumnSlice.class);
         HColumn column = mock(HColumn.class);
@@ -97,13 +97,13 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(value.getValue(), columnValue);
     }
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testReadColumnValueAndTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.readColumnValue(rowKey, superColumnName, columnName);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testReadColumnsAsMapSpecifyingNoColumnName() {
         Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
@@ -130,13 +130,13 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(actualResult, testResultMap);
     }
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testReadColumnsAsMapAndTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.readColumnsAsMap(rowKey, superColumnName);
     }
 
-    @Test(groups={"functest"})
+    @Test(groups={"unit"})
     public void testMultiGetColumnsAsMapSpecifyingNoColumnName() {
         Map<String,Map<String,PropertyValue<?>>> expectedResult =  new HashMap<String,Map<String,PropertyValue<?>>>();
 
@@ -184,13 +184,13 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(result, expectedResult);
     }
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testMultiGetColumnsAsMapTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.multiGetColumnsAsMap(rowKeys, superColumnName);
     }
 
-    @Test(groups={"functest"})
+    @Test(groups={"unit"})
     public void testReadRowAsMap() {
         Map<String,Map<String,PropertyValue<?>>> expectedResult = new HashMap<String,Map<String,PropertyValue<?>>>();
         for (String superColumnName : superColumnNames) {
@@ -227,13 +227,13 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(result, expectedResult);
     }
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testReadRowAsMapTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.readRowAsMap(rowKey);
     }
 
-    @Test(groups={"functest"})
+    @Test(groups={"unit"})
     public void testWriteColumns() {
         Map<String,PropertyValue<?>> properties = new HashMap<String,PropertyValue<?>>();
         Iterator<String> itr = columnValues.iterator();
@@ -264,7 +264,7 @@ public class SuperColumnFamilyTemplateTest {
         assertTrue(areSuperColumnsEqual(actualSuperColumn, superColumn));
     }
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testWriteColumnsTranslateHectorException() {
         when(mutator.addInsertion(eq(rowKey),
                                   eq(columnFamily),
@@ -283,7 +283,7 @@ public class SuperColumnFamilyTemplateTest {
     }
 
 
-    @Test(groups={"functest"})
+    @Test(groups={"unit"})
     public void testWriteColumn() {
         PropertyValue<?> propertyValue = PropertyValueFactory.get().createPropertyValue(columnValue);
 
@@ -309,7 +309,7 @@ public class SuperColumnFamilyTemplateTest {
     }
 
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testWriteColumnTranslateHectorException() {
 
         when(mutator.addInsertion(eq(rowKey),
@@ -324,7 +324,7 @@ public class SuperColumnFamilyTemplateTest {
         //=========================
     }
 
-    @Test(groups={"functest"})
+    @Test(groups={"unit"})
     public void testDeleteColumns() {
         //=========================
         superColumnFamilyTestDao.deleteColumns(rowKey, superColumnName, columnNames, txnContext);
@@ -341,7 +341,7 @@ public class SuperColumnFamilyTemplateTest {
         }
     }
 
-    @Test(groups={"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testDeleteColumnsTranslateHectorException() {
         when(mutator.addSubDelete(anyString(),
                                   anyString(),

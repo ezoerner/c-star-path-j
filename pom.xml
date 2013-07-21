@@ -61,7 +61,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${surefire.version}</version>
                         <configuration>
-                            <groups>functest,startup,system</groups>
+                            <groups>unit,startup,system</groups>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -126,7 +126,7 @@
                 <configuration>
                     <parallel>both</parallel>
                     <threadCount>16</threadCount>
-                    <groups>functest</groups>
+                    <groups>unit</groups>
                     <reportFormat>plain</reportFormat>
                 </configuration>
             </plugin>

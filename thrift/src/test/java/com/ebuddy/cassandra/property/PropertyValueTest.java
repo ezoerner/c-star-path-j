@@ -1,9 +1,9 @@
 package com.ebuddy.cassandra.property;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -11,7 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import org.apache.commons.lang.ArrayUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+import org.testng.annotations.Test;
 
 /**
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
@@ -19,7 +22,7 @@ import static org.testng.Assert.*;
 @SuppressWarnings({"JavaDoc"})
 public class PropertyValueTest {
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testJsonStringValue() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         ObjectMapper mapper = new ObjectMapper();
@@ -31,7 +34,7 @@ public class PropertyValueTest {
         assertEquals(newValue, propertyValue);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testStoreStringAsBytes() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         String string = "value";
@@ -49,7 +52,7 @@ public class PropertyValueTest {
     }
 
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testJsonStringValueInOtherObject() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         ObjectMapper mapper = new ObjectMapper();
@@ -63,7 +66,7 @@ public class PropertyValueTest {
         assertEquals(newValue, list);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testJsonNestedProperties() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         ObjectMapper mapper = new ObjectMapper();
@@ -83,7 +86,7 @@ public class PropertyValueTest {
         assertEquals(newValue, propertyValue);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testStoreMapAsBytes() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         Map<String, PropertyValue<?>> map = new HashMap<String, PropertyValue<?>>();
@@ -105,7 +108,7 @@ public class PropertyValueTest {
     }
 
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testJsonListOfStrings() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         ObjectMapper mapper = new ObjectMapper();
@@ -122,7 +125,7 @@ public class PropertyValueTest {
         assertEquals(actualList, expectedList);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testStoreListAsBytes() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         List<String> list = new ArrayList<String>();
@@ -143,7 +146,7 @@ public class PropertyValueTest {
         assertEquals(actualList, expectedList);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testJsonNestedPropertiesMultipleLevels() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         ObjectMapper mapper = new ObjectMapper();
@@ -180,7 +183,7 @@ public class PropertyValueTest {
         assertFalse(postJSONLevelThreeNewValue.isNestedProperties());                
     }
     
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testJsonNestedPropertiesInOtherObject() throws Exception {
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         ObjectMapper mapper = new ObjectMapper();
@@ -198,7 +201,7 @@ public class PropertyValueTest {
         assertEquals(newValue, list);
     }
 
-    @Test(groups={"functest"})
+    @Test(groups={"unit"})
     /**
      * This tests what happens when converting a "structured" string back to a PropertyValue.
      * This situation can occur when encountering data written by writing a PropertyValue containing

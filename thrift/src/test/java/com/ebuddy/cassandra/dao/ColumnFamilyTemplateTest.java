@@ -76,7 +76,7 @@ public class ColumnFamilyTemplateTest {
         when(txnContext.getMutator()).thenReturn(mutator);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testReadColumnValue() throws Exception {
         HColumn<String,PropertyValue<String>> column = mock(HColumn.class);
         String columnValue = "testColumnValue";
@@ -89,13 +89,13 @@ public class ColumnFamilyTemplateTest {
         assertEquals(value.getValue(), columnValue);
     }
 
-    @Test(groups = {"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testReadColumnValueTranslateHectorException() throws Exception {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         columnFamilyTestDao.readColumnValue(rowKey, columnName);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testReadColumnsAsMap() throws Exception {
         Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
@@ -120,7 +120,7 @@ public class ColumnFamilyTemplateTest {
         assertEquals(actualResult, testResultMap);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testReadColumns() throws Exception {
         Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
@@ -157,7 +157,7 @@ public class ColumnFamilyTemplateTest {
         assertEquals(resultMap, testResultMap);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testBasicMultiGetAsMap() throws Exception {
 
         Rows<String,String,PropertyValue<?>> resultRows = mock(Rows.class);
@@ -199,13 +199,13 @@ public class ColumnFamilyTemplateTest {
         assertEquals(resultMap, expectedResultMap);
     }
 
-    @Test(groups = {"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testReadColumnsAsMapTranslateHectorException() throws Exception {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         columnFamilyTestDao.readColumnsAsMap(rowKey);
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testWriteColumn() throws Exception {
         PropertyValue<?> propertyValue = PropertyValueFactory.get().createPropertyValue(columnValue);
 
@@ -225,7 +225,7 @@ public class ColumnFamilyTemplateTest {
         assertTrue(areColumnsEqual(actualColumn, column));
     }
 
-    @Test(groups = {"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testWriteColumnTranslateHectorException() throws Exception {
         when(mutator.addInsertion(eq(rowKey),
                                   eq(columnFamily),
@@ -239,7 +239,7 @@ public class ColumnFamilyTemplateTest {
         //=========================
     }
 
-    @Test(groups = {"functest"})
+    @Test(groups = {"unit"})
     public void testWriteColumns() throws Exception {
         Map<String,PropertyValue<?>> properties = new HashMap<String,PropertyValue<?>>();
         Iterator<String> itr = columnValues.iterator();
@@ -266,7 +266,7 @@ public class ColumnFamilyTemplateTest {
         assertTrue(areColumnsEqual(actualColumns.get(1), column2));
     }
 
-    @Test(groups = {"functest"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
     public void testWriteColumnsTranslateHectorException() throws Exception {
         when(mutator.addInsertion(eq(rowKey),
                                   eq(columnFamily),
