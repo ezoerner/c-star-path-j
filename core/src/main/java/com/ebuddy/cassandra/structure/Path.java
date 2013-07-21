@@ -142,4 +142,26 @@ public class Path implements Comparable<Path> {
         }
         return index >= 0;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        return pathElements.equals(((Path)o).pathElements);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return pathElements.hashCode();
+    }
+
+    public int size() {
+        return pathElements.size();
+    }
 }
