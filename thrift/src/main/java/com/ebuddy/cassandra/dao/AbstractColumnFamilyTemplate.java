@@ -2,6 +2,8 @@ package com.ebuddy.cassandra.dao;
 
 import javax.annotation.Nullable;
 
+import com.ebuddy.cassandra.BatchContext;
+
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.exceptions.HectorException;
@@ -81,11 +83,11 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
     /**
      * Remove the entire row.
      * @param rowKey the row key
-     * @param txnContext optional TransactionContext
+     * @param batchContext optional BatchContext
      */
     public final void removeRow(K rowKey,
-                                @Nullable TransactionContext txnContext) {
-        Mutator<K> mutator = validateAndGetMutator(txnContext);
+                                @Nullable BatchContext batchContext) {
+        Mutator<K> mutator = validateAndGetMutator(batchContext);
         try {
             if (mutator == null) {
                 createMutator().delete(rowKey, columnFamily, null, null);

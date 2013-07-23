@@ -34,6 +34,13 @@ import java.util.TreeMap;
  */
 public class Composer {
     private static final String INCONSISTENT_ROOT = "@ROOT";
+    private static final Composer INSTANCE = new Composer();
+
+    private Composer() { }
+
+    public static Composer get() {
+        return INSTANCE;
+    }
 
     /**
      * Compose a map of simple objects keyed by paths into a single complex object, e.g. a map or list

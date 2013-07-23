@@ -21,7 +21,7 @@ public class DecomposerTest {
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
-        decomposer = new Decomposer();
+        decomposer = Decomposer.get();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)

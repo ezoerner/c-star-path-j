@@ -21,7 +21,7 @@ public class ComposerTest {
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
-        composer = new Composer();
+        composer = Composer.get();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)

@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 
@@ -16,22 +17,23 @@ import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 public interface ColumnFamilyOperations<K,N,V> {
 
     /**
-     * Create a TransactionContext for use with this keyspace.
+     * Create a BatchContext for use with this keyspace.
      *
-     * @return the TransactionContext
+     * @return the BatchContext
      */
-    TransactionContext begin();
+    BatchContext begin();
 
     /**
      * Execute a batch of mutations using a mutator.
      *
-     * @param transactionContext the TransactionContext
+     * @param batchContext the BatchContext
      */
-    void commit(@Nonnull TransactionContext transactionContext);
+    void commit(@Nonnull BatchContext batchContext);
 
     V readColumnValue(K rowKey, N columnName);
 
     Map<N,V> readColumnsAsMap(K rowKey);
+    Map<N,V> readColumnsAsMap(K rowKey, N start, N finish, int count, boolean reversed);
 
     <T> List<T> readColumns(K rowKey, ColumnMapper<T,N,V> columnMapper);
 
@@ -51,22 +53,23 @@ public interface ColumnFamilyOperations<K,N,V> {
 
     void writeColumn(K rowKey, N columnName, V columnValue, long timeToLive, TimeUnit timeToLiveTimeUnit);
 
-    void writeColumn(K rowKey, N columnName, V columnValue, @Nonnull TransactionContext txnContext);
+    void writeColumn(K rowKey, N columnName, V columnValue, @Nonnull BatchContext batchContext);
 
     void writeColumn(K rowKey,
                      N columnName,
                      V columnValue,
                      int timeToLive,
                      TimeUnit timeToLiveTimeUnit,
-                     @Nonnull TransactionContext txnContext);
+                     @Nonnull BatchContext batchContext);
 
     void writeColumns(K rowKey, Map<N,V> map);
 
-    void writeColumns(K rowKey, Map<N,V> map, @Nonnull TransactionContext txnContext);
+    void writeColumns(K rowKey, Map<N,V> map, @Nonnull BatchContext batchContext);
 
     void deleteColumns(K rowKey, N... columnNames);
 
     void removeRow(K rowKey);
 
-    void removeRow(K rowKey, TransactionContext txnContext);
+    void removeRow(K rowKey, BatchContext batchContext);
+
 }

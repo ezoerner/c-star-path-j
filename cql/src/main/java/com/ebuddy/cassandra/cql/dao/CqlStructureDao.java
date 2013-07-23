@@ -1,5 +1,6 @@
 package com.ebuddy.cassandra.cql.dao;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructureDao;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -11,12 +12,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 public class CqlStructureDao<K> implements StructureDao<K> {
 
     @Override
-    public <T> T readFromPath(K rowKey, String path, TypeReference<T> type) {
+    public <T> T readFromPath(String columnFamily, K rowKey, String path, TypeReference<T> type) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
-    public void writeToPath(K rowKey, String path, Object value) {
+    public void writeToPath(String columnFamily, K rowKey, String path, Object value) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public void writeToPath(String columnFamily, K rowKey, String path, Object value, BatchContext batchContext) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 }

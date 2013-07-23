@@ -26,7 +26,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
  */
 public interface StructureDao<K> {
 
-    <T> T readFromPath(K rowKey, String path, TypeReference<T> type);
+    <T> T readFromPath(String columnFamily, K rowKey, String path, TypeReference<T> type);
 
-    void writeToPath(K rowKey, String path, Object value);
+    void writeToPath(String columnFamily, K rowKey, String path, Object value);
+
+    void writeToPath(String columnFamily, K rowKey, String path, Object value, BatchContext batchContext);
 }

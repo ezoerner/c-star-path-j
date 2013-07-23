@@ -63,7 +63,7 @@ public class SuperColumnFamilyTemplateTest {
     @Mock
     private ExecutionResult executionResult;
     @Mock
-    private AbstractColumnFamilyTemplate<String,String,String>.HectorTransactionContext txnContext;
+    private KeyspaceTemplate.HectorBatchContext txnContext;
     @Mock
     private Mutator<String> mutator;
     private SuperColumnFamilyOperations<String,String,String,PropertyValue<?>> superColumnFamilyTestDao;

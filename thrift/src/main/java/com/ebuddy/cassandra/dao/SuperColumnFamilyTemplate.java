@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.Validate;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 
@@ -327,13 +328,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      * @param rowKey          the row key of type K
      * @param superColumnName the super column name of type SN
      * @param columnMap       a map of column names type N and column values type V.
-     * @param txnContext      TransactionContext for batch operations
+     * @param txnContext      BatchContext for batch operations
      */
     @Override
     public void writeColumns(K rowKey,
                                    SN superColumnName,
                                    Map<N,V> columnMap,
-                                   @Nonnull TransactionContext txnContext) {
+                                   @Nonnull BatchContext txnContext) {
         Validate.notNull(txnContext);
         basicWriteColumns(rowKey, superColumnName, columnMap, txnContext);
     }
@@ -360,14 +361,14 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      * @param superColumnName the super column name of type SN
      * @param columnName      the column name
      * @param columnValue     the column value
-     * @param txnContext      TransactionContext for batch operations
+     * @param txnContext      BatchContext for batch operations
      */
     @Override
     public void writeColumn(K rowKey,
                                   SN superColumnName,
                                   N columnName,
                                   V columnValue,
-                                  @Nonnull TransactionContext txnContext) {
+                                  @Nonnull BatchContext txnContext) {
         Validate.notNull(txnContext);
         basicWriteColumn(rowKey, superColumnName, columnName, columnValue, txnContext);
     }
@@ -395,13 +396,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      * @param rowKey          the row key
      * @param superColumnName the super column name
      * @param subcolumnNames  the names of the subcolumns
-     * @param txnContext      TransactionContext for batch operation
+     * @param txnContext      BatchContext for batch operation
      */
     @Override
     public void deleteColumns(K rowKey,
                                     SN superColumnName,
                                     Iterable<N> subcolumnNames,
-                                    @Nonnull TransactionContext txnContext) {
+                                    @Nonnull BatchContext txnContext) {
         Validate.notNull(txnContext);
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         try {
@@ -425,7 +426,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     }
 
     @Override
-    public void deleteSuperColumn(K rowKey, SN superColumnName, @Nonnull TransactionContext txnContext) {
+    public void deleteSuperColumn(K rowKey, SN superColumnName, @Nonnull BatchContext txnContext) {
 
         Validate.notNull(txnContext);
 
@@ -441,7 +442,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                   SN superColumnName,
                                   N columnName,
                                   V columnValue,
-                                  @Nullable TransactionContext txnContext) {
+                                  @Nullable BatchContext txnContext) {
 
 
         // create the subcolumns for the super column
@@ -469,12 +470,12 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      * @param rowKey          the row key of type K
      * @param superColumnName the super column name of type SN
      * @param columnMap       a map of column names type N and column values type V.
-     * @param txnContext      TransactionContext for batch operations
+     * @param txnContext      BatchContext for batch operations
      */
     private void basicWriteColumns(K rowKey,
                                    SN superColumnName,
                                    Map<N,V> columnMap,
-                                   @Nullable TransactionContext txnContext) {
+                                   @Nullable BatchContext txnContext) {
 
         // create the subcolumns for the super column
         List<HColumn<N,V>> columns = new ArrayList<HColumn<N,V>>(columnMap.size());
@@ -594,7 +595,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
     private void insertSuperColumn(K rowKey,
                                    HSuperColumn<SN,N,V> superColumn,
-                                   @Nonnull TransactionContext txnContext) {
+                                   @Nonnull BatchContext txnContext) {
         Validate.notNull(txnContext);
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         try {

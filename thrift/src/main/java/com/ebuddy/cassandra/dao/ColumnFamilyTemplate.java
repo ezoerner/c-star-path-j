@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang.Validate;
 import org.apache.log4j.Logger;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 
@@ -84,10 +85,22 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      * Read the columns as a map from a single row.
      *
      * @param rowKey the row key of type K
-     * @return map of columns, key is type N and values are type V.
+     * @return sorted map of columns, key is type N and values are type V.
      */
     @Override
     public Map<N,V> readColumnsAsMap(K rowKey) {
+        return readColumnsAsMap(rowKey, null, null, ALL, false);
+    }
+
+    /**
+     * Read the columns as a map from a single row specifying start, finish, count, and reversed.
+     *
+     *
+     * @param rowKey the row key of type K
+     * @return map of columns, key is type N and values are type V.
+     */
+    @Override
+    public Map<N,V> readColumnsAsMap(K rowKey, N start, N finish, int count, boolean reversed) {
         Map<N,V> maps = new HashMap<N,V>();
         try {
             SliceQuery<K,N,V> query = HFactory.createSliceQuery(keyspace,
@@ -96,7 +109,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
                                                                 valueSerializer);
             QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
                     setColumnFamily(columnFamily).
-                    setRange(null, null, false, ALL).
+                    setRange(start, finish, reversed, count).
                     execute();
             ColumnSlice<N,V> slice = result.get();
 
@@ -268,12 +281,12 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      * @param rowKey      the row key of type K
      * @param columnName  the column name
      * @param columnValue the column value
-     * @param txnContext  TransactionContext
+     * @param batchContext  BatchContext
      */
     @Override
-    public void writeColumn(K rowKey, N columnName, V columnValue, @Nonnull TransactionContext txnContext) {
-        Validate.notNull(txnContext);
-        basicWriteColumn(rowKey, columnName, columnValue, 0, null, txnContext);
+    public void writeColumn(K rowKey, N columnName, V columnValue, @Nonnull BatchContext batchContext) {
+        Validate.notNull(batchContext);
+        basicWriteColumn(rowKey, columnName, columnValue, 0, null, batchContext);
     }
 
     /**
@@ -282,7 +295,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      * @param rowKey             the row key of type K
      * @param columnName         the column name
      * @param columnValue        the column value
-     * @param txnContext         TransactionContext
+     * @param batchContext         BatchContext
      * @param timeToLive         a positive time to live
      * @param timeToLiveTimeUnit the time unit for timeToLive
      */
@@ -292,9 +305,9 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
                             V columnValue,
                             int timeToLive,
                             TimeUnit timeToLiveTimeUnit,
-                            @Nonnull TransactionContext txnContext) {
-        Validate.notNull(txnContext);
-        basicWriteColumn(rowKey, columnName, columnValue, timeToLive, timeToLiveTimeUnit, txnContext);
+                            @Nonnull BatchContext batchContext) {
+        Validate.notNull(batchContext);
+        basicWriteColumn(rowKey, columnName, columnValue, timeToLive, timeToLiveTimeUnit, batchContext);
     }
 
     /**
@@ -314,12 +327,12 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      *
      * @param rowKey     the row key of type K
      * @param map        a map of columns with keys of column name type N and column values V.
-     * @param txnContext optional TransactionContext for batch operations
+     * @param batchContext optional BatchContext for batch operations
      */
     @Override
-    public void writeColumns(K rowKey, Map<N,V> map, @Nonnull TransactionContext txnContext) {
-        Validate.notNull(txnContext);
-        Mutator<K> mutator = validateAndGetMutator(txnContext);
+    public void writeColumns(K rowKey, Map<N,V> map, @Nonnull BatchContext batchContext) {
+        Validate.notNull(batchContext);
+        Mutator<K> mutator = validateAndGetMutator(batchContext);
         try {
             addInsertions(rowKey, map, mutator);
         } catch (HectorException e) {
@@ -434,7 +447,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     }
 
     /**
-     * Write a column value, with option of doing batch operation if txnContext is provided.
+     * Write a column value, with option of doing batch operation if batchContext is provided.
      *
      * @param rowKey             the row key of type K
      * @param columnName         the column name
@@ -442,15 +455,15 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      * @param timeToLive         a positive time to live in seconds, or
      *                           ignored if timeToLiveTimeUnit is null.
      * @param timeToLiveTimeUnit the time unit for timeToLive, or null if no time to live is specified.
-     * @param txnContext         optional TransactionContext for a batch operation
+     * @param batchContext         optional BatchContext for a batch operation
      */
     private void basicWriteColumn(K rowKey,
                                   N columnName,
                                   V columnValue,
                                   long timeToLive,
                                   @Nullable TimeUnit timeToLiveTimeUnit,
-                                  @Nullable TransactionContext txnContext) {
-        Mutator<K> mutator = validateAndGetMutator(txnContext);
+                                  @Nullable BatchContext batchContext) {
+        Mutator<K> mutator = validateAndGetMutator(batchContext);
         HColumn<N,V> column;
 
         if (timeToLiveTimeUnit == null) {
@@ -493,10 +506,11 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     private void insertColumns(K rowKey, Map<N,V> properties) {
         Mutator<K> mutator = createMutator();
         for (Map.Entry<N,V> mapEntry : properties.entrySet()) {
-            mutator.insert(rowKey, columnFamily, HFactory.createColumn(mapEntry.getKey(),
-                                                                       mapEntry.getValue(),
-                                                                       topSerializer,
-                                                                       valueSerializer));
+            mutator.addInsertion(rowKey, columnFamily, HFactory.createColumn(mapEntry.getKey(),
+                                                                             mapEntry.getValue(),
+                                                                             topSerializer,
+                                                                             valueSerializer));
         }
+        mutator.execute();
     }
 }

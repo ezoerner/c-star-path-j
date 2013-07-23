@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.apache.commons.lang.Validate;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 
 /**
@@ -45,13 +46,13 @@ public class SupercolumnStringSetDao<K,SN> implements StringSetDao<K,SN> {
     @Override
     public void writeElement(K rowKey, SN clusteringKey, String element, boolean isDefault) {
         Validate.notNull(clusteringKey);
-        TransactionContext transactionContext = operations.begin();
+        BatchContext batchContext = operations.begin();
         String propertyName = tag + element;
-        operations.writeColumn(rowKey, clusteringKey, propertyName, "", transactionContext);
+        operations.writeColumn(rowKey, clusteringKey, propertyName, "", batchContext);
         if (isDefault) {
-            operations.writeColumn(rowKey, clusteringKey, defaultTag, element, transactionContext);
+            operations.writeColumn(rowKey, clusteringKey, defaultTag, element, batchContext);
         }
-        operations.commit(transactionContext);
+        operations.commit(batchContext);
     }
 
     @Override

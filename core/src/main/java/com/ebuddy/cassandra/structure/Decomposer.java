@@ -12,6 +12,13 @@ import java.util.Map;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class Decomposer {
+    private static final Decomposer INSTANCE = new Decomposer();
+
+    private Decomposer() { }
+
+    public static Decomposer get() {
+        return INSTANCE;
+    }
 
     /**
      * Decompose a map of arbitrarily complex structured objects into a map of

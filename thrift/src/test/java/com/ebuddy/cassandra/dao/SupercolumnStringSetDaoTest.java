@@ -15,6 +15,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 
 /**
@@ -29,35 +30,34 @@ public class SupercolumnStringSetDaoTest {
     @Mock
     private SuperColumnFamilyOperations<String,String,String,String> operations;
     @Mock
-    private TransactionContext transactionContext;
+    private BatchContext batchContext;
     @Captor
     private ArgumentCaptor<ColumnMapper<String,String,String>> mapperCaptor;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(operations.begin()).thenReturn(transactionContext);
+        when(operations.begin()).thenReturn(batchContext);
         service = new SupercolumnStringSetDao<String,String>("email", "defaultEmail", operations);
     }
 
     @Test(groups = {"unit"})
     public void shouldWriteDefaultEmailAddress() throws Exception {
         service.writeElement(rowKey, "xms", "encrypted-email", true);
-        verify(operations).writeColumn(rowKey, "xms", "email:encrypted-email", "", transactionContext);
-        verify(operations).writeColumn(rowKey,  "xms", "defaultEmail", "encrypted-email", transactionContext);
-        verify(operations).commit(transactionContext);
+        verify(operations).writeColumn(rowKey, "xms", "email:encrypted-email", "", batchContext);
+        verify(operations).writeColumn(rowKey,  "xms", "defaultEmail", "encrypted-email", batchContext);
+        verify(operations).commit(batchContext);
     }
 
     @Test(groups = {"unit"})
     public void shouldWriteNondefaultEmailAddress() throws Exception {
         service.writeElement(rowKey, "xms", "encrypted-email", false);
-        verify(operations).writeColumn(rowKey, "xms", "email:encrypted-email", "", transactionContext);
+        verify(operations).writeColumn(rowKey, "xms", "email:encrypted-email", "", batchContext);
         verify(operations, never()).writeColumn(rowKey,
                                                 "xms",
                                                 "defaultEmail",
-                                                "encrypted-email",
-                                                transactionContext);
-        verify(operations).commit(transactionContext);
+                                                "encrypted-email", batchContext);
+        verify(operations).commit(batchContext);
     }
 
     @Test(groups = {"unit"})

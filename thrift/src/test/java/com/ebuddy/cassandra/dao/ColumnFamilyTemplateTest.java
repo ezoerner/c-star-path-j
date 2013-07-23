@@ -58,7 +58,7 @@ public class ColumnFamilyTemplateTest {
     @Mock
     private ExecutionResult executionResult;
     @Mock
-    private AbstractColumnFamilyTemplate<String,String,String>.HectorTransactionContext txnContext;
+    private KeyspaceTemplate.HectorBatchContext txnContext;
     @Mock
     private Mutator<String> mutator;
     private ColumnFamilyOperations<String,String,PropertyValue<?>> columnFamilyTestDao;
