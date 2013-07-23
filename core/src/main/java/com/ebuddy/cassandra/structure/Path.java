@@ -18,7 +18,10 @@ public class Path implements Comparable<Path> {
 
     private final List<String> pathElements;
 
-    public Path(String string) {
+    /** initialize a single path element */
+    // private so clients don't accidently pass in a path string here
+    // client should use the static factory methods to construct a path
+    private Path(String string) {
         this(Arrays.asList(string));
     }
 
@@ -52,19 +55,14 @@ public class Path implements Comparable<Path> {
         return new Path(LIST_INDEX_PREFIX + i);
     }
 
-    public static Path fromObject(Object o) {
-        if (o instanceof Path) {
-            return (Path)o;
-        }
-        return new Path(o.toString());
-    }
 
-    public static Path fromPathString(String pathString) {
-        return fromPathStringWithDelimiter(pathString, PATH_DELIMITER_CHAR);
+    /** Create a Path object given a path string. */
+    public static Path fromString(String pathString) {
+        return fromString(pathString, PATH_DELIMITER_CHAR);
     }
 
     // used for backward compatibility to specify the vertical bar as a delimiter
-    public static Path fromPathStringWithDelimiter(String pathString, char delmiterChar) {
+    public static Path fromString(String pathString, char delmiterChar) {
         String[] parts = StringUtils.split(pathString, delmiterChar);
         return new Path(Arrays.asList(parts));
     }
@@ -126,23 +124,6 @@ public class Path implements Comparable<Path> {
         }
     }
 
-    /**
-     * Return true if the head element in this path is a list index.
-     */
-    private static boolean isListIndex(String pathElement) {
-        if (!pathElement.startsWith(LIST_INDEX_PREFIX)) {
-            return false;
-        }
-        String rest = pathElement.substring(LIST_INDEX_PREFIX.length());
-        int index;
-        try {
-            index = Integer.parseInt(rest);
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-        return index >= 0;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -163,5 +144,30 @@ public class Path implements Comparable<Path> {
 
     public int size() {
         return pathElements.size();
+    }
+
+    /** (package protected) Create a single element path from an object. */
+    static Path fromObject(Object o) {
+        if (o instanceof Path) {
+            return (Path)o;
+        }
+        return new Path(o.toString());
+    }
+
+    /**
+     * Return true if the head element in this path is a list index.
+     */
+    private static boolean isListIndex(String pathElement) {
+        if (!pathElement.startsWith(LIST_INDEX_PREFIX)) {
+            return false;
+        }
+        String rest = pathElement.substring(LIST_INDEX_PREFIX.length());
+        int index;
+        try {
+            index = Integer.parseInt(rest);
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+        return index >= 0;
     }
 }

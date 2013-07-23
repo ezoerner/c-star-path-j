@@ -49,6 +49,7 @@ public class Decomposer {
 
     //////// Private Methods //////////
 
+    @SuppressWarnings("ChainOfInstanceofChecks")
     private Map<Path,Object> decomposeStructure(Object structure) {
         Map<Path,Object> decomposedMap;
         if (structure instanceof Map) {

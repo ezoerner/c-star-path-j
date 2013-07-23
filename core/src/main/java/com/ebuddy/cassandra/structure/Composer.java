@@ -103,7 +103,7 @@ public class Composer {
         if (rest.isEmpty()) {
             composition.put(head, simpleValue);
         } else {
-            composition.put(head, compose(Collections.singletonMap(rest, simpleValue)));
+            composition.put(head, composeMap(Collections.singletonMap(rest, simpleValue)));
         }
     }
 
@@ -119,7 +119,7 @@ public class Composer {
 
         // merging longer path with simple value
         composition.put(INCONSISTENT_ROOT, nextLevelComposition);
-        composition.put(head, compose(Collections.singletonMap(rest, simpleValue)));
+        composition.put(head, composeMap(Collections.singletonMap(rest, simpleValue)));
     }
 
     @SuppressWarnings("unchecked")
@@ -153,9 +153,9 @@ public class Composer {
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map) {
-                entry.setValue(transformLists((Map<String,Object>)value));
-            }
-            if (!Types.isSimple(value) ) {
+                Object transformedValue = transformLists((Map<String,Object>)value);
+                entry.setValue(transformedValue);
+            } else if (!Types.isSimple(value) ) {
                 throw new IllegalStateException("found strange object in structure: " + value);
             }
         }
