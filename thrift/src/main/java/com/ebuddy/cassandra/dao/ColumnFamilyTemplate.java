@@ -45,6 +45,12 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         implements ColumnFamilyOperations<K,N,V> {
     private static final Logger LOG = Logger.getLogger(ColumnFamilyTemplate.class);
 
+    public ColumnFamilyTemplate(Keyspace keyspace,
+                                Serializer<K> keySerializer,
+                                Serializer<N> topSerializer,
+                                Serializer<V> valueSerializer) {
+        super(keyspace, null, keySerializer, topSerializer, valueSerializer);
+    }
 
     public ColumnFamilyTemplate(Keyspace keyspace,
                                 @Nullable String defaultColumnFamily,
@@ -547,10 +553,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         HColumn<N,V> column;
 
         if (timeToLiveTimeUnit == null) {
-            column = HFactory.createColumn(columnName,
-                                           columnValue,
-                                           topSerializer,
-                                           valueSerializer);
+            column = createColumn(columnName, columnValue);
         } else {
             Validate.notNull(timeToLiveTimeUnit);
             long timeToLiveInSeconds = TimeUnit.SECONDS.convert(timeToLive, timeToLiveTimeUnit);
@@ -576,21 +579,23 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     private void addInsertions(String columnFamily, K rowKey, Map<N,V> properties, Mutator<K> mutator) {
         for (Map.Entry<N,V> mapEntry : properties.entrySet()) {
-            mutator.addInsertion(rowKey, columnFamily, HFactory.createColumn(mapEntry.getKey(),
-                                                                             mapEntry.getValue(),
-                                                                             topSerializer,
-                                                                             valueSerializer));
+            mutator.addInsertion(rowKey, columnFamily, createColumn(mapEntry.getKey(), mapEntry.getValue()));
         }
     }
 
     private void insertColumns(String columnFamily, K rowKey, Map<N,V> properties) {
         Mutator<K> mutator = createMutator();
         for (Map.Entry<N,V> mapEntry : properties.entrySet()) {
-            mutator.addInsertion(rowKey, columnFamily, HFactory.createColumn(mapEntry.getKey(),
-                                                                             mapEntry.getValue(),
-                                                                             topSerializer,
-                                                                             valueSerializer));
+            N key = mapEntry.getKey();
+            V value = mapEntry.getValue();
+            mutator.addInsertion(rowKey, columnFamily, createColumn(key, value));
         }
         mutator.execute();
+    }
+
+    private HColumn<N,V> createColumn(N key, V value) {
+        // TODO: handle null values specially since HColumn and Serializer do not support null values
+        // for now a null will throw an exception here
+        return HFactory.createColumn(key, value, topSerializer, valueSerializer);
     }
 }
