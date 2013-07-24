@@ -56,7 +56,7 @@ public class ThriftStructureDaoSystemTest {
         cluster.dropKeyspace(TEST_KEYSPACE, true);
     }
 
-    @Test(groups = {"unit"})
+    @Test(groups = {"system"})
     public void shouldReadAndWriteTestPojo() throws Exception {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
         String rowKey = "pojo0";
