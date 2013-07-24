@@ -9,7 +9,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.ebuddy.cassandra.StructureDao;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.ebuddy.cassandra.TypeReference;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Cluster;

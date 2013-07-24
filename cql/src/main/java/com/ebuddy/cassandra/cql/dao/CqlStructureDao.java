@@ -2,7 +2,7 @@ package com.ebuddy.cassandra.cql.dao;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructureDao;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.ebuddy.cassandra.TypeReference;
 
 /**
  * Implementation of StructureDao for CQL.

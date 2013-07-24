@@ -1,7 +1,5 @@
 package com.ebuddy.cassandra;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 /**
  * Provides data access for structured objects in Cassandra.
  * Objects are read using a hierarchical path that must contain at least one path element.

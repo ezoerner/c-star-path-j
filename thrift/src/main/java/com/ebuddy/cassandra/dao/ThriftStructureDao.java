@@ -10,10 +10,11 @@ import org.apache.commons.lang.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructureDao;
+import com.ebuddy.cassandra.TypeReference;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
+import com.ebuddy.cassandra.structure.JacksonTypeReference;
 import com.ebuddy.cassandra.structure.Path;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -49,7 +50,7 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
         Object structure = Composer.get().compose(pathMap);
 
         // convert object structure into POJO of type referred to by TypeReference
-        return mapper.convertValue(structure, type);
+        return mapper.convertValue(structure, new JacksonTypeReference<T>(type));
     }
 
     @Override
