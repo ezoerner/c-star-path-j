@@ -40,7 +40,7 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
         // normalizes the path, e.g. makes sure ends with the delimiter character
         String start = path.toString();
         String finish = start + Character.MAX_VALUE;
-        Map<String,Object> columnsMap = operations.readColumnsAsMap(rowKey, start, finish, count, reversed);
+        Map<String,Object> columnsMap = operations.readColumnsAsMap(columnFamily, rowKey, start, finish, count, reversed);
 
         // convert strings to paths
         // TODO: Consider adding support to ColumnFamilyOperations for a ColumnMapper that returns a map of N,V objects
@@ -67,7 +67,7 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
             stringObjectMap.put(entry.getKey().toString(), entry.getValue());
         }
-        operations.writeColumns(rowKey, stringObjectMap);
+        operations.writeColumns(columnFamily, rowKey, stringObjectMap);
     }
 
     @Override
@@ -86,9 +86,9 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
             stringObjectMap.put(entry.getKey().toString(), entry.getValue());
         }
         if (batchContext == null) {
-            operations.writeColumns(rowKey, stringObjectMap);
+            operations.writeColumns(columnFamily, rowKey, stringObjectMap);
         } else {
-            operations.writeColumns(rowKey, stringObjectMap, batchContext);
+            operations.writeColumns(columnFamily, rowKey, stringObjectMap, batchContext);
         }
     }
 

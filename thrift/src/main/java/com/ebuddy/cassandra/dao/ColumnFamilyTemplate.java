@@ -47,23 +47,28 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
 
     public ColumnFamilyTemplate(Keyspace keyspace,
-                                String columnFamily,
+                                @Nullable String defaultColumnFamily,
                                 Serializer<K> keySerializer,
                                 Serializer<N> topSerializer,
                                 Serializer<V> valueSerializer) {
-        super(keyspace, columnFamily, keySerializer, topSerializer, valueSerializer);
+        super(keyspace, defaultColumnFamily, keySerializer, topSerializer, valueSerializer);
     }
 
 
-    /**
-     * Read a column value.
-     *
-     * @param rowKey     the row key of type K
-     * @param columnName the column name
-     * @return the column value or null if not found
-     */
     @Override
     public V readColumnValue(K rowKey, N columnName) {
+        return readColumnValue(defaultColumnFamily, rowKey, columnName);
+    }
+
+        /**
+         * Read a column value.
+         *
+         * @param rowKey     the row key of type K
+         * @param columnName the column name
+         * @return the column value or null if not found
+         */
+    @Override
+    public V readColumnValue(String columnFamily, K rowKey, N columnName) {
         try {
             ColumnQuery<K,N,V> query = HFactory.createColumnQuery(keyspace,
                                                                   keySerializer,
@@ -92,15 +97,21 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         return readColumnsAsMap(rowKey, null, null, ALL, false);
     }
 
-    /**
-     * Read the columns as a map from a single row specifying start, finish, count, and reversed.
-     *
-     *
-     * @param rowKey the row key of type K
-     * @return map of columns, key is type N and values are type V.
-     */
     @Override
     public Map<N,V> readColumnsAsMap(K rowKey, N start, N finish, int count, boolean reversed) {
+        return readColumnsAsMap(defaultColumnFamily, rowKey, start, finish, count, reversed);
+    }
+
+
+        /**
+         * Read the columns as a map from a single row specifying start, finish, count, and reversed.
+         *
+         *
+         * @param rowKey the row key of type K
+         * @return map of columns, key is type N and values are type V.
+         */
+    @Override
+    public Map<N,V> readColumnsAsMap(String columnFamily, K rowKey, N start, N finish, int count, boolean reversed) {
         Map<N,V> maps = new HashMap<N,V>();
         try {
             SliceQuery<K,N,V> query = HFactory.createSliceQuery(keyspace,
@@ -124,12 +135,24 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     }
 
     @Override
-    public <T> List<T> readColumns(K rowKey, ColumnMapper<T,N,V> columnMapper) {
+    public <T> List<T> readColumns(K rowKey, ColumnMapper <T,N,V> columnMapper) {
         return readColumns(rowKey, null, null, ALL, false, columnMapper);
     }
 
     @Override
     public <T> List<T> readColumns(K rowKey,
+                                   N start,
+                                   N finish,
+                                   int count,
+                                   boolean reversed,
+                                   ColumnMapper<T,N,V> columnMapper) {
+        return readColumns(defaultColumnFamily, rowKey, start, finish, count, reversed, columnMapper);
+    }
+
+
+    @Override
+    public <T> List<T> readColumns(String columnFamily,
+                                   K rowKey,
                                    N start,
                                    N finish,
                                    int count,
@@ -191,6 +214,12 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     @Override
     public Map<K,Map<N,V>> readRowsAsMap() {
+        return readRowsAsMap(defaultColumnFamily);
+    }
+
+
+    @Override
+    public Map<K,Map<N,V>> readRowsAsMap(String columnFamily) {
         Map<K,Map<N,V>> resultMap = new HashMap<K,Map<N,V>>();
         try {
             RangeSlicesQuery<K, N, V> rangeSlicesQuery =
@@ -310,13 +339,18 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         basicWriteColumn(rowKey, columnName, columnValue, timeToLive, timeToLiveTimeUnit, batchContext);
     }
 
-    /**
-     * Write multiple columns immediately from a map.
-     */
     @Override
     public void writeColumns(K rowKey, Map<N,V> map) {
+        writeColumns(defaultColumnFamily, rowKey, map);
+    }
+
+        /**
+         * Write multiple columns immediately from a map.
+         */
+    @Override
+    public void writeColumns(String columnFamily, K rowKey, Map<N,V> map) {
         try {
-            insertColumns(rowKey, map);
+            insertColumns(columnFamily, rowKey, map);
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -331,10 +365,15 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      */
     @Override
     public void writeColumns(K rowKey, Map<N,V> map, @Nonnull BatchContext batchContext) {
+        writeColumns(defaultColumnFamily, rowKey, map, batchContext);
+    }
+
+    @Override
+    public void writeColumns(String columnFamily, K rowKey, Map<N,V> map, @Nonnull BatchContext batchContext) {
         Validate.notNull(batchContext);
         Mutator<K> mutator = validateAndGetMutator(batchContext);
         try {
-            addInsertions(rowKey, map, mutator);
+            addInsertions(columnFamily, rowKey, map, mutator);
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -342,6 +381,12 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     @Override
     public void deleteColumns(K rowKey, N... columnNames) {
+        deleteColumns(defaultColumnFamily, rowKey, columnNames);
+    }
+
+
+    @Override
+    public void deleteColumns(String columnFamily, K rowKey, N... columnNames) {
         if (columnNames.length == 0) {
             return;
         }
@@ -369,6 +414,18 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      * @return The column data
      */
     private Map<K,Map<N,V>> basicMultiGetAsMap(Iterable<K> rowKeys, @Nullable N[] columnNames) {
+        return basicMultiGetAsMap(defaultColumnFamily, rowKeys, columnNames);
+    }
+
+
+        /**
+         * Helper method to get multiple rows and return result in a Map.
+         * @param rowKeys     The row keys to read.
+         * @param columnNames if null then get all columns; otherwise, get only specified columns. If empty, then this
+         *                    is a key-only query and only the keys are returned.
+         * @return The column data
+         */
+    private Map<K,Map<N,V>> basicMultiGetAsMap(String columnFamily, Iterable <K> rowKeys, @Nullable N[] columnNames) {
 
         Map<K,Map<N,V>> resultMap = new HashMap<K,Map<N,V>>();
         try {
@@ -403,14 +460,21 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         return resultMap;
     }
 
-    /**
-     * Helper method to get multiple rows using a row mapper.
-     * @param rowKeys     The row keys to read.
-     * @param columnNames if null then get all columns; otherwise, get only specified columns. If empty, then this
-     *                    is a key-only query and only the keys are returned.
-     * @return The column data
-     */
     private <T> List<T> basicMultiGet(Iterable<K> rowKeys,
+                                      ColumnFamilyRowMapper<T,K,N,V> rowMapper,
+                                      @Nullable N[] columnNames) {
+        return basicMultiGet(defaultColumnFamily, rowKeys, rowMapper, columnNames);
+    }
+
+        /**
+         * Helper method to get multiple rows using a row mapper.
+         * @param rowKeys     The row keys to read.
+         * @param columnNames if null then get all columns; otherwise, get only specified columns. If empty, then this
+         *                    is a key-only query and only the keys are returned.
+         * @return The column data
+         */
+    private <T> List<T> basicMultiGet(String columnFamily,
+                                      Iterable <K> rowKeys,
                                       ColumnFamilyRowMapper<T,K,N,V> rowMapper,
                                       @Nullable N[] columnNames) {
 
@@ -446,18 +510,34 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         return resultList;
     }
 
-    /**
-     * Write a column value, with option of doing batch operation if batchContext is provided.
-     *
-     * @param rowKey             the row key of type K
-     * @param columnName         the column name
-     * @param columnValue        the column value
-     * @param timeToLive         a positive time to live in seconds, or
-     *                           ignored if timeToLiveTimeUnit is null.
-     * @param timeToLiveTimeUnit the time unit for timeToLive, or null if no time to live is specified.
-     * @param batchContext         optional BatchContext for a batch operation
-     */
     private void basicWriteColumn(K rowKey,
+                                  N columnName,
+                                  V columnValue,
+                                  long timeToLive,
+                                  @Nullable TimeUnit timeToLiveTimeUnit,
+                                  @Nullable BatchContext batchContext) {
+        basicWriteColumn(defaultColumnFamily,
+                         rowKey,
+                         columnName,
+                         columnValue,
+                         timeToLive,
+                         timeToLiveTimeUnit,
+                         batchContext);
+    }
+
+        /**
+         * Write a column value, with option of doing batch operation if batchContext is provided.
+         *
+         * @param rowKey             the row key of type K
+         * @param columnName         the column name
+         * @param columnValue        the column value
+         * @param timeToLive         a positive time to live in seconds, or
+         *                           ignored if timeToLiveTimeUnit is null.
+         * @param timeToLiveTimeUnit the time unit for timeToLive, or null if no time to live is specified.
+         * @param batchContext         optional BatchContext for a batch operation
+         */
+    private void basicWriteColumn(String columnFamily,
+                                  K rowKey,
                                   N columnName,
                                   V columnValue,
                                   long timeToLive,
@@ -494,7 +574,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         }
     }
 
-    private void addInsertions(K rowKey, Map<N,V> properties, Mutator<K> mutator) {
+    private void addInsertions(String columnFamily, K rowKey, Map<N,V> properties, Mutator<K> mutator) {
         for (Map.Entry<N,V> mapEntry : properties.entrySet()) {
             mutator.addInsertion(rowKey, columnFamily, HFactory.createColumn(mapEntry.getKey(),
                                                                              mapEntry.getValue(),
@@ -503,7 +583,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         }
     }
 
-    private void insertColumns(K rowKey, Map<N,V> properties) {
+    private void insertColumns(String columnFamily, K rowKey, Map<N,V> properties) {
         Mutator<K> mutator = createMutator();
         for (Map.Entry<N,V> mapEntry : properties.entrySet()) {
             mutator.addInsertion(rowKey, columnFamily, HFactory.createColumn(mapEntry.getKey(),
