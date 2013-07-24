@@ -43,7 +43,9 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
         Map<String,Object> columnsMap = operations.readColumnsAsMap(columnFamily, rowKey, start, finish, count, reversed);
 
         // convert strings to paths
-        // TODO: Consider adding support to ColumnFamilyOperations for a ColumnMapper that returns a map of N,V objects
+
+        // TODO: (performance) Adding support to ColumnFamilyOperations for a ColumnMapper
+        // that returns a map of N,V objects
         // (instead of just List<T>) so we don't have to do another pass on the map entries here.
 
         Map<Path,Object> pathMap = new HashMap<Path,Object>(columnsMap.size());
@@ -58,16 +60,7 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
 
     @Override
     public void writeToPath(String columnFamily, K rowKey, String pathString, Object value) {
-        validateArgs(columnFamily, rowKey, pathString);
-
-        Map<Path,Object> structures = Collections.singletonMap(Path.fromString(pathString), value);
-        Map<Path,Object> objectMap = Decomposer.get().decompose(structures);
-
-        Map<String,Object> stringObjectMap = new HashMap<String,Object>();
-        for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
-            stringObjectMap.put(entry.getKey().toString(), entry.getValue());
-        }
-        operations.writeColumns(columnFamily, rowKey, stringObjectMap);
+        writeToPath(columnFamily, rowKey, pathString, value, null);
     }
 
     @Override
@@ -96,6 +89,5 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
         Validate.notEmpty(columnFamily);
         Validate.notEmpty(pathString);
         Validate.notNull(rowKey);
-       
     }
 }

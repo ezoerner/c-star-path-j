@@ -72,9 +72,12 @@ public class Decomposer {
     private Map<Path,Object> normalizeMap(Map<?,?> map) {
         Map<Path,Object> normalized = new HashMap<Path,Object>(map.size());
         for (Map.Entry<?,?> entry : map.entrySet()) {
-            Path key = Path.fromObject(entry.getKey());
+
+            Object key = entry.getKey();
+            Path keyPath = key instanceof Path ? (Path)key : Path.fromString(key.toString());
+
             Object value = entry.getValue();
-            normalized.put(key, value);
+            normalized.put(keyPath, value);
         }
         return normalized;
     }

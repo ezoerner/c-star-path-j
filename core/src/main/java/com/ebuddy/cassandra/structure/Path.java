@@ -18,13 +18,7 @@ public class Path implements Comparable<Path> {
 
     private final List<String> pathElements;
 
-    /** initialize a single path element */
-    // private so clients don't accidently pass in a path string here
-    // client should use the static factory methods to construct a path
-    private Path(String string) {
-        this(Arrays.asList(string));
-    }
-
+    /** Create a path from a list of path element strings. */
     private Path(List<String> pathElements) {
         this.pathElements = pathElements;
     }
@@ -52,7 +46,7 @@ public class Path implements Comparable<Path> {
     }
 
     public static Path fromIndex(int i) {
-        return new Path(LIST_INDEX_PREFIX + i);
+        return new Path(Arrays.asList(LIST_INDEX_PREFIX + i));
     }
 
 
@@ -62,8 +56,8 @@ public class Path implements Comparable<Path> {
     }
 
     // used for backward compatibility to specify the vertical bar as a delimiter
-    public static Path fromString(String pathString, char delmiterChar) {
-        String[] parts = StringUtils.split(pathString, delmiterChar);
+    public static Path fromString(String pathString, char delimiterChar) {
+        String[] parts = StringUtils.split(pathString, delimiterChar);
         return new Path(Arrays.asList(parts));
     }
 
@@ -144,14 +138,6 @@ public class Path implements Comparable<Path> {
 
     public int size() {
         return pathElements.size();
-    }
-
-    /** (package protected) Create a single element path from an object. */
-    static Path fromObject(Object o) {
-        if (o instanceof Path) {
-            return (Path)o;
-        }
-        return new Path(o.toString());
     }
 
     /**
