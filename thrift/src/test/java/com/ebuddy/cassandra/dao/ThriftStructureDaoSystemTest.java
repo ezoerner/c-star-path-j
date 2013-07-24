@@ -9,7 +9,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.ebuddy.cassandra.StructureDao;
-import com.ebuddy.cassandra.property.StructureSerializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;

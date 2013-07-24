@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.property;
+package com.ebuddy.cassandra.dao;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
