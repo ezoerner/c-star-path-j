@@ -88,13 +88,13 @@ public class Path implements Comparable<Path> {
     }
 
     /**
-     * Returns the rest of the path after the head.
+     * Returns the rest of the path after the first element.
      * If this is an empty path, return null,
      * if this path has only one element, return an empty path,
      * otherwise return a new path with elements starting after the head.
      */
     public Path rest() {
-        return pathElements.size() == 0 ? null : new Path(pathElements.subList(1, pathElements.size()));
+        return pathElements.size() == 0 ? null : tail(1);
     }
 
     public boolean isEmpty() {
@@ -116,6 +116,21 @@ public class Path implements Comparable<Path> {
         } catch (NumberFormatException ignored) {
             throw new IllegalStateException("bad format for list index");
         }
+    }
+
+    /**
+     * Return true if this path starts with the specified path.
+     */
+    public boolean startsWith(Path path) {
+        return pathElements.subList(0, path.size()).equals(path.pathElements);
+    }
+
+    /**
+     * Return a new Path consisting of the rest of the path elements of this path starting with the specified index.
+     * @param startIndex 0-based start index
+     */
+    public Path tail(int startIndex) {
+        return new Path(pathElements.subList(startIndex, pathElements.size()));
     }
 
     @Override
@@ -156,4 +171,5 @@ public class Path implements Comparable<Path> {
         }
         return index >= 0;
     }
+
 }
