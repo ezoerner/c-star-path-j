@@ -81,6 +81,9 @@ public interface ColumnFamilyOperations<K,N,V> {
     void deleteColumns(String columnFamily, K rowKey, N... columnNames);
     void deleteColumns(K rowKey, N... columnNames);
 
+    void deleteColumns(String columnFamily, K rowKey, N start, N finish);
+    void deleteColumns(String columnFamily, K rowKey, N start, N finish, BatchContext batchContext);
+
     void removeRow(K rowKey);
 
     void removeRow(K rowKey, BatchContext batchContext);

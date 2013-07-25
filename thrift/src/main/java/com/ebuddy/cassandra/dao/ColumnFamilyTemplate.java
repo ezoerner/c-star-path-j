@@ -41,29 +41,40 @@ import me.prettyprint.hector.api.query.SliceQuery;
  * @param <V> the type of the column values
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,N,V>
+public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,N,V>
         implements ColumnFamilyOperations<K,N,V> {
     private static final Logger LOG = Logger.getLogger(ColumnFamilyTemplate.class);
 
+    private final ColumnMapper<N,N,V> columnMapperToGetColumnNames = new ColumnMapper<N,N,V>() {
+        @Override
+        public N mapColumn(N columnName, V columnValue) {
+            return columnName;
+        }
+    };
+
     public ColumnFamilyTemplate(Keyspace keyspace,
                                 Serializer<K> keySerializer,
-                                Serializer<N> topSerializer,
+                                Serializer<N> columnNameSerializer,
                                 Serializer<V> valueSerializer) {
-        super(keyspace, null, keySerializer, topSerializer, valueSerializer);
+        this(keyspace, null, keySerializer, columnNameSerializer, valueSerializer);
     }
 
     public ColumnFamilyTemplate(Keyspace keyspace,
                                 @Nullable String defaultColumnFamily,
                                 Serializer<K> keySerializer,
-                                Serializer<N> topSerializer,
+                                Serializer<N> columnNameSerializer,
                                 Serializer<V> valueSerializer) {
-        super(keyspace, defaultColumnFamily, keySerializer, topSerializer, valueSerializer);
+        super(keyspace,
+              defaultColumnFamily,
+              keySerializer,
+              Validate.notNull(columnNameSerializer),
+              Validate.notNull(valueSerializer));
     }
 
 
     @Override
     public V readColumnValue(K rowKey, N columnName) {
-        return readColumnValue(defaultColumnFamily, rowKey, columnName);
+        return readColumnValue(getDefaultColumnFamily(), rowKey, columnName);
     }
 
         /**
@@ -76,10 +87,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     @Override
     public V readColumnValue(String columnFamily, K rowKey, N columnName) {
         try {
-            ColumnQuery<K,N,V> query = HFactory.createColumnQuery(keyspace,
-                                                                  keySerializer,
-                                                                  topSerializer,
-                                                                  valueSerializer);
+            ColumnQuery<K,N,V> query = HFactory.createColumnQuery(getKeyspace(),
+                                                                  getKeySerializer(),
+                                                                  getColumnNameSerializer(),
+                                                                  getValueSerializer());
             QueryResult<HColumn<N,V>> result = query.
                     setKey(rowKey).
                     setColumnFamily(columnFamily).
@@ -105,7 +116,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     @Override
     public Map<N,V> readColumnsAsMap(K rowKey, N start, N finish, int count, boolean reversed) {
-        return readColumnsAsMap(defaultColumnFamily, rowKey, start, finish, count, reversed);
+        return readColumnsAsMap(getDefaultColumnFamily(), rowKey, start, finish, count, reversed);
     }
 
 
@@ -120,10 +131,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     public Map<N,V> readColumnsAsMap(String columnFamily, K rowKey, N start, N finish, int count, boolean reversed) {
         Map<N,V> maps = new HashMap<N,V>();
         try {
-            SliceQuery<K,N,V> query = HFactory.createSliceQuery(keyspace,
-                                                                keySerializer,
-                                                                topSerializer,
-                                                                valueSerializer);
+            SliceQuery<K,N,V> query = HFactory.createSliceQuery(getKeyspace(),
+                                                                getKeySerializer(),
+                                                                getColumnNameSerializer(),
+                                                                getValueSerializer());
             QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
                     setColumnFamily(columnFamily).
                     setRange(start, finish, reversed, count).
@@ -152,7 +163,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
                                    int count,
                                    boolean reversed,
                                    ColumnMapper<T,N,V> columnMapper) {
-        return readColumns(defaultColumnFamily, rowKey, start, finish, count, reversed, columnMapper);
+        return readColumns(getDefaultColumnFamily(), rowKey, start, finish, count, reversed, columnMapper);
     }
 
 
@@ -166,10 +177,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
                                    ColumnMapper<T,N,V> columnMapper) {
         List<T> resultList = new ArrayList<T>();
         try {
-            SliceQuery<K,N,V> query = HFactory.createSliceQuery(keyspace,
-                                                                keySerializer,
-                                                                topSerializer,
-                                                                valueSerializer);
+            SliceQuery<K,N,V> query = HFactory.createSliceQuery(getKeyspace(),
+                                                                getKeySerializer(),
+                                                                getColumnNameSerializer(),
+                                                                getValueSerializer());
             QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
                     setColumnFamily(columnFamily).
                     setRange(start, finish, reversed, count).
@@ -220,7 +231,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     @Override
     public Map<K,Map<N,V>> readRowsAsMap() {
-        return readRowsAsMap(defaultColumnFamily);
+        return readRowsAsMap(getDefaultColumnFamily());
     }
 
 
@@ -228,8 +239,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     public Map<K,Map<N,V>> readRowsAsMap(String columnFamily) {
         Map<K,Map<N,V>> resultMap = new HashMap<K,Map<N,V>>();
         try {
-            RangeSlicesQuery<K, N, V> rangeSlicesQuery =
-                    HFactory.createRangeSlicesQuery(keyspace, keySerializer, topSerializer, valueSerializer);
+            RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(getKeyspace(),
+                                                                                         getKeySerializer(),
+                                                                                         getColumnNameSerializer(),
+                                                                                         getValueSerializer());
             rangeSlicesQuery.setColumnFamily(columnFamily);
             rangeSlicesQuery.setRange(null, null, false, ALL);
             rangeSlicesQuery.setRowCount(ALL);
@@ -347,7 +360,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     @Override
     public void writeColumns(K rowKey, Map<N,V> map) {
-        writeColumns(defaultColumnFamily, rowKey, map);
+        writeColumns(getDefaultColumnFamily(), rowKey, map);
     }
 
         /**
@@ -371,7 +384,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      */
     @Override
     public void writeColumns(K rowKey, Map<N,V> map, @Nonnull BatchContext batchContext) {
-        writeColumns(defaultColumnFamily, rowKey, map, batchContext);
+        writeColumns(getDefaultColumnFamily(), rowKey, map, batchContext);
     }
 
     @Override
@@ -387,9 +400,8 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
     @Override
     public void deleteColumns(K rowKey, N... columnNames) {
-        deleteColumns(defaultColumnFamily, rowKey, columnNames);
+        deleteColumns(getDefaultColumnFamily(), rowKey, columnNames);
     }
-
 
     @Override
     public void deleteColumns(String columnFamily, K rowKey, N... columnNames) {
@@ -400,11 +412,51 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
         Mutator<K> mutator = createMutator();
         try {
             if (columnNames.length == 1) {
-                mutator.delete(rowKey, columnFamily, columnNames[0], topSerializer);
+                mutator.delete(rowKey, columnFamily, columnNames[0], getColumnNameSerializer());
             } else {
                 for (N columnName : columnNames) {
-                    mutator.addDeletion(rowKey, columnFamily, columnName, topSerializer);
+                    mutator.addDeletion(rowKey, columnFamily, columnName, getColumnNameSerializer());
                 }
+                mutator.execute();
+            }
+        } catch (HectorException e) {
+            throw EXCEPTION_TRANSLATOR.translate(e);
+        }
+    }
+
+    @Override
+    public void deleteColumns(String columnFamily, K rowKey, N start, N finish) {
+        deleteColumns(columnFamily, rowKey, start, finish, null);
+    }
+
+    @Override
+    public void deleteColumns(String columnFamily, K rowKey, N start, N finish, BatchContext batchContext) {
+        Mutator<K> mutator;
+        boolean shouldExecute;
+        if (batchContext == null) {
+            shouldExecute = true;
+            mutator = createMutator();
+        } else {
+            shouldExecute = false;
+            mutator = validateAndGetMutator(batchContext);
+        }
+
+        try {
+            // unfortunately the thrift API to Cassandra does not support deleting with a SliceRange.
+            // !! We have read before delete -- performance and thread safety issue
+            // get column names to delete using a slice query
+            List<N> columnNamesToDelete = readColumns(columnFamily,
+                                                      rowKey,
+                                                      start,
+                                                      finish,
+                                                      ALL,
+                                                      false,
+                                                      columnMapperToGetColumnNames);
+            for (N columnName : columnNamesToDelete) {
+                mutator.addDeletion(rowKey, columnFamily, columnName, getColumnNameSerializer());
+            }
+
+            if (shouldExecute) {
                 mutator.execute();
             }
         } catch (HectorException e) {
@@ -419,8 +471,8 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
      *                    is a key-only query and only the keys are returned.
      * @return The column data
      */
-    private Map<K,Map<N,V>> basicMultiGetAsMap(Iterable<K> rowKeys, @Nullable N[] columnNames) {
-        return basicMultiGetAsMap(defaultColumnFamily, rowKeys, columnNames);
+    private Map<K,Map<N,V>> basicMultiGetAsMap(Iterable <K> rowKeys, @Nullable N[] columnNames) {
+        return basicMultiGetAsMap(getDefaultColumnFamily(), rowKeys, columnNames);
     }
 
 
@@ -435,10 +487,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
         Map<K,Map<N,V>> resultMap = new HashMap<K,Map<N,V>>();
         try {
-            MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(keyspace,
-                                                                                keySerializer,
-                                                                                topSerializer,
-                                                                                valueSerializer);
+            MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(getKeyspace(),
+                                                                                getKeySerializer(),
+                                                                                getColumnNameSerializer(),
+                                                                                getValueSerializer());
             query.setKeys(rowKeys).
                     setColumnFamily(columnFamily).
                     setRange(null, null, false, ALL);
@@ -469,7 +521,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     private <T> List<T> basicMultiGet(Iterable<K> rowKeys,
                                       ColumnFamilyRowMapper<T,K,N,V> rowMapper,
                                       @Nullable N[] columnNames) {
-        return basicMultiGet(defaultColumnFamily, rowKeys, rowMapper, columnNames);
+        return basicMultiGet(getDefaultColumnFamily(), rowKeys, rowMapper, columnNames);
     }
 
         /**
@@ -486,10 +538,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
 
         List<T> resultList = new ArrayList<T>();
         try {
-            MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(keyspace,
-                                                                                keySerializer,
-                                                                                topSerializer,
-                                                                                valueSerializer);
+            MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(getKeyspace(),
+                                                                                getKeySerializer(),
+                                                                                getColumnNameSerializer(),
+                                                                                getValueSerializer());
             query.setKeys(rowKeys).
                     setColumnFamily(columnFamily).
                     setRange(null, null, false, ALL);
@@ -522,7 +574,7 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
                                   long timeToLive,
                                   @Nullable TimeUnit timeToLiveTimeUnit,
                                   @Nullable BatchContext batchContext) {
-        basicWriteColumn(defaultColumnFamily,
+        basicWriteColumn(getDefaultColumnFamily(),
                          rowKey,
                          columnName,
                          columnValue,
@@ -563,8 +615,8 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
             column = HFactory.createColumn(columnName,
                                            columnValue,
                                            (int)timeToLiveInSeconds,
-                                           topSerializer,
-                                           valueSerializer);
+                                           getColumnNameSerializer(),
+                                           getValueSerializer());
         }
         try {
             if (mutator == null) {
@@ -596,6 +648,10 @@ public final class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTempl
     private HColumn<N,V> createColumn(N key, V value) {
         // TODO: handle null values specially since HColumn and Serializer do not support null values
         // for now a null will throw an exception here
-        return HFactory.createColumn(key, value, topSerializer, valueSerializer);
+        return HFactory.createColumn(key, value, getColumnNameSerializer(), getValueSerializer());
+    }
+
+    private Serializer<N> getColumnNameSerializer() {
+        return getTopSerializer();
     }
 }

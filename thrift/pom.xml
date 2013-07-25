@@ -11,10 +11,11 @@
     <packaging>jar</packaging>
 
     <properties>
-        <hector.version>1.1-2</hector.version>
+        <hector.version>1.1-4</hector.version>
         <hector.groupId>org.hectorclient</hector.groupId>
-        <cassandra.version>1.2.3</cassandra.version>
+        <cassandra.version>1.2.6</cassandra.version>
         <aspectj.version>1.7.2</aspectj.version>
+        <guava.version>14.0.1</guava.version>
     </properties>
 
     <dependencies>
@@ -39,6 +40,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
@@ -95,11 +102,11 @@
             </exclusions>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
             <version>${aspectj.version}</version>
-        </dependency>
+        </dependency -->
 
         <dependency> <!-- this is only here because of a spring compilation issue -->
             <groupId>javax.persistence</groupId>
@@ -113,7 +120,7 @@
     <build>
         <plugins>
 
-            <plugin>
+            <!-- plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
                 <version>1.4</version>
@@ -147,7 +154,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin -->
 
 
         </plugins>

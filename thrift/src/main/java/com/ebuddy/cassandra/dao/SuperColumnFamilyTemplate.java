@@ -54,13 +54,17 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     private final Serializer<N> subSerializer;
 
     public SuperColumnFamilyTemplate(Keyspace keyspace,
-                                     String columnFamily,
+                                     @Nullable String columnFamily,
                                      Serializer<K> keySerializer,
-                                     Serializer<SN> topSerializer,
-                                     Serializer<N> subSerializer,
+                                     Serializer<SN> supercolumnNameSerializer,
+                                     Serializer<N> subcolumnNameSerializer,
                                      Serializer<V> valueSerializer) {
-        super(keyspace, columnFamily, keySerializer, topSerializer, valueSerializer);
-        this.subSerializer = subSerializer;
+        super(keyspace,
+              columnFamily,
+              keySerializer,
+              Validate.notNull(supercolumnNameSerializer),
+              Validate.notNull(valueSerializer));
+        subSerializer = Validate.notNull(subcolumnNameSerializer);
     }
 
     /**
@@ -74,14 +78,14 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     @Override
     public V readColumnValue(K rowKey, SN superColumnName, N columnName) {
         try {
-            SubColumnQuery<K,SN,N,V> query = HFactory.createSubColumnQuery(keyspace,
-                                                                           keySerializer,
-                                                                           topSerializer,
-                                                                           subSerializer,
-                                                                           valueSerializer);
+            SubColumnQuery<K,SN,N,V> query = HFactory.createSubColumnQuery(getKeyspace(),
+                                                                           getKeySerializer(),
+                                                                           getSuperColumnNameSerializer(),
+                                                                           getSubcolumnNameSerializer(),
+                                                                           getValueSerializer());
             QueryResult<HColumn<N,V>> result = query.
                     setKey(rowKey).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setSuperColumn(superColumnName).
                     setColumn(columnName).
                     execute();
@@ -104,13 +108,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     public Map<N,V> readColumnsAsMap(K rowKey, SN superColumnName, N... columnNames) {
         Map<N,V> columns = new HashMap<N,V>();
         try {
-            SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(keyspace,
-                                                                         keySerializer,
-                                                                         topSerializer,
-                                                                         subSerializer,
-                                                                         valueSerializer);
+            SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
+                                                                         getKeySerializer(),
+                                                                         getSuperColumnNameSerializer(),
+                                                                         getSubcolumnNameSerializer(),
+                                                                         getValueSerializer());
             query.setKey(rowKey).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(null, null, false, ALL);
             if (columnNames.length == 0) {
@@ -155,13 +159,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                    ColumnMapper<T,N,V> columnMapper) {
         List<T> resultList = new ArrayList<T>();
         try {
-            SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(keyspace,
-                                                                         keySerializer,
-                                                                         topSerializer,
-                                                                         subSerializer,
-                                                                         valueSerializer);
+            SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
+                                                                         getKeySerializer(),
+                                                                         getSuperColumnNameSerializer(),
+                                                                         getSubcolumnNameSerializer(),
+                                                                         getValueSerializer());
             query.setKey(rowKey).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(start, finish, reversed, count);
 
@@ -249,13 +253,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     @Override
     public Map<SN,Map<N,V>> readRowAsMap(K key) {
         try {
-            SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(keyspace,
-                                                                             keySerializer,
-                                                                             topSerializer,
-                                                                             subSerializer,
-                                                                             valueSerializer);
+            SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(getKeyspace(),
+                                                                             getKeySerializer(),
+                                                                             getSuperColumnNameSerializer(),
+                                                                             getSubcolumnNameSerializer(),
+                                                                             getValueSerializer());
             query.setKey(key).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setRange(null, null, false, ALL);
             QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
             Map<SN,Map<N,V>> results = new HashMap<SN,Map<N,V>>();
@@ -285,13 +289,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     @Override
     public <T> List<T> readRow(K key, SuperColumnMapper<T,K,SN,N,V> superColumnMapper) {
         try {
-            SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(keyspace,
-                                                                             keySerializer,
-                                                                             topSerializer,
-                                                                             subSerializer,
-                                                                             valueSerializer);
+            SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(getKeyspace(),
+                                                                             getKeySerializer(),
+                                                                             getSuperColumnNameSerializer(),
+                                                                             getSubcolumnNameSerializer(),
+                                                                             getValueSerializer());
             query.setKey(key).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setRange(null, null, false, ALL);
             QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
             List<HSuperColumn<SN,N,V>> superColumns = queryResult.get().getSuperColumns();
@@ -378,11 +382,12 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         Mutator<K> mutator = createMutator();
         try {
             for (N subcolumnName : subcolumnNames) {
-                mutator.subDelete(rowKey, defaultColumnFamily,
+                mutator.subDelete(rowKey,
+                                  getDefaultColumnFamily(),
                                   superColumnName,
                                   subcolumnName,
-                                  topSerializer,
-                                  subSerializer);
+                                  getSuperColumnNameSerializer(),
+                                  getSubcolumnNameSerializer());
             }
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
@@ -407,7 +412,11 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         try {
             for (N subcolumn : subcolumnNames) {
                 mutator.addSubDelete(rowKey,
-                                     defaultColumnFamily, superColumnName, subcolumn, topSerializer, subSerializer);
+                                     getDefaultColumnFamily(),
+                                     superColumnName,
+                                     subcolumn,
+                                     getSuperColumnNameSerializer(),
+                                     getSubcolumnNameSerializer());
             }
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
@@ -419,7 +428,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
         Mutator<K> mutator = createMutator();
         try {
-            mutator.superDelete(rowKey, defaultColumnFamily, superColumnName, topSerializer);
+            mutator.superDelete(rowKey, getDefaultColumnFamily(), superColumnName, getSuperColumnNameSerializer());
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -432,7 +441,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         try {
-            mutator.superDelete(rowKey, defaultColumnFamily, superColumnName, topSerializer);
+            mutator.superDelete(rowKey, getDefaultColumnFamily(), superColumnName, getSuperColumnNameSerializer());
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -449,14 +458,14 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         @SuppressWarnings({"unchecked"})
         List<HColumn<N,V>> columns = Arrays.asList(
                 HFactory.createColumn(
-                        columnName, columnValue, subSerializer, valueSerializer
+                        columnName, columnValue, subSerializer, getValueSerializer()
                 )
         );
         HSuperColumn<SN,N,V> superColumn = HFactory.createSuperColumn(superColumnName,
                                                                       columns,
-                                                                      topSerializer,
-                                                                      subSerializer,
-                                                                      valueSerializer);
+                                                                      getSuperColumnNameSerializer(),
+                                                                      getSubcolumnNameSerializer(),
+                                                                      getValueSerializer());
         if (txnContext == null) {
             insertSuperColumn(rowKey, superColumn);
         } else {
@@ -482,15 +491,15 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         for (Map.Entry<N,V> mapEntry : columnMap.entrySet()) {
             columns.add(HFactory.createColumn(mapEntry.getKey(),
                                               mapEntry.getValue(),
-                                              subSerializer,
-                                              valueSerializer));
+                                              getSubcolumnNameSerializer(),
+                                              getValueSerializer()));
         }
 
         HSuperColumn<SN,N,V> superColumn = HFactory.createSuperColumn(superColumnName,
                                                                       columns,
-                                                                      topSerializer,
+                                                                      getSuperColumnNameSerializer(),
                                                                       subSerializer,
-                                                                      valueSerializer);
+                                                                      getValueSerializer());
 
         if (txnContext == null) {
             insertSuperColumn(rowKey, superColumn);
@@ -511,13 +520,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
         Map<K,Map<N,V>> superColumns = new HashMap<K,Map<N,V>>();
         try {
-            MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(keyspace,
-                                                                                         keySerializer,
-                                                                                         topSerializer,
-                                                                                         subSerializer,
-                                                                                         valueSerializer);
+            MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
+                                                                                         getKeySerializer(),
+                                                                                         getSuperColumnNameSerializer(),
+                                                                                         getSubcolumnNameSerializer(),
+                                                                                         getValueSerializer());
             query.setKeys(rowKeys).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(null, null, false, ALL);
             if (columnNames != null) {
@@ -555,13 +564,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
         List<T> superColumns = new LinkedList<T>();
         try {
-            MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(keyspace,
-                                                                                         keySerializer,
-                                                                                         topSerializer,
-                                                                                         subSerializer,
-                                                                                         valueSerializer);
+            MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
+                                                                                         getKeySerializer(),
+                                                                                         getSuperColumnNameSerializer(),
+                                                                                         getSubcolumnNameSerializer(),
+                                                                                         getValueSerializer());
             query.setKeys(rowKeys).
-                    setColumnFamily(defaultColumnFamily).
+                    setColumnFamily(getDefaultColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(null, null, false, ALL);
             if (columnNames != null) {
@@ -586,7 +595,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     private void insertSuperColumn(K rowKey,
                                    HSuperColumn<SN,N,V> superColumn) {
         try {
-            createMutator().insert(rowKey, defaultColumnFamily, superColumn);
+            createMutator().insert(rowKey, getDefaultColumnFamily(), superColumn);
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -599,9 +608,17 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         Validate.notNull(txnContext);
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         try {
-            mutator.addInsertion(rowKey, defaultColumnFamily, superColumn);
+            mutator.addInsertion(rowKey, getDefaultColumnFamily(), superColumn);
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
+    }
+
+    private Serializer<SN> getSuperColumnNameSerializer() {
+        return getTopSerializer();
+    }
+
+    private Serializer<N> getSubcolumnNameSerializer() {
+        return subSerializer;
     }
 }

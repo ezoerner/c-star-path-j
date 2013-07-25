@@ -4,8 +4,10 @@ import static org.apache.commons.lang3.ObjectUtils.NULL;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,6 +60,23 @@ public class ThriftStructuredDataSupportTest {
     }
 
     @Test(groups = {"unit"})
+    public void shouldReadFromPathNotFound() throws Exception {
+
+        when(operations.readColumnsAsMap(columnFamily, rowKey,
+                                         "a/b/c/",
+                                         "a/b/c/" + Character.MAX_VALUE,
+                                         Integer.MAX_VALUE,
+                                         false)).thenReturn(Collections.<String,Object>emptyMap());
+
+        //////////////////////
+        TestPojo result = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
+        //////////////////////
+
+        assertNull(result);
+    }
+
+
+    @Test(groups = {"unit"})
     public void shouldWriteToPath() throws Exception {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
 
@@ -68,6 +87,16 @@ public class ThriftStructuredDataSupportTest {
         Map<String,Object> stringObjectMap = getExpectedMap(true);
 
         verify(operations).writeColumns(columnFamily, rowKey, stringObjectMap);
+    }
+
+    @Test(groups = {"unit"})
+    public void shouldDeletePath() throws Exception {
+
+        //////////////////////
+        dao.deletePath(columnFamily, rowKey, pathString);
+        //////////////////////
+
+        verify(operations).deleteColumns(columnFamily, rowKey, pathString + "/", pathString +"/" +Character.MAX_VALUE);
     }
 
     private Map<String,Object> getExpectedMap(boolean useNullToken) {

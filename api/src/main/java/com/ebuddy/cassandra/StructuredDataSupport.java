@@ -20,9 +20,22 @@ package com.ebuddy.cassandra;
  */
 public interface StructuredDataSupport<K> {
 
-    <T> T readFromPath(String columnFamily, K rowKey, String path, TypeReference<T> type);
+    /**
+     * Read an object from a path in the database.
+     * @param tableName the table (or column family) name
+     * @param rowKey the row key for the object to be read
+     * @param path the path to the object to be read
+     * @param type a TypeReference for the type of object to be returned
+     * @param <T> the type of the object to be returned
+     * @return the object of type T, or null if not found
+     */
+    <T> T readFromPath(String tableName, K rowKey, String path, TypeReference<T> type);
 
-    void writeToPath(String columnFamily, K rowKey, String path, Object value);
+    void writeToPath(String tableName, K rowKey, String path, Object value);
 
-    void writeToPath(String columnFamily, K rowKey, String path, Object value, BatchContext batchContext);
+    void writeToPath(String tableName, K rowKey, String path, Object value, BatchContext batchContext);
+
+    void deletePath(String tableName, K rowKey, String path);
+
+    void deletePath(String tableName, K rowKey, String path, BatchContext batchContext);
 }

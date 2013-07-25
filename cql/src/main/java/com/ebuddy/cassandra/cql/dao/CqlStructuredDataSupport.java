@@ -12,17 +12,27 @@ import com.ebuddy.cassandra.TypeReference;
 public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     @Override
-    public <T> T readFromPath(String columnFamily, K rowKey, String path, TypeReference<T> type) {
+    public <T> T readFromPath(String tableName, K rowKey, String path, TypeReference<T> type) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
-    public void writeToPath(String columnFamily, K rowKey, String path, Object value) {
+    public void writeToPath(String tableName, K rowKey, String path, Object value) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
-    public void writeToPath(String columnFamily, K rowKey, String path, Object value, BatchContext batchContext) {
+    public void writeToPath(String tableName, K rowKey, String path, Object value, BatchContext batchContext) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public void deletePath(String tableName, K rowKey, String path) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public void deletePath(String tableName, K rowKey, String path, BatchContext batchContext) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 }

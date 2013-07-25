@@ -1,10 +1,15 @@
 package com.ebuddy.cassandra.dao;
 
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -20,8 +25,10 @@ import org.apache.commons.collections.KeyValue;
 import org.apache.commons.collections.keyvalue.DefaultKeyValue;
 import org.apache.commons.lang3.ObjectUtils;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.verification.VerificationMode;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -35,6 +42,7 @@ import me.prettyprint.cassandra.model.ExecutingKeyspace;
 import me.prettyprint.cassandra.model.ExecutionResult;
 import me.prettyprint.cassandra.model.KeyspaceOperationCallback;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.Row;
@@ -61,6 +69,10 @@ public class ColumnFamilyTemplateTest {
     private KeyspaceTemplate.HectorBatchContext txnContext;
     @Mock
     private Mutator<String> mutator;
+
+    @Captor
+    private ArgumentCaptor<ColumnMapper<String,String,PropertyValue<?>>> mapperCaptor;
+
     private ColumnFamilyOperations<String,String,PropertyValue<?>> columnFamilyTestDao;
 
     @BeforeMethod(alwaysRun = true)
@@ -282,6 +294,23 @@ public class ColumnFamilyTemplateTest {
         //=========================
         columnFamilyTestDao.writeColumns(rowKey, properties, txnContext);
         //=========================
+    }
+
+    @Test(groups = {"unit"})
+    public void shouldDeleteColumnSlice() throws Exception {
+        ColumnFamilyOperations<String,String,PropertyValue<?>> spy = spy(columnFamilyTestDao);
+        doReturn(Arrays.asList("a", "b", "c")).when(spy).readColumns(eq(columnFamily), eq(rowKey), eq("start"), eq(
+                "finish"), eq(Integer.MAX_VALUE), eq(false), mapperCaptor.capture());
+
+        //=========================
+        spy.deleteColumns(columnFamily, rowKey, "start", "finish", txnContext);
+        //=========================
+
+        verify(mutator).addDeletion(rowKey, columnFamily, "a", StringSerializer.get());
+        verify(mutator).addDeletion(rowKey, columnFamily, "a", StringSerializer.get());
+        verify(mutator).addDeletion(rowKey, columnFamily, "a", StringSerializer.get());
+
+        verify(mutator, never()).execute();
     }
 
     private boolean areColumnsEqual(HColumn column1, HColumn column2) {

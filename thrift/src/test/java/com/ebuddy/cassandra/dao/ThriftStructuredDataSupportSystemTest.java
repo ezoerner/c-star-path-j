@@ -1,6 +1,8 @@
 package com.ebuddy.cassandra.dao;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertNull;
 
 import java.util.Arrays;
 
@@ -61,7 +63,7 @@ public class ThriftStructuredDataSupportSystemTest {
     }
 
     @Test(groups = {"system"})
-    public void shouldReadAndWriteTestPojo() throws Exception {
+    public void shouldWriteReadDeleteTestPojo() throws Exception {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
         String rowKey = "pojo0";
         String pathString = "a/b/c";
@@ -69,8 +71,12 @@ public class ThriftStructuredDataSupportSystemTest {
 
         dao.writeToPath(columnFamily, rowKey, pathString, testObject);
         TestPojo result = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
-
+        assertNotSame(result, testObject);
         assertEquals(result, testObject);
+
+        dao.deletePath(columnFamily, rowKey, pathString);
+        TestPojo result2 = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
+        assertNull(result2);
     }
 
     private void dropAndCreateSchema() {

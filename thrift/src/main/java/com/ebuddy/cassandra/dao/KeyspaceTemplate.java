@@ -30,13 +30,19 @@ public class KeyspaceTemplate<K> implements KeyspaceOperations {
     /**
      * The keyspace for operations.
      */
-    protected final Keyspace keyspace;
+    private final Keyspace keyspace;
     /**
      * The serializer for row keys.
      */
-    protected final Serializer<K> keySerializer;
+    private final Serializer<K> keySerializer;
 
     public KeyspaceTemplate(Keyspace keyspace, Serializer<K> keySerializer) {
+        if (keySerializer == null) {
+            throw new IllegalArgumentException("keySerializer is null");
+        }
+        if (keyspace == null) {
+            throw new IllegalArgumentException("keyspace is null");
+        }
         this.keyspace = keyspace;
         this.keySerializer = keySerializer;
     }
@@ -74,10 +80,19 @@ public class KeyspaceTemplate<K> implements KeyspaceOperations {
         Validate.isTrue(txnContext instanceof KeyspaceTemplate.HectorBatchContext,
                         "BatchContext not valid for this DAO implementation");
 
-        @SuppressWarnings({"unchecked", "ConstantConditions"}) HectorBatchContext htc = (HectorBatchContext)txnContext;
+        @SuppressWarnings({"unchecked", "ConstantConditions"})
+        HectorBatchContext htc = (HectorBatchContext)txnContext;
 
         htc.validateSameKeyspace(keyspace);
         return htc.getMutator();
+    }
+
+    protected final Serializer<K> getKeySerializer() {
+        return keySerializer;
+    }
+
+    protected final Keyspace getKeyspace() {
+        return keyspace;
     }
 
     class HectorBatchContext implements BatchContext {
