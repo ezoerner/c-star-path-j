@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
-import com.ebuddy.cassandra.StructureDao;
+import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
@@ -18,18 +18,18 @@ import com.ebuddy.cassandra.structure.Path;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Implementation of StructureDao for the Thrift API access to a standard ColumnFamily.
+ * Implementation of StructuredDataSupport for the Thrift API access to a standard ColumnFamily.
  *
  * @param <K> the type of the row key
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class ThriftStructureDao<K> implements StructureDao<K> {
+public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     private final ColumnFamilyOperations<K,String,Object> operations;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ThriftStructureDao(ColumnFamilyOperations<K,String,Object> operations) {
+    public ThriftStructuredDataSupport(ColumnFamilyOperations<K,String,Object> operations) {
         this.operations = operations;
     }
 

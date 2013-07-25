@@ -7,7 +7,7 @@ import me.prettyprint.cassandra.serializers.AbstractSerializer;
 /**
  * Serializer for PropertyValues.
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
- * @deprecated use regular objects with a StructureDao instead of PropertyValues
+ * @deprecated use regular objects with a StructuredDataSupport instead of PropertyValues
  */
 @Deprecated
 public class PropertyValueSerializer extends AbstractSerializer<PropertyValue<?>> {

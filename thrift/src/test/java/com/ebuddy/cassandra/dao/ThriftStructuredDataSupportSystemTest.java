@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ebuddy.cassandra.StructureDao;
+import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -19,21 +19,21 @@ import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.factory.HFactory;
 
 /**
- * System tests for ThriftStructureDao.
+ * System tests for ThriftStructuredDataSupport.
  * Requires local Cassandra 1.2.x+ to be running with a default cluster ("Test Cluster")
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class ThriftStructureDaoSystemTest {
+public class ThriftStructuredDataSupportSystemTest {
 
     private static final String TEST_CLUSTER = "Test Cluster";
     private static final String LOCALHOST_IP = "localhost";
-    private static final String TEST_KEYSPACE = "ThriftStructureDaoSystemTest";
+    private static final String TEST_KEYSPACE = "ThriftStructuredDataSupportSystemTest";
     private final String columnFamily = "testpojo";
 
     private Cluster cluster;
     private ColumnFamilyOperations<String,String,Object> operations;
-    private StructureDao<String> dao;
+    private StructuredDataSupport<String> dao;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
@@ -47,7 +47,7 @@ public class ThriftStructureDaoSystemTest {
                                                                     columnNameSerializer,
                                                                     valueSerializer);
 
-        dao = new ThriftStructureDao<String>(operations);
+        dao = new ThriftStructuredDataSupport<String>(operations);
 
         dropAndCreateSchema();
     }

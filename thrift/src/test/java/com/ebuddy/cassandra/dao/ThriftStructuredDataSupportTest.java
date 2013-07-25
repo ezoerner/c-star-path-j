@@ -17,16 +17,16 @@ import org.testng.annotations.Test;
 import com.ebuddy.cassandra.TypeReference;
 
 /**
- * Unit tests for ThriftStructureDao.
+ * Unit tests for ThriftStructuredDataSupport.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class ThriftStructureDaoTest {
+public class ThriftStructuredDataSupportTest {
 
     @Mock
     private ColumnFamilyOperations<String,String,Object> operations;
 
-    private ThriftStructureDao<String> dao ;
+    private ThriftStructuredDataSupport<String> dao ;
     private final String columnFamily = "columnfamily";
     private final String rowKey = "rowKey";
     private final String pathString = "a/b/c";
@@ -35,7 +35,7 @@ public class ThriftStructureDaoTest {
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        dao = new ThriftStructureDao<String>(operations);
+        dao = new ThriftStructuredDataSupport<String>(operations);
     }
 
     @Test(groups = {"unit"})
