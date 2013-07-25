@@ -2,7 +2,7 @@ package com.ebuddy.cassandra.dao;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.HectorExceptionTranslator;

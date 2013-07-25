@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.Arrays;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -16,6 +15,7 @@ import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.ddl.ComparatorType;
+import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.factory.HFactory;
 
 /**
@@ -48,12 +48,8 @@ public class ThriftStructureDaoSystemTest {
                                                                     valueSerializer);
 
         dao = new ThriftStructureDao<String>(operations);
-        createSchema();
-    }
 
-    @AfterMethod(alwaysRun = true)
-    public void tearDown() throws Exception {
-        cluster.dropKeyspace(TEST_KEYSPACE, true);
+        dropAndCreateSchema();
     }
 
     @Test(groups = {"system"})
@@ -69,10 +65,19 @@ public class ThriftStructureDaoSystemTest {
         assertEquals(result, testObject);
     }
 
-    private void createSchema() {
+    private void dropAndCreateSchema() {
+        dropKeyspaceIfExists();
         cluster.addKeyspace(HFactory.createKeyspaceDefinition(TEST_KEYSPACE), true);
         cluster.addColumnFamily(HFactory.createColumnFamilyDefinition(TEST_KEYSPACE,
                                                                       columnFamily,
                                                                       ComparatorType.UTF8TYPE));
+    }
+
+    private void dropKeyspaceIfExists() {
+        try {
+            cluster.dropKeyspace(TEST_KEYSPACE, true);
+        } catch (HInvalidRequestException ignored) {
+            // doesn't exist
+        }
     }
 }

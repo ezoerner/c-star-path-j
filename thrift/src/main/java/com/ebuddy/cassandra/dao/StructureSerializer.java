@@ -1,5 +1,7 @@
 package com.ebuddy.cassandra.dao;
 
+import static org.apache.commons.lang3.ObjectUtils.NULL;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,7 +9,7 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.ebuddy.cassandra.UncategorizedCassandraException;
@@ -61,6 +63,10 @@ public class StructureSerializer extends AbstractSerializer<Object> {
         }
 
         // write as special header bytes followed by JSON
+        // intercept the Null token which stands in for a real null
+        if (obj == NULL) {
+            obj = null;
+        }
         String jsonString = encodeJson(obj);
         byte[] jsonBytes = jsonString.getBytes(Charset.forName("UTF-8"));
         byte[] result = new byte[jsonBytes.length + UTF8_HEADER_BYTES.length];

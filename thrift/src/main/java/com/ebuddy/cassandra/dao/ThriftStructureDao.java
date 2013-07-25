@@ -6,7 +6,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructureDao;
@@ -68,17 +68,17 @@ public class ThriftStructureDao<K> implements StructureDao<K> {
 
         Object structure = mapper.convertValue(value, Object.class);
 
-        Map<Path,Object> structures = Collections.singletonMap(Path.fromString(pathString), structure);
-        Map<Path,Object> objectMap = Decomposer.get().decompose(structures);
+        Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), structure);
+        Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
-        Map<String,Object> stringObjectMap = new HashMap<String,Object>();
+        Map<String,Object> stringMap = new HashMap<String,Object>();
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
-            stringObjectMap.put(entry.getKey().toString(), entry.getValue());
+            stringMap.put(entry.getKey().toString(), entry.getValue());
         }
         if (batchContext == null) {
-            operations.writeColumns(columnFamily, rowKey, stringObjectMap);
+            operations.writeColumns(columnFamily, rowKey, stringMap);
         } else {
-            operations.writeColumns(columnFamily, rowKey, stringObjectMap, batchContext);
+            operations.writeColumns(columnFamily, rowKey, stringMap, batchContext);
         }
     }
 

@@ -2,7 +2,7 @@ package com.ebuddy.cassandra.dao;
 
 import java.util.Collection;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;

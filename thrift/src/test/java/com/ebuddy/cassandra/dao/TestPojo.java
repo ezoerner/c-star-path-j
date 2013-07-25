@@ -13,6 +13,7 @@ import java.util.List;
 public class TestPojo {
     public String s;
     public long n;
+    public String nullTest;
     public boolean b;
     public List<String> list;
 
@@ -42,6 +43,9 @@ public class TestPojo {
         this.s = s;
     }
 
+    public void setNullTest(String nullTest) {
+        this.nullTest = nullTest;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -60,6 +64,9 @@ public class TestPojo {
         if (n != testPojo.n) {
             return false;
         }
+        if (nullTest != null ? !nullTest.equals(testPojo.nullTest) : testPojo.nullTest != null) {
+            return false;
+        }
         if (!list.equals(testPojo.list)) {
             return false;
         }
@@ -70,6 +77,7 @@ public class TestPojo {
     public int hashCode() {
         int result = s.hashCode();
         result = 31 * result + (int)(n ^ (n >>> 32));
+        result = 31 * result + (nullTest != null ? nullTest.hashCode() : 0);
         result = 31 * result + (b ? 1 : 0);
         result = 31 * result + list.hashCode();
         return result;

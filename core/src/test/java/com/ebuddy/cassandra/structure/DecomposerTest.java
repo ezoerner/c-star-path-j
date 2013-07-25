@@ -1,6 +1,7 @@
 package com.ebuddy.cassandra.structure;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -45,7 +47,11 @@ public class DecomposerTest {
 
         Map<Path,Object> result = decomposer.decompose(structures);
 
-        // output of only simple objects is equal to the input
+        assertNotSame(result, structures);
+
+        // output of only simple objects is still equal to the input
+        // with one exception, nulls are replaced by the NULL token
+        structures.put(Path.fromString("N"), ObjectUtils.NULL);
         assertEquals(result, structures);
     }
 
@@ -59,7 +65,11 @@ public class DecomposerTest {
 
         Map<Path,Object> result = decomposer.decompose(structures);
 
+        assertNotSame(result, structures);
+
         // output of only simple objects is still equal to the input
+        // with one exception, nulls are replaced by the NULL token
+        structures.put(Path.fromString("j/k/l"), ObjectUtils.NULL);
         assertEquals(result, structures);
     }
 

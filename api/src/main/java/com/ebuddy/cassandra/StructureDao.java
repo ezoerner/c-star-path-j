@@ -6,17 +6,13 @@ package com.ebuddy.cassandra;
  * When reading values, they will be constructed as the specified type in a TypeReference.
  * Any object that can be converted to JSON can be written to a path.
  *
- * Paths are delimited by vertical bar and in general each element should be URLEncoded
+ * Paths are delimited by forward slash and in general each element should be URLEncoded
  * by the caller. The URL encoding allows each path element to contain vertical bars and other special
  * characters used by the implementation (currently only '@'). It also allows support for
  * encoding maps that have special characters in the keys.
  *
  * Paths that refer to list elements use a special notation, the '@' symbol followed by
- * the element index within the list.
- *
- * Note: This interface is duplicated in both the cql-data-access and the thrift-data-access
- * modules, as it is anticipated that eventually the entire thrift-data-access module will
- * be deprecated.
+ * the element index within the list (as a string).
  *
  * @param <K> The row key type
  *

@@ -1,5 +1,7 @@
 package com.ebuddy.cassandra.structure;
 
+import static org.apache.commons.lang3.ObjectUtils.NULL;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,12 @@ public class Decomposer {
 
             Object structure = entry.getValue();
             Path path = entry.getKey();
+
+            // handle null specially by replacing with a Null token
+            if (structure == null) {
+                decomposed.put(path, NULL);
+                continue;
+            }
 
             if (Types.isSimple(structure)) {
                 decomposed.put(path, structure);

@@ -1,5 +1,6 @@
 package com.ebuddy.cassandra.dao;
 
+import static org.apache.commons.lang3.ObjectUtils.NULL;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -40,7 +41,7 @@ public class ThriftStructureDaoTest {
     @Test(groups = {"unit"})
     public void shouldReadFromPath() throws Exception {
 
-        Map<String,Object> stringObjectMap = getExpectedMap();
+        Map<String,Object> stringObjectMap = getExpectedMap(false);
 
         when(operations.readColumnsAsMap(columnFamily, rowKey,
                                          "a/b/c/",
@@ -64,18 +65,19 @@ public class ThriftStructureDaoTest {
         dao.writeToPath(columnFamily, rowKey, pathString, testObject);
         //////////////////////
 
-        Map<String,Object> stringObjectMap = getExpectedMap();
+        Map<String,Object> stringObjectMap = getExpectedMap(true);
 
         verify(operations).writeColumns(columnFamily, rowKey, stringObjectMap);
     }
 
-    private Map<String,Object> getExpectedMap() {
+    private Map<String,Object> getExpectedMap(boolean useNullToken) {
         Map<String,Object> stringObjectMap = new HashMap<String,Object>();
         stringObjectMap.put("a/b/c/s/", "v1");
         stringObjectMap.put("a/b/c/n/", 42L);
         stringObjectMap.put("a/b/c/b/", true);
         stringObjectMap.put("a/b/c/list/@0/", "e1");
         stringObjectMap.put("a/b/c/list/@1/", "e2");
+        stringObjectMap.put("a/b/c/nullTest/", useNullToken ? NULL : null);
         return stringObjectMap;
     }
 }
