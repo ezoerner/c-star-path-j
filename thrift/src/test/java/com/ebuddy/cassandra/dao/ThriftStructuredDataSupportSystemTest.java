@@ -20,7 +20,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * System tests for ThriftStructuredDataSupport.
- * Requires local Cassandra 1.2.x+ to be running with a default cluster ("Test Cluster")
+ * Requires a Cassandra 1.2.x+ instance
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
@@ -30,6 +30,7 @@ public class ThriftStructuredDataSupportSystemTest {
     private static final String LOCALHOST_IP = "localhost";
     private static final String CASSANDRA_HOSTS_SYSTEM_PROPERTY = "cassandra.hosts";
     private static final String TEST_KEYSPACE = "ThriftStructuredDataSupportSystemTest";
+    private static final String CLUSTER_NAME_PROPERTY = "cassandra.cluster";
     private final String columnFamily = "testpojo";
 
     private Cluster cluster;
@@ -37,9 +38,13 @@ public class ThriftStructuredDataSupportSystemTest {
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
-        // default to using cassandra on localhosts, but can be overridden with a system property
+        // default to using cassandra on localhost, but can be overridden with a system property
         String cassandraHosts = System.getProperty(CASSANDRA_HOSTS_SYSTEM_PROPERTY, LOCALHOST_IP);
-        cluster = HFactory.getOrCreateCluster(TEST_CLUSTER, cassandraHosts);
+
+        // default cluster name can also be overridden with a system property
+        String clusterName = System.getProperty(CLUSTER_NAME_PROPERTY, TEST_CLUSTER);
+
+        cluster = HFactory.getOrCreateCluster(clusterName, cassandraHosts);
         Keyspace keyspace = HFactory.createKeyspace(TEST_KEYSPACE, cluster);
         Serializer<String> keySerializer = StringSerializer.get();
         Serializer<String> columnNameSerializer = StringSerializer.get();
