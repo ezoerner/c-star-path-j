@@ -28,24 +28,27 @@ public class ThriftStructuredDataSupportSystemTest {
 
     private static final String TEST_CLUSTER = "Test Cluster";
     private static final String LOCALHOST_IP = "localhost";
+    private static final String CASSANDRA_HOSTS_SYSTEM_PROPERTY = "cassandra.hosts";
     private static final String TEST_KEYSPACE = "ThriftStructuredDataSupportSystemTest";
     private final String columnFamily = "testpojo";
 
     private Cluster cluster;
-    private ColumnFamilyOperations<String,String,Object> operations;
     private StructuredDataSupport<String> dao;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
-        cluster = HFactory.getOrCreateCluster(TEST_CLUSTER, LOCALHOST_IP);
+        // default to using cassandra on localhosts, but can be overridden with a system property
+        String cassandraHosts = System.getProperty(CASSANDRA_HOSTS_SYSTEM_PROPERTY, LOCALHOST_IP);
+        cluster = HFactory.getOrCreateCluster(TEST_CLUSTER, cassandraHosts);
         Keyspace keyspace = HFactory.createKeyspace(TEST_KEYSPACE, cluster);
         Serializer<String> keySerializer = StringSerializer.get();
         Serializer<String> columnNameSerializer = StringSerializer.get();
         Serializer<Object> valueSerializer = StructureSerializer.get();
-        operations = new ColumnFamilyTemplate<String,String,Object>(keyspace,
-                                                                    keySerializer,
-                                                                    columnNameSerializer,
-                                                                    valueSerializer);
+        ColumnFamilyOperations<String,String,Object> operations = new ColumnFamilyTemplate<String,String,Object>(
+                keyspace,
+                keySerializer,
+                columnNameSerializer,
+                valueSerializer);
 
         dao = new ThriftStructuredDataSupport<String>(operations);
 
