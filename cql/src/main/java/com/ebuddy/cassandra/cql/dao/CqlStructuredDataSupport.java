@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.datastax.driver.core.querybuilder.Batch;
+import com.datastax.driver.core.querybuilder.Insert;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
@@ -36,30 +37,40 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final JdbcTemplate jdbcTemplate;
     private final String pathColumnName;
     private final String valueColumnName;
-
-    // TODO: Remove tableName from method parameters and add as a field
-    // Since we are configuring with column names, we might as well configure with table name as well
-
+    private final String tableName;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final String readQueryString;
+    private final Insert insertStatement;
 
     /**
      * Used for tables that are upgraded from a thrift dynamic column family that still has the default column names.
      */
-    public CqlStructuredDataSupport(JdbcTemplate jdbcTemplate) {
-        this(jdbcTemplate, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN);
+    public CqlStructuredDataSupport(String tableName, JdbcTemplate jdbcTemplate) {
+        this(tableName, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, jdbcTemplate);
     }
 
-    public CqlStructuredDataSupport(JdbcTemplate jdbcTemplate,
+    public CqlStructuredDataSupport(String tableName,
                                     String pathColumnName,
-                                    String valueColumnName) {
+                                    String valueColumnName,
+                                    JdbcTemplate jdbcTemplate) {
+        Validate.notEmpty(tableName);
         this.jdbcTemplate = jdbcTemplate;
         this.pathColumnName = pathColumnName;
         this.valueColumnName = valueColumnName;
+        this.tableName = tableName;
+        readQueryString = select(pathColumnName, valueColumnName)
+                .from(tableName)
+                .where(gte(pathColumnName, bindMarker()))
+                .and(lte(pathColumnName, bindMarker()))
+                .getQueryString();
+        insertStatement = insertInto(tableName)
+                .value(pathColumnName, bindMarker())
+                .value(valueColumnName, bindMarker());
     }
 
     @Override
-    public <T> T readFromPath(String tableName, K rowKey, String pathString, TypeReference<T> type) {
-        validateArgs(tableName, rowKey, pathString);
+    public <T> T readFromPath(K rowKey, String pathString, TypeReference<T> type) {
+        validateArgs(rowKey, pathString);
         Path inputPath = Path.fromString(pathString);
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
@@ -68,17 +79,10 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         PathMapRowCallbackHandler rowCallbackHandler = new PathMapRowCallbackHandler(inputPath);
 
-        // this prepared statement should be cached and reused by the connection pooling component....
-        // TODO: once tableName is configured as a field, this query string can also be made a field
-
-        String queryString = select(pathColumnName, valueColumnName)
-                                .from(tableName)
-                                .where(gte(pathColumnName, bindMarker()))
-                                    .and(lte(pathColumnName, bindMarker()))
-                             .getQueryString();
+        // note: prepared statements should be cached and reused by the connection pooling component....
 
         Object[] args = {start,finish};
-        jdbcTemplate.query(queryString, args, rowCallbackHandler);
+        jdbcTemplate.query(readQueryString, args, rowCallbackHandler);
         Map<Path,Object> pathMap = rowCallbackHandler.getResultMap();
         if (pathMap.isEmpty()) {
             // not found
@@ -92,13 +96,12 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
-    public void writeToPath(String tableName, K rowKey, String pathString, Object value) {
-        writeToPath(tableName, rowKey, pathString, value, null);
+    public void writeToPath(K rowKey, String pathString, Object value) {
+        writeToPath(rowKey, pathString, value, null);
     }
 
     @Override
-    public void writeToPath(String tableName,
-                            K rowKey,
+    public void writeToPath(K rowKey,
                             String pathString,
                             Object structuredValue,
                             BatchContext batchContext) {
@@ -106,17 +109,15 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             throw new UnsupportedOperationException("Batch updates not yet implemented");
         }
 
-        validateArgs(tableName, rowKey, pathString);
+        validateArgs(rowKey, pathString);
         Object simplifiedStructure = mapper.convertValue(structuredValue, Object.class);
         Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), simplifiedStructure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
-        // TODO: once tableName is configured as a field, these query string can also be made a field
-
         Batch batch = batch();
         List<Object> bindArguments = new LinkedList<Object>();
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
-            batch.add(insertInto(tableName).value(pathColumnName, bindMarker()).value(valueColumnName, bindMarker()));
+            batch.add(insertStatement);
 
             String stringValue = StructureConverter.get().toString(entry.getValue());
 
@@ -129,17 +130,16 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
-    public void deletePath(String tableName, K rowKey, String path) {
+    public void deletePath(K rowKey, String path) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
-    public void deletePath(String tableName, K rowKey, String path, BatchContext batchContext) {
+    public void deletePath(K rowKey, String path, BatchContext batchContext) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    private void validateArgs(String columnFamily, K rowKey, String pathString) {
-        Validate.notEmpty(columnFamily);
+    private void validateArgs(K rowKey, String pathString) {
         Validate.notEmpty(pathString);
         Validate.notNull(rowKey);
     }

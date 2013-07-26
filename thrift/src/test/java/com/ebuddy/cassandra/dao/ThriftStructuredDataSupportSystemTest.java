@@ -53,6 +53,7 @@ public class ThriftStructuredDataSupportSystemTest {
         Serializer<Object> valueSerializer = StructureSerializer.get();
         ColumnFamilyOperations<String,String,Object> operations = new ColumnFamilyTemplate<String,String,Object>(
                 keyspace,
+                columnFamily,
                 keySerializer,
                 columnNameSerializer,
                 valueSerializer);
@@ -69,13 +70,13 @@ public class ThriftStructuredDataSupportSystemTest {
         String pathString = "a/b/c";
         TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
 
-        dao.writeToPath(columnFamily, rowKey, pathString, testObject);
-        TestPojo result = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
+        dao.writeToPath(rowKey, pathString, testObject);
+        TestPojo result = dao.readFromPath(rowKey, pathString, typeReference);
         assertNotSame(result, testObject);
         assertEquals(result, testObject);
 
-        dao.deletePath(columnFamily, rowKey, pathString);
-        TestPojo result2 = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
+        dao.deletePath(rowKey, pathString);
+        TestPojo result2 = dao.readFromPath(rowKey, pathString, typeReference);
         assertNull(result2);
     }
 

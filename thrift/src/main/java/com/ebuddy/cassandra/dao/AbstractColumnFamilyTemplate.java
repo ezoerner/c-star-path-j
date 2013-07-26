@@ -48,26 +48,26 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
      * The default column family for this DAO, or null if not specific to a single column family.
      */
     @Nullable
-    private final String defaultColumnFamily;
+    private final String columnFamily;
 
     /**
      * Constructor.
      *
      * @param keyspace      the Keyspace
-     * @param defaultColumnFamily  the name of the column family or null if this is not specific to a column family.
+     * @param columnFamily  the name of the column family or null if this is not specific to a column family.
      * @param keySerializer the serializer for row keys
      * @param topSerializer the serializer for the top columns (columns for a Column Family,
      *                      superColumns for a Super Column Family).
      *                      If null, then this instance is not specific to one Column Family.
      */
     protected AbstractColumnFamilyTemplate(Keyspace keyspace,
-                                           @Nullable String defaultColumnFamily,
+                                           @Nullable String columnFamily,
                                            Serializer<K> keySerializer,
                                            @Nullable Serializer<N> topSerializer,
                                            @Nullable Serializer<V> valueSerializer) {
         super(keyspace, keySerializer);
         this.topSerializer = topSerializer;
-        this.defaultColumnFamily = defaultColumnFamily;
+        this.columnFamily = columnFamily;
         this.valueSerializer = valueSerializer;
     }
 
@@ -87,17 +87,6 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
      * @param batchContext optional BatchContext
      */
     public final void removeRow(K rowKey,
-                                @Nullable BatchContext batchContext) {
-        removeRow(defaultColumnFamily, rowKey, batchContext);
-
-    }
-        /**
-          * Remove the entire row.
-          * @param rowKey the row key
-          * @param batchContext optional BatchContext
-          */
-    public final void removeRow(String columnFamily,
-                                K rowKey,
                                 @Nullable BatchContext batchContext) {
         Mutator<K> mutator = validateAndGetMutator(batchContext);
         try {
@@ -132,7 +121,7 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
     }
 
     @Nullable
-    public String getDefaultColumnFamily() {
-        return defaultColumnFamily;
+    public String getColumnFamily() {
+        return columnFamily;
     }
 }

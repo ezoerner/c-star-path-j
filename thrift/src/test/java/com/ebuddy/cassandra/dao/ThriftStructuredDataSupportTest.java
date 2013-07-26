@@ -29,7 +29,6 @@ public class ThriftStructuredDataSupportTest {
     private ColumnFamilyOperations<String,String,Object> operations;
 
     private ThriftStructuredDataSupport<String> dao ;
-    private final String columnFamily = "columnfamily";
     private final String rowKey = "rowKey";
     private final String pathString = "a/b/c";
     private final TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
@@ -45,14 +44,14 @@ public class ThriftStructuredDataSupportTest {
 
         Map<String,Object> stringObjectMap = getExpectedMap(false);
 
-        when(operations.readColumnsAsMap(columnFamily, rowKey,
+        when(operations.readColumnsAsMap(rowKey,
                                          "a/b/c/",
                                          "a/b/c/" + Character.MAX_VALUE,
                                          Integer.MAX_VALUE,
                                          false)).thenReturn(stringObjectMap);
 
         //////////////////////
-        TestPojo result = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
+        TestPojo result = dao.readFromPath(rowKey, pathString, typeReference);
         //////////////////////
 
         TestPojo expectedResult = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
@@ -62,14 +61,14 @@ public class ThriftStructuredDataSupportTest {
     @Test(groups = {"unit"})
     public void shouldReadFromPathNotFound() throws Exception {
 
-        when(operations.readColumnsAsMap(columnFamily, rowKey,
+        when(operations.readColumnsAsMap(rowKey,
                                          "a/b/c/",
                                          "a/b/c/" + Character.MAX_VALUE,
                                          Integer.MAX_VALUE,
                                          false)).thenReturn(Collections.<String,Object>emptyMap());
 
         //////////////////////
-        TestPojo result = dao.readFromPath(columnFamily, rowKey, pathString, typeReference);
+        TestPojo result = dao.readFromPath(rowKey, pathString, typeReference);
         //////////////////////
 
         assertNull(result);
@@ -81,22 +80,22 @@ public class ThriftStructuredDataSupportTest {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
 
         //////////////////////
-        dao.writeToPath(columnFamily, rowKey, pathString, testObject);
+        dao.writeToPath(rowKey, pathString, testObject);
         //////////////////////
 
         Map<String,Object> stringObjectMap = getExpectedMap(true);
 
-        verify(operations).writeColumns(columnFamily, rowKey, stringObjectMap);
+        verify(operations).writeColumns(rowKey, stringObjectMap);
     }
 
     @Test(groups = {"unit"})
     public void shouldDeletePath() throws Exception {
 
         //////////////////////
-        dao.deletePath(columnFamily, rowKey, pathString);
+        dao.deletePath(rowKey, pathString);
         //////////////////////
 
-        verify(operations).deleteColumns(columnFamily, rowKey, pathString + "/", pathString +"/" +Character.MAX_VALUE);
+        verify(operations).deleteColumns(rowKey, pathString + "/", pathString +"/" +Character.MAX_VALUE);
     }
 
     private Map<String,Object> getExpectedMap(boolean useNullToken) {

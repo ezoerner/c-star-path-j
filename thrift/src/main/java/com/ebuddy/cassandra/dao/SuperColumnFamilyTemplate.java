@@ -85,7 +85,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                            getValueSerializer());
             QueryResult<HColumn<N,V>> result = query.
                     setKey(rowKey).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setSuperColumn(superColumnName).
                     setColumn(columnName).
                     execute();
@@ -114,7 +114,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                          getSubcolumnNameSerializer(),
                                                                          getValueSerializer());
             query.setKey(rowKey).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(null, null, false, ALL);
             if (columnNames.length == 0) {
@@ -165,7 +165,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                          getSubcolumnNameSerializer(),
                                                                          getValueSerializer());
             query.setKey(rowKey).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(start, finish, reversed, count);
 
@@ -259,7 +259,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                              getSubcolumnNameSerializer(),
                                                                              getValueSerializer());
             query.setKey(key).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setRange(null, null, false, ALL);
             QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
             Map<SN,Map<N,V>> results = new HashMap<SN,Map<N,V>>();
@@ -295,7 +295,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                              getSubcolumnNameSerializer(),
                                                                              getValueSerializer());
             query.setKey(key).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setRange(null, null, false, ALL);
             QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
             List<HSuperColumn<SN,N,V>> superColumns = queryResult.get().getSuperColumns();
@@ -383,7 +383,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         try {
             for (N subcolumnName : subcolumnNames) {
                 mutator.subDelete(rowKey,
-                                  getDefaultColumnFamily(),
+                                  getColumnFamily(),
                                   superColumnName,
                                   subcolumnName,
                                   getSuperColumnNameSerializer(),
@@ -412,7 +412,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         try {
             for (N subcolumn : subcolumnNames) {
                 mutator.addSubDelete(rowKey,
-                                     getDefaultColumnFamily(),
+                                     getColumnFamily(),
                                      superColumnName,
                                      subcolumn,
                                      getSuperColumnNameSerializer(),
@@ -428,7 +428,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
         Mutator<K> mutator = createMutator();
         try {
-            mutator.superDelete(rowKey, getDefaultColumnFamily(), superColumnName, getSuperColumnNameSerializer());
+            mutator.superDelete(rowKey, getColumnFamily(), superColumnName, getSuperColumnNameSerializer());
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -441,7 +441,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         try {
-            mutator.superDelete(rowKey, getDefaultColumnFamily(), superColumnName, getSuperColumnNameSerializer());
+            mutator.superDelete(rowKey, getColumnFamily(), superColumnName, getSuperColumnNameSerializer());
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -526,7 +526,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                                          getSubcolumnNameSerializer(),
                                                                                          getValueSerializer());
             query.setKeys(rowKeys).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(null, null, false, ALL);
             if (columnNames != null) {
@@ -570,7 +570,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                                          getSubcolumnNameSerializer(),
                                                                                          getValueSerializer());
             query.setKeys(rowKeys).
-                    setColumnFamily(getDefaultColumnFamily()).
+                    setColumnFamily(getColumnFamily()).
                     setSuperColumn(superColumnName).
                     setRange(null, null, false, ALL);
             if (columnNames != null) {
@@ -595,7 +595,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     private void insertSuperColumn(K rowKey,
                                    HSuperColumn<SN,N,V> superColumn) {
         try {
-            createMutator().insert(rowKey, getDefaultColumnFamily(), superColumn);
+            createMutator().insert(rowKey, getColumnFamily(), superColumn);
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
@@ -608,7 +608,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         Validate.notNull(txnContext);
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         try {
-            mutator.addInsertion(rowKey, getDefaultColumnFamily(), superColumn);
+            mutator.addInsertion(rowKey, getColumnFamily(), superColumn);
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }

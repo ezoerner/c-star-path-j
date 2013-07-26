@@ -299,11 +299,11 @@ public class ColumnFamilyTemplateTest {
     @Test(groups = {"unit"})
     public void shouldDeleteColumnSlice() throws Exception {
         ColumnFamilyOperations<String,String,PropertyValue<?>> spy = spy(columnFamilyTestDao);
-        doReturn(Arrays.asList("a", "b", "c")).when(spy).readColumns(eq(columnFamily), eq(rowKey), eq("start"), eq(
+        doReturn(Arrays.asList("a", "b", "c")).when(spy).readColumns(eq(rowKey), eq("start"), eq(
                 "finish"), eq(Integer.MAX_VALUE), eq(false), mapperCaptor.capture());
 
         //=========================
-        spy.deleteColumns(columnFamily, rowKey, "start", "finish", txnContext);
+        spy.deleteColumns(rowKey, "start", "finish", txnContext);
         //=========================
 
         verify(mutator).addDeletion(rowKey, columnFamily, "a", StringSerializer.get());
