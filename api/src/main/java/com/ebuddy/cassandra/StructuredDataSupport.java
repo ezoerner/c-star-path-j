@@ -24,18 +24,18 @@ public interface StructuredDataSupport<K> {
      * Read an object from a path in the database.
      * @param tableName the table (or column family) name
      * @param rowKey the row key for the object to be read
-     * @param path the path to the object to be read
+     * @param pathString the path to the object to be read
      * @param type a TypeReference for the type of object to be returned
      * @param <T> the type of the object to be returned
      * @return the object of type T, or null if not found
      */
-    <T> T readFromPath(String tableName, K rowKey, String path, TypeReference<T> type);
+    <T> T readFromPath(String tableName, K rowKey, String pathString, TypeReference<T> type);
 
-    void writeToPath(String tableName, K rowKey, String path, Object value);
+    void writeToPath(String tableName, K rowKey, String pathString, Object value);
 
-    void writeToPath(String tableName, K rowKey, String path, Object value, BatchContext batchContext);
+    void writeToPath(String tableName, K rowKey, String pathString, Object value, BatchContext batchContext);
 
-    void deletePath(String tableName, K rowKey, String path);
+    void deletePath(String tableName, K rowKey, String pathString);
 
-    void deletePath(String tableName, K rowKey, String path, BatchContext batchContext);
+    void deletePath(String tableName, K rowKey, String pathString, BatchContext batchContext);
 }

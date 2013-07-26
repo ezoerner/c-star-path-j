@@ -15,19 +15,25 @@ import com.datastax.driver.core.Session;
  */
 public class DataStaxDataSource extends AbstractDataSource {
     private final Cluster cluster;
+    private final String defaultKeyspace;
+
+    public DataStaxDataSource(Cluster cluster, String defaultKeyspace) {
+        this.cluster = cluster;
+        this.defaultKeyspace = defaultKeyspace;
+    }
 
     public DataStaxDataSource(Cluster cluster) {
-        this.cluster = cluster;
+        this(cluster, null);
     }
 
     @Override
     public Connection getConnection() throws SQLException {
-        Session session = cluster.connect();
+        Session session = defaultKeyspace == null ? cluster.connect() : cluster.connect(defaultKeyspace);
         return new CqlConnection(session);
     }
 
     @Override
-    public Connection getConnection(String s, String s2) throws SQLException {
+    public Connection getConnection(String username, String password) throws SQLException {
         return getConnection();
     }
 }

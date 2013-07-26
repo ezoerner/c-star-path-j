@@ -20,6 +20,11 @@
             <version>${version}</version>
         </dependency>
         <dependency>
+            <groupId>com.ebuddy.cassandra</groupId>
+            <artifactId>core</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.java.driver.version}</version>

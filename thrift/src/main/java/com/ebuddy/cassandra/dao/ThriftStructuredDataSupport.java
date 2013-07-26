@@ -29,6 +29,11 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     private final ColumnFamilyOperations<K,String,Object> operations;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Create and configure an instance with a ColumnFamilyOperations.
+     * @param operations a ColumnFamilyOperations that has a String column name and a StructureSerializer for the
+     *                   valueSerializer.
+     */
     public ThriftStructuredDataSupport(ColumnFamilyOperations<K,String,Object> operations) {
         this.operations = operations;
     }
