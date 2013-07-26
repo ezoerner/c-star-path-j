@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.dao.DataRetrievalFailureException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,7 +28,7 @@ public class StructureConverter {
     protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     /**
-     * header char, a unicode non-character, used to flag a JSON deserialized object
+     * Header char, a unicode non-character, used to flag a JSON deserialized object.
      */
     private static final int HEADER_CHAR = '\uFFFE';
     /**
@@ -67,8 +68,7 @@ public class StructureConverter {
                 try {
                     return JSON_MAPPER.readValue(str.substring(1), Object.class);
                 } catch (IOException e) {
-                    // TODO: Use a DataAccessException here?
-                    throw new RuntimeException("Could not parse JSON", e);
+                    throw new DataRetrievalFailureException("Could not parse JSON", e);
                 }
             default:
                 // if no special header, then just a string
@@ -143,8 +143,7 @@ public class StructureConverter {
                     return UTF_8_CHARSET.decode(ByteBuffer.wrap(bytes)).toString();
             }
         } catch (IOException ioe) {
-            // TODO: Use a DataAccessException here?
-            throw new RuntimeException("Could not", ioe);
+            throw new DataRetrievalFailureException("Could not parse JSON", ioe);
         }
     }
 
@@ -154,8 +153,7 @@ public class StructureConverter {
             jsonString = JSON_MAPPER.writeValueAsString(value);
             return jsonString;
         } catch (IOException ioe) {
-            // TODO: Use a DataAccessException here?
-            throw new RuntimeException("Could not encode object as JSON: class=" + value.getClass().getName(), ioe);
+            throw new DataRetrievalFailureException("Could not encode object as JSON: class=" + value.getClass().getName(), ioe);
         }
     }
 }
