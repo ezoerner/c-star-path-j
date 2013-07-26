@@ -561,8 +561,6 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
     }
 
     private HColumn<N,V> createColumn(N key, V value) {
-        // TODO: handle null values specially since HColumn and Serializer do not support null values
-        // for now a null will throw an exception here
         return HFactory.createColumn(key, value, getColumnNameSerializer(), getValueSerializer());
     }
 

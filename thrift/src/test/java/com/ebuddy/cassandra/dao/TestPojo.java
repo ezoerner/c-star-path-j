@@ -5,7 +5,6 @@ import java.util.List;
 /**
  * Test class used for both unit and system tests in this package.
  * It contains the basic types supported by JSON.
- * TODO: Support null values and keys since JSON supports null. Currently a null value or key will throw an exception
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
