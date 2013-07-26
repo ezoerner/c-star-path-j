@@ -15,7 +15,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.datastax.driver.core.querybuilder.Batch;
-import com.datastax.driver.core.querybuilder.Insert;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
@@ -37,8 +36,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final JdbcTemplate jdbcTemplate;
     private final String pathColumnName;
     private final String valueColumnName;
-
-    private static final String BEGIN_BATCH = "begin batch\n";
 
     // TODO: Remove tableName from method parameters and add as a field
     // Since we are configuring with column names, we might as well configure with table name as well
@@ -147,12 +144,12 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         Validate.notNull(rowKey);
     }
 
-    private static class PathMapRowCallbackHandler implements RowCallbackHandler {
-        private final Path headPath;
+    private class PathMapRowCallbackHandler implements RowCallbackHandler {
+        private final Path pathPrefix;
         private final Map<Path,Object> resultMap = new HashMap<Path,Object>();
 
-        private PathMapRowCallbackHandler(Path headPath) {
-            this.headPath = headPath;
+        private PathMapRowCallbackHandler(Path pathPrefix) {
+            this.pathPrefix = pathPrefix;
         }
 
         private Map<Path,Object> getResultMap() {
@@ -161,7 +158,17 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         @Override
         public void processRow(ResultSet rs) throws SQLException {
-            throw new UnsupportedOperationException("Not yet implemented");
+            Path path = Path.fromString(rs.getString(pathColumnName));
+            String valueString = rs.getString(valueColumnName);
+
+            if (!path.startsWith(pathPrefix)) {
+                throw new IllegalStateException("unexpected path found in database:" + path);
+            }
+            path = path.tail(pathPrefix.size());
+
+            Object value = StructureConverter.get().fromString(valueString);
+
+            resultMap.put(path, value);
         }
     }
 }

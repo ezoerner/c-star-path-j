@@ -49,6 +49,33 @@ public class StructureConverter {
         return INSTANCE;
     }
 
+    @SuppressWarnings("fallthrough")
+    public Object fromString(String str) {
+        if (str == null) {
+            return null;
+        }
+        if (str.isEmpty()) {
+            return str;
+        }
+
+        // look for header char to determine if a JSON object or legacy NestedProperties
+        int firstChar = str.charAt(0);
+        switch (firstChar) {
+            case '\uFFFF':
+                // legacy NestedProperties, obsolete and interpreted now as simply a JSON encoded Map
+            case HEADER_CHAR:
+                try {
+                    return JSON_MAPPER.readValue(str.substring(1), Object.class);
+                } catch (IOException e) {
+                    // TODO: Use a DataAccessException here?
+                    throw new RuntimeException("Could not parse JSON", e);
+                }
+            default:
+                // if no special header, then just a string
+                return str;
+        }
+    }
+
     public String toString(Object obj) {
         if (obj == null) {
             return null;
@@ -109,9 +136,8 @@ public class StructureConverter {
                 case '\uFFFF':
                     // legacy NestedProperties, obsolete and interpreted now as simply a JSON encoded Map
                 case HEADER_CHAR:
-                    return JSON_MAPPER.readValue(ArrayUtils.subarray(bytes,
-                                                                     UTF8_HEADER_BYTES.length,
-                                                                     bytes.length), Object.class);
+                    return JSON_MAPPER.readValue(ArrayUtils.subarray(bytes, UTF8_HEADER_BYTES.length, bytes.length),
+                                                 Object.class);
                 default:
                     // if no special header, then just a string
                     return UTF_8_CHARSET.decode(ByteBuffer.wrap(bytes)).toString();
