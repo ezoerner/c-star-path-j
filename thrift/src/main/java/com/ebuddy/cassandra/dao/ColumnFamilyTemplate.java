@@ -188,11 +188,7 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
             ColumnSlice<N,V> slice = result.get();
 
             for (HColumn<N,V> column : slice.getColumns()) {
-                try {
-                    resultList.add(columnMapper.mapColumn(column.getName(), column.getValue()));
-                } catch (RuntimeException e) {
-                    LOG.error("Error while deserializing, skipping column", e);
-                }
+                resultList.add(columnMapper.mapColumn(column.getName(), column.getValue()));
             }
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
