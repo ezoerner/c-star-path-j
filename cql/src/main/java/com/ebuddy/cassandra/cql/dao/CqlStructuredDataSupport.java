@@ -165,9 +165,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
             path = path.tail(pathPrefix.size());
-
             Object value = StructureConverter.get().fromString(valueString);
-
             resultMap.put(path, value);
         }
     }
