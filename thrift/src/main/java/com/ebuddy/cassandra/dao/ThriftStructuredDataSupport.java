@@ -34,8 +34,8 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public <T> T readFromPath(String tableName, K rowKey, String pathString, TypeReference<T> type) {
-        validateArgs(tableName, rowKey, pathString);
+    public <T> T readFromPath(String columnFamily, K rowKey, String pathString, TypeReference<T> type) {
+        validateArgs(columnFamily, rowKey, pathString);
         Path inputPath = Path.fromString(pathString);
         int count = Integer.MAX_VALUE;
         boolean reversed = false;
@@ -43,7 +43,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
         String start = inputPath.toString();
         String finish = start + Character.MAX_VALUE;
-        Map<String,Object> columnsMap = operations.readColumnsAsMap(tableName, rowKey, start, finish, count, reversed);
+        Map<String,Object> columnsMap = operations.readColumnsAsMap(columnFamily, rowKey, start, finish, count, reversed);
         if (columnsMap.isEmpty()) {
             return null;
         }
@@ -56,17 +56,17 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public void writeToPath(String tableName, K rowKey, String pathString, Object value) {
-        writeToPath(tableName, rowKey, pathString, value, null);
+    public void writeToPath(String columnFamily, K rowKey, String pathString, Object value) {
+        writeToPath(columnFamily, rowKey, pathString, value, null);
     }
 
     @Override
-    public void writeToPath(String tableName,
+    public void writeToPath(String columnFamily,
                             K rowKey,
                             String pathString,
                             Object value,
                             @Nullable BatchContext batchContext) {
-        validateArgs(tableName, rowKey, pathString);
+        validateArgs(columnFamily, rowKey, pathString);
 
         Object structure = mapper.convertValue(value, Object.class);
 
@@ -78,24 +78,24 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
             stringMap.put(entry.getKey().toString(), entry.getValue());
         }
         if (batchContext == null) {
-            operations.writeColumns(tableName, rowKey, stringMap);
+            operations.writeColumns(columnFamily, rowKey, stringMap);
         } else {
-            operations.writeColumns(tableName, rowKey, stringMap, batchContext);
+            operations.writeColumns(columnFamily, rowKey, stringMap, batchContext);
         }
     }
 
     @Override
-    public void deletePath(String tableName, K rowKey, String path) {
-        deletePath(tableName, rowKey, path, null);
+    public void deletePath(String columnFamily, K rowKey, String path) {
+        deletePath(columnFamily, rowKey, path, null);
     }
 
     @Override
-    public void deletePath(String tableName, K rowKey, String path, @Nullable BatchContext batchContext) {
+    public void deletePath(String columnFamily, K rowKey, String path, @Nullable BatchContext batchContext) {
         // normalize path
         Path inputPath = Path.fromString(path);
         String start = inputPath.toString();
         String finish = start + Character.MAX_VALUE;
-        operations.deleteColumns(tableName, rowKey, start, finish);
+        operations.deleteColumns(columnFamily, rowKey, start, finish);
     }
 
     /**
