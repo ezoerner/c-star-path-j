@@ -37,7 +37,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final JdbcTemplate jdbcTemplate;
     private final String pathColumnName;
     private final String valueColumnName;
-    private final String tableName;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String readQueryString;
     private final Insert insertStatement;
@@ -57,7 +56,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         this.jdbcTemplate = jdbcTemplate;
         this.pathColumnName = pathColumnName;
         this.valueColumnName = valueColumnName;
-        this.tableName = tableName;
         readQueryString = select(pathColumnName, valueColumnName)
                 .from(tableName)
                 .where(gte(pathColumnName, bindMarker()))
