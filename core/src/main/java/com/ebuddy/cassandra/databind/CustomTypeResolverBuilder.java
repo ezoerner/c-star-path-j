@@ -13,14 +13,15 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 
 /**
- * Custom type resolver builder to put type information in all collections and arrays.
+ * Custom type resolver builder to put type information in all collections and arrays when serializing,
+ * and does nothing special on deserializing.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  * @see ObjectMapper#setDefaultTyping
  */
-public class SetTypeResolverBuilder extends StdTypeResolverBuilder {
+public class CustomTypeResolverBuilder extends StdTypeResolverBuilder {
 
-    public SetTypeResolverBuilder() {
+    public CustomTypeResolverBuilder() {
         init(JsonTypeInfo.Id.CLASS, null);
         inclusion(JsonTypeInfo.As.WRAPPER_ARRAY);
     }
@@ -29,7 +30,7 @@ public class SetTypeResolverBuilder extends StdTypeResolverBuilder {
     public TypeDeserializer buildTypeDeserializer(DeserializationConfig config,
                                                   JavaType baseType,
                                                   Collection<NamedType> subtypes) {
-        return useForType(baseType) ? super.buildTypeDeserializer(config, baseType, subtypes) : null;
+        return super.buildTypeDeserializer(config, baseType, subtypes);
     }
 
     @Override
