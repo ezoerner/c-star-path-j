@@ -1,23 +1,26 @@
 package com.ebuddy.cassandra.structure.jackson;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ebuddy.cassandra.databind.CustomBeanSerializerFactory;
 import com.ebuddy.cassandra.databind.SetTypeResolverBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * // TODO: Add class description here.
+ * Test for preserving sets in object conversion.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-@SuppressWarnings("CloneableClassWithoutClone")
+@SuppressWarnings({"CloneableClassWithoutClone", "OverlyStrongTypeCast", "unchecked"})
 public class SetConversionTest {
 
     private ObjectMapper mapper;
@@ -25,7 +28,6 @@ public class SetConversionTest {
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         mapper = new ObjectMapper();
-        mapper.setSerializerFactory(new CustomBeanSerializerFactory());
         mapper.setDefaultTyping(new SetTypeResolverBuilder());
     }
 
@@ -34,7 +36,7 @@ public class SetConversionTest {
         TestPojoWithSet testObject = new TestPojoWithSet("string",
                                                          42L,
                                                          true,
-                                                         Arrays.asList("l2", "l1"),
+                                                         Arrays.asList("l2", "l1", "l3"),
                                                          new HashSet<Object>() {{
                                                             add(1);
                                                             add("X");
@@ -49,8 +51,35 @@ public class SetConversionTest {
                                                          }}
         );
         Object convertedObject = mapper.convertValue(testObject, Object.class);
-        @SuppressWarnings("unchecked")
-        Map<String,Object> map = (Map<String,Object>)convertedObject;
-        //assertTrue(map.get("hashSet") instanceof Set);
+        Map<String,?> map = (Map<String,?>)convertedObject;
+
+        List<?> list = (List<Object>)map.get("list");
+        assertEquals(list.size(), 2);
+        assertEquals(list.get(0), "java.util.ArrayList");
+        assertEquals((List<Object>)list.get(1), Arrays.asList("l2", "l1", "l3"));
+
+        list = (List<?>)map.get("objectSet");
+        assertEquals(list.size(), 2);
+        assertEquals(list.get(0), "com.ebuddy.cassandra.structure.jackson.SetConversionTest$1");
+        list = (List<?>)list.get(1);
+        assertEquals(list.size(), 2);
+        assertTrue(list.contains(1));
+        assertTrue(list.contains("X"));
+
+        list = (List<Object>)map.get("hashSet");
+        assertEquals(list.size(), 2);
+        assertEquals(list.get(0), "com.ebuddy.cassandra.structure.jackson.SetConversionTest$2");
+        list = (List<?>)list.get(1);
+        assertEquals(list.size(), 2);
+        assertTrue(list.contains("a"));
+        assertTrue(list.contains("b"));
+
+        list = (List<Object>)map.get("set");
+        assertEquals(list.size(), 2);
+        assertEquals(list.get(0), "com.ebuddy.cassandra.structure.jackson.SetConversionTest$3");
+        list = (List<?>)list.get(1);
+        assertEquals(list.size(), 2);
+        assertTrue(list.contains("x"));
+        assertTrue(list.contains("y"));
     }
 }
