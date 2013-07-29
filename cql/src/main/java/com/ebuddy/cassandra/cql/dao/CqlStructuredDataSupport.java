@@ -1,6 +1,13 @@
 package com.ebuddy.cassandra.cql.dao;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.gte;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.lte;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,12 +16,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang.Validate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
-import org.springframework.jdbc.core.RowMapper;
 
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
@@ -26,9 +31,9 @@ import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
+import com.ebuddy.cassandra.structure.Path;
 import com.ebuddy.cassandra.structure.StructureConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ebuddy.cassandra.structure.Path;
 
 /**
  * Implementation of StructuredDataSupport for CQL.
