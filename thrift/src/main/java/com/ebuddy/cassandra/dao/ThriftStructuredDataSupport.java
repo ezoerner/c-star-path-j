@@ -11,6 +11,7 @@ import org.apache.commons.lang3.Validate;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
+import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     private final ColumnFamilyOperations<K,String,Object> operations;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
 
     /**
      * Create and configure an instance with a ColumnFamilyOperations.
@@ -36,6 +37,8 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
      */
     public ThriftStructuredDataSupport(ColumnFamilyOperations<K,String,Object> operations) {
         this.operations = operations;
+        mapper = new ObjectMapper();
+        mapper.setDefaultTyping(new CustomTypeResolverBuilder());
     }
 
     @Override

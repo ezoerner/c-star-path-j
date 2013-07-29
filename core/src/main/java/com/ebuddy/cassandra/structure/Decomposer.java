@@ -91,9 +91,14 @@ public class Decomposer {
     }
 
     private Map<Path,Object> normalizeList(List<?> list) {
-        Map<Path,Object> normalized = new HashMap<Path,Object>(list.size());
-        for (int i = 0; i < list.size(); i++) {
-            normalized.put(Path.fromIndex(i), list.get(i));
+        // get type info for list
+        String type = (String)list.get(0);
+        /// get list itself
+        List<?> listItself = (List<?>)list.get(1);
+
+        Map<Path,Object> normalized = new HashMap<Path,Object>(listItself.size());
+        for (int i = 0; i < listItself.size(); i++) {
+            normalized.put(Path.fromIndex(i), listItself.get(i));
         }
         return normalized;
     }

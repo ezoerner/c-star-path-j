@@ -112,7 +112,7 @@ public class DecomposerTest {
     @Test(groups = "unit")
     public void decomposeList() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
-        structures.put(Path.fromString("list"), Arrays.asList("x", "y", "z"));
+        structures.put(Path.fromString("list"), Arrays.asList("java.util.ArrayList", Arrays.asList("x", "y", "z")));
 
         Map<Path,Object> expected  = new HashMap<Path,Object>();
         expected.put(Path.fromString("list/@0"), "x");
@@ -134,7 +134,7 @@ public class DecomposerTest {
         Map<String,Object> map3 = new HashMap<String,Object>();
         map3.put("k3", "v3");
 
-        structures.put(Path.fromString("list"), Arrays.asList(map1, map2, map3));
+        structures.put(Path.fromString("list"), Arrays.asList("java.util.ArrayList", Arrays.asList(map1, map2, map3)));
 
         Map<Path,Object> expected  = new HashMap<Path,Object>();
         expected.put(Path.fromString("list/@0/k1"), "v1");
@@ -149,9 +149,9 @@ public class DecomposerTest {
     public void decomposeMapOfLists() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
 
-        List<String> list1 = Arrays.asList("a", "b", "c");
-        List<String> list2 = Arrays.asList("d", "e", "f");
-        List<String> list3 = Arrays.asList("g", "h", "i");
+        List<?> list1 = Arrays.asList("java.util.ArrayList", Arrays.asList("a", "b", "c"));
+        List<?> list2 = Arrays.asList("java.util.ArrayList", Arrays.asList("d", "e", "f"));
+        List<?> list3 = Arrays.asList("java.util.ArrayList", Arrays.asList("g", "h", "i"));
 
         structures.put(Path.fromString("1"), list1);
         structures.put(Path.fromString("2"), list2);
