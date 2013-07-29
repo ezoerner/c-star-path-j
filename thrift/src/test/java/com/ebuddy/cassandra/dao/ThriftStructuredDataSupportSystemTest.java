@@ -5,6 +5,8 @@ import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -16,6 +18,7 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
+import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
 import me.prettyprint.hector.api.factory.HFactory;
@@ -80,13 +83,36 @@ public class ThriftStructuredDataSupportSystemTest {
         assertNull(result2);
     }
 
+    @Test(groups = {"system"})
+    public void shouldWriteReadDeleteTestPojoWithSet() throws Exception {
+        TestPojoWithSet testObject = getTestPojoWithSubclassedSets();
+        String rowKey = "pojo1";
+        String pathString = "a/b/c";
+        TypeReference<TestPojoWithSet> typeReference = new TypeReference<TestPojoWithSet>() { };
+
+        dao.writeToPath(rowKey, pathString, testObject);
+        TestPojoWithSet result = dao.readFromPath(rowKey, pathString, typeReference);
+        assertNotSame(result, testObject);
+        assertEquals(result, testObject);
+
+        dao.deletePath(rowKey, pathString);
+        TestPojoWithSet result2 = dao.readFromPath(rowKey, pathString, typeReference);
+        assertNull(result2);
+    }
+
+
+
     private void dropAndCreateSchema() {
         dropKeyspaceIfExists();
         cluster.addKeyspace(HFactory.createKeyspaceDefinition(TEST_KEYSPACE), true);
-        cluster.addColumnFamily(HFactory.createColumnFamilyDefinition(TEST_KEYSPACE,
-                                                                      columnFamily,
-                                                                      ComparatorType.UTF8TYPE));
+        ColumnFamilyDefinition columnFamilyDefinition = HFactory.createColumnFamilyDefinition(TEST_KEYSPACE,
+                                                                                              columnFamily,
+                                                                                              ComparatorType.UTF8TYPE);
+        columnFamilyDefinition.setDefaultValidationClass("UTF8Type");
+        cluster.addColumnFamily(columnFamilyDefinition);
     }
+
+
 
     private void dropKeyspaceIfExists() {
         try {
@@ -94,5 +120,25 @@ public class ThriftStructuredDataSupportSystemTest {
         } catch (HInvalidRequestException ignored) {
             // doesn't exist
         }
+    }
+
+    @SuppressWarnings("CloneableClassWithoutClone")
+    private TestPojoWithSet getTestPojoWithSubclassedSets() {
+        return new TestPojoWithSet("string",
+                                   42L,
+                                   true,
+                                   Arrays.asList("l2", "l1", "l3"),
+                                   new HashSet<Object>() {{
+                                       add(1);
+                                       add("X");
+                                   }},
+                                   new HashSet<String>() {{
+                                       add("a");
+                                       add("b");
+                                   }},
+                                   new TreeSet<String>() {{
+                                       add("x");
+                                       add("y");
+                                   }});
     }
 }

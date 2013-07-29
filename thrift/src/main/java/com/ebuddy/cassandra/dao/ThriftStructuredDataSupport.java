@@ -28,7 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     private final ColumnFamilyOperations<K,String,Object> operations;
-    private final ObjectMapper mapper;
+    private final ObjectMapper writeMapper;
+    private final ObjectMapper readMapper;
 
     /**
      * Create and configure an instance with a ColumnFamilyOperations.
@@ -37,8 +38,9 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
      */
     public ThriftStructuredDataSupport(ColumnFamilyOperations<K,String,Object> operations) {
         this.operations = operations;
-        mapper = new ObjectMapper();
-        mapper.setDefaultTyping(new CustomTypeResolverBuilder());
+        writeMapper = new ObjectMapper();
+        writeMapper.setDefaultTyping(new CustomTypeResolverBuilder());
+        readMapper = new ObjectMapper();
     }
 
     @Override
@@ -60,7 +62,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         Object structure = Composer.get().compose(pathMap);
 
         // convert object structure into POJO of type referred to by TypeReference
-        return mapper.convertValue(structure, new JacksonTypeReference<T>(type));
+        return readMapper.convertValue(structure, new JacksonTypeReference<T>(type));
     }
 
     @Override
@@ -75,7 +77,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
                             @Nullable BatchContext batchContext) {
         validateArgs(rowKey, pathString);
 
-        Object structure = mapper.convertValue(value, Object.class);
+        Object structure = writeMapper.convertValue(value, Object.class);
 
         Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), structure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
