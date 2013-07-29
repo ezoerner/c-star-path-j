@@ -15,7 +15,7 @@ import com.datastax.driver.core.Session;
  */
 public class DataStaxDataSource extends AbstractDataSource {
     private final Cluster cluster;
-    private final String defaultKeyspace;
+    private String defaultKeyspace;
 
     public DataStaxDataSource(Cluster cluster, String defaultKeyspace) {
         this.cluster = cluster;
@@ -24,6 +24,10 @@ public class DataStaxDataSource extends AbstractDataSource {
 
     public DataStaxDataSource(Cluster cluster) {
         this(cluster, null);
+    }
+
+    public void setDefaultKeyspace(String defaultKeyspace) {
+        this.defaultKeyspace = defaultKeyspace;
     }
 
     @Override

@@ -65,7 +65,7 @@ public class CqlResultSet implements ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented");
+       return currentRow.getString(columnIndex - 1);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class CqlResultSet implements ResultSet {
 
     @Override
     public String getString(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented"); 
+        return currentRow.getString(columnLabel);
     }
 
     @Override

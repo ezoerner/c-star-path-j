@@ -9,16 +9,20 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.Validate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.RowMapper;
 
 import com.datastax.driver.core.querybuilder.Batch;
+import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
+import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
@@ -34,21 +38,27 @@ import com.ebuddy.cassandra.structure.Path;
 public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private static final String DEFAULT_VALUE_COLUMN = "value";
     private static final String DEFAULT_PATH_COLUMN = "column1";
+    private static final String DEFAULT_PARTITION_KEY_COLUMN = "key";
     private final JdbcTemplate jdbcTemplate;
     private final String pathColumnName;
     private final String valueColumnName;
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final String readQueryString;
+    private final ObjectMapper writeMapper;
+    private final ObjectMapper readMapper;
+    private final String readPathQueryString;
     private final Insert insertStatement;
+    private final String readForDeleteString;
+    private final String tableName;
+    private final String partitionKeyColumnName;
 
     /**
      * Used for tables that are upgraded from a thrift dynamic column family that still has the default column names.
      */
     public CqlStructuredDataSupport(String tableName, JdbcTemplate jdbcTemplate) {
-        this(tableName, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, jdbcTemplate);
+        this(tableName, DEFAULT_PARTITION_KEY_COLUMN, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, jdbcTemplate);
     }
 
     public CqlStructuredDataSupport(String tableName,
+                                    String partitionKeyColumnName,
                                     String pathColumnName,
                                     String valueColumnName,
                                     JdbcTemplate jdbcTemplate) {
@@ -56,14 +66,29 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         this.jdbcTemplate = jdbcTemplate;
         this.pathColumnName = pathColumnName;
         this.valueColumnName = valueColumnName;
-        readQueryString = select(pathColumnName, valueColumnName)
+
+        writeMapper = new ObjectMapper();
+        writeMapper.setDefaultTyping(new CustomTypeResolverBuilder());
+        readMapper = new ObjectMapper();
+
+        readPathQueryString = select(pathColumnName, valueColumnName)
                 .from(tableName)
-                .where(gte(pathColumnName, bindMarker()))
+                .where(eq(partitionKeyColumnName, bindMarker()))
+                .and(gte(pathColumnName, bindMarker()))
+                .and(lte(pathColumnName, bindMarker()))
+                .getQueryString();
+        readForDeleteString = select(pathColumnName)
+                .from(tableName)
+                .where(eq(partitionKeyColumnName, bindMarker()))
+                .and(gte(pathColumnName, bindMarker()))
                 .and(lte(pathColumnName, bindMarker()))
                 .getQueryString();
         insertStatement = insertInto(tableName)
+                .value(partitionKeyColumnName, bindMarker())
                 .value(pathColumnName, bindMarker())
                 .value(valueColumnName, bindMarker());
+        this.tableName = tableName;
+        this.partitionKeyColumnName = partitionKeyColumnName;
     }
 
     @Override
@@ -79,8 +104,8 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         // note: prepared statements should be cached and reused by the connection pooling component....
 
-        Object[] args = {start,finish};
-        jdbcTemplate.query(readQueryString, args, rowCallbackHandler);
+        Object[] args = {rowKey,start,finish};
+        jdbcTemplate.query(readPathQueryString, args, rowCallbackHandler);
         Map<Path,Object> pathMap = rowCallbackHandler.getResultMap();
         if (pathMap.isEmpty()) {
             // not found
@@ -90,7 +115,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         Object structure = Composer.get().compose(pathMap);
 
         // convert object structure into POJO of type referred to by TypeReference
-        return mapper.convertValue(structure, new JacksonTypeReference<T>(type));
+        return readMapper.convertValue(structure, new JacksonTypeReference<T>(type));
     }
 
     @Override
@@ -108,7 +133,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
 
         validateArgs(rowKey, pathString);
-        Object simplifiedStructure = mapper.convertValue(structuredValue, Object.class);
+        Object simplifiedStructure = writeMapper.convertValue(structuredValue, Object.class);
         Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), simplifiedStructure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
@@ -119,6 +144,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
             String stringValue = StructureConverter.get().toString(entry.getValue());
 
+            bindArguments.add(rowKey);
             bindArguments.add(entry.getKey().toString());
             bindArguments.add(stringValue);
         }
@@ -129,12 +155,50 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     @Override
     public void deletePath(K rowKey, String path) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        deletePath(rowKey, path, null);
     }
 
     @Override
-    public void deletePath(K rowKey, String path, BatchContext batchContext) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public void deletePath(K rowKey, String pathString, BatchContext batchContext) {
+        if (batchContext != null) {
+            throw new UnsupportedOperationException("Batch updates not yet implemented");
+        }
+
+        validateArgs(rowKey, pathString);
+        Path inputPath = Path.fromString(pathString);
+
+        // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
+        String start = inputPath.toString();
+        String finish = start + Character.MAX_VALUE;
+
+        // would like to just do a delete with a where clause, but unfortunately Cassandra can't do that in CQL (either)
+        // with >= and <=
+
+        // Also, we can't delete primary key columns without deleting the whole row, so we delete here only the
+        // value column. However, this leaves the row behind with a null value. So in our query for readFromPath
+        // we filter out null values. Strange.
+
+        Object[] args = {rowKey,start,finish};
+        List<String> pathsToDelete = jdbcTemplate.queryForList(readForDeleteString, args, String.class);
+        if (pathsToDelete.isEmpty()) {
+            // not found
+            return;
+        }
+
+        Delete deleteStatement = delete(valueColumnName)
+                .from(tableName);
+        deleteStatement
+                .where(eq(partitionKeyColumnName, rowKey))
+                .and(eq(pathColumnName, bindMarker()));
+
+        Batch batch = batch();
+        List<Object> bindArguments = new LinkedList<Object>();
+        for (String pathToDelete : pathsToDelete) {
+            batch.add(deleteStatement);
+            bindArguments.add(pathToDelete);
+        }
+
+        jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
     }
 
     private void validateArgs(K rowKey, String pathString) {
@@ -156,14 +220,20 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         @Override
         public void processRow(ResultSet rs) throws SQLException {
-            Path path = Path.fromString(rs.getString(pathColumnName));
             String valueString = rs.getString(valueColumnName);
+            if (valueString == null) {
+                // a "real" null here means that this is a deleted row!! See comment in deletePath
+                return;
+            }
+
+            Path path = Path.fromString(rs.getString(pathColumnName));
 
             if (!path.startsWith(pathPrefix)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
             path = path.tail(pathPrefix.size());
             Object value = StructureConverter.get().fromString(valueString);
+            // this can be a null converted from a JSON null
             resultMap.put(path, value);
         }
     }

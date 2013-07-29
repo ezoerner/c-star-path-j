@@ -91,7 +91,11 @@ public class StructureConverter {
             obj = null;
         }
 
-        return HEADER_CHAR + encodeJson(obj);
+        String jsonString = encodeJson(obj);
+        char[] chars = new char[jsonString.length() + 1];
+        chars[0] = HEADER_CHAR;
+        jsonString.getChars(0,jsonString.length(),chars,1);
+        return new String(chars);
     }
 
     public ByteBuffer toByteBuffer(Object obj) {
@@ -109,7 +113,7 @@ public class StructureConverter {
             obj = null;
         }
         String jsonString = encodeJson(obj);
-        byte[] jsonBytes = jsonString.getBytes(Charset.forName("UTF-8"));
+        byte[] jsonBytes = jsonString.getBytes(UTF_8_CHARSET);
         byte[] result = new byte[jsonBytes.length + UTF8_HEADER_BYTES.length];
         System.arraycopy(UTF8_HEADER_BYTES, 0, result, 0, UTF8_HEADER_BYTES.length);
         System.arraycopy(jsonBytes, 0, result, UTF8_HEADER_BYTES.length, jsonBytes.length);
@@ -129,7 +133,7 @@ public class StructureConverter {
     private Object decodeBytes(byte[] bytes) {
         // look for header char to determine if a JSON object or legacy NestedProperties
         InputStream inputStream = new ByteArrayInputStream(bytes);
-        InputStreamReader reader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
+        InputStreamReader reader = new InputStreamReader(inputStream, UTF_8_CHARSET);
         try {
             int firstChar = reader.read();
             switch (firstChar) {

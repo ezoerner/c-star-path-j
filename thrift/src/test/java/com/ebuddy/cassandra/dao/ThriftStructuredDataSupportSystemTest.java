@@ -27,7 +27,7 @@ import me.prettyprint.hector.api.factory.HFactory;
  * System tests for ThriftStructuredDataSupport.
  * Requires a Cassandra 1.2.x+ instance
  *
- * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
+ * @author EOric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class ThriftStructuredDataSupportSystemTest {
 
