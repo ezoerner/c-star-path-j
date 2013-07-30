@@ -62,9 +62,10 @@ i.e. the next element of the primary key after the partition key.
 
 thrift
 ------
-Implementations of `StructuredDataAccessSupport` for column and super column family access, using the
+Implementations of `StructuredDataAccessSupport` for standard column family access, using the
 [Hector client](https://github.com/hector-client/hector) library (and therefore Thrift) for transport and
-low level operations.
+low level operations.  
+**Note:** Support for super column families is planned but not yet implemented.
 
 core
 ----
