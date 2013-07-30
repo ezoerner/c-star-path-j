@@ -49,8 +49,6 @@ cql module
 Implementation of `StructuredDataAccessSupport` for CQL3. Uses the
 [Datastax Java Driver](https://github.com/datastax/java-driver) for transport and low level operations.
 
-Note: The tests currently are all system tests and require a local Cassandra 1.2+ database to be running.
-
 To use structured data in a CQL3 table, the following data modeling rules apply:
 
 * There must be a designated path column and it must be the first clustering key,
@@ -59,6 +57,8 @@ i.e. the next element of the primary key after the partition key.
 * There can only be one designated path and one designated value column per table.
 * The designated path and value columns must be typed as a textual type.
 
+Note: The tests include system tests that require a local Cassandra 1.2+ database to be running.
+These tests are in the "system" TestNG test group.
 
 thrift module
 -------------
