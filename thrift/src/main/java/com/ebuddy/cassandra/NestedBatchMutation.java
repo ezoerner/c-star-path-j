@@ -1,17 +1,29 @@
 package com.ebuddy.cassandra;
 
-import com.ebuddy.cassandra.property.PropertyValue;
-import com.ebuddy.cassandra.property.PropertyValueFactory;
-import org.apache.cassandra.thrift.*;
-import org.apache.commons.collections.KeyValue;
-import org.apache.commons.collections.keyvalue.DefaultKeyValue;
+import static com.ebuddy.cassandra.HectorUtils.bytes;
+import static com.ebuddy.cassandra.HectorUtils.getSlice;
+import static com.ebuddy.cassandra.HectorUtils.string;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
-import static com.ebuddy.cassandra.HectorUtils.*;
+import org.apache.cassandra.thrift.Column;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.Mutation;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SuperColumn;
+import org.apache.commons.collections.KeyValue;
+import org.apache.commons.collections.keyvalue.DefaultKeyValue;
+
+import com.ebuddy.cassandra.property.PropertyValue;
+import com.ebuddy.cassandra.property.PropertyValueFactory;
 
 /**
  * An NestedBatchMutation encapsulates a set of updates/insertions/deletions all submitted
@@ -52,7 +64,11 @@ class NestedBatchMutation {
      * @param columnFamily the column family
      * @param superColumnName the super column name, or null if this is a regular column family
      */
-    public NestedBatchMutation(CassandraTemplate cassandraTemplate, String keySpace, String rowKey, String columnFamily, String superColumnName) {
+    NestedBatchMutation(CassandraTemplate cassandraTemplate,
+                               String keySpace,
+                               String rowKey,
+                               String columnFamily,
+                               String superColumnName) {
         this.cassandraTemplate = cassandraTemplate;
         this.keySpace = keySpace;
         if(rowKey == null) {
@@ -73,7 +89,7 @@ class NestedBatchMutation {
      * @param value the new String value for the property
      * @return the receiver
      */
-    public NestedBatchMutation addInsertion(String path, String value, String delimiter) {
+    NestedBatchMutation addInsertion(String path, String value, String delimiter) {
         if (partialsApplied) {
             throw new IllegalStateException("cannot insert after getMutationMap() is called");
         }

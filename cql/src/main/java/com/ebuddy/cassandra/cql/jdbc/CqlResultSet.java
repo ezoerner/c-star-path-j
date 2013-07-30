@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -29,7 +29,7 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 
 /**
- * // TODO: Class description.
+ * java.sql.ResultSet wrapper around a datastax ResultSet.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
@@ -65,7 +65,7 @@ public class CqlResultSet implements ResultSet {
 
     @Override
     public String getString(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented");
+       return currentRow.getString(columnIndex - 1);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class CqlResultSet implements ResultSet {
 
     @Override
     public String getString(String columnLabel) throws SQLException {
-        throw new UnsupportedOperationException("Not yet implemented"); 
+        return currentRow.getString(columnLabel);
     }
 
     @Override

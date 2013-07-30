@@ -1,7 +1,16 @@
 package com.ebuddy.cassandra;
 
-import me.prettyprint.hector.api.exceptions.*;
 import org.springframework.dao.DataAccessException;
+
+import me.prettyprint.hector.api.exceptions.HInvalidRequestException;
+import me.prettyprint.hector.api.exceptions.HNotFoundException;
+import me.prettyprint.hector.api.exceptions.HPoolRecoverableException;
+import me.prettyprint.hector.api.exceptions.HTimedOutException;
+import me.prettyprint.hector.api.exceptions.HUnavailableException;
+import me.prettyprint.hector.api.exceptions.HectorException;
+import me.prettyprint.hector.api.exceptions.HectorPoolException;
+import me.prettyprint.hector.api.exceptions.HectorTransportException;
+import me.prettyprint.hector.api.exceptions.PoolIllegalStateException;
 
 /**
  * Translates HectorExceptions to Spring DataAccessExceptions.

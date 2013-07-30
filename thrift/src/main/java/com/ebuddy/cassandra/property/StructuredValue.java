@@ -1,5 +1,9 @@
 package com.ebuddy.cassandra.property;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializableWithType;
@@ -7,10 +11,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializerProvider;
 import org.codehaus.jackson.map.TypeSerializer;
 import org.springframework.util.ObjectUtils;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 /**
  * An implementation of PropertyValue that stores a structured object as JSON.
@@ -24,6 +24,7 @@ import java.nio.charset.Charset;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 // needs to be public so jackson can access getValue() by reflection
+@Deprecated
 public abstract class StructuredValue<T> implements PropertyValue<T>, JsonSerializableWithType {
     private static final Logger LOG = Logger.getLogger(StructuredValue.class);
     protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();

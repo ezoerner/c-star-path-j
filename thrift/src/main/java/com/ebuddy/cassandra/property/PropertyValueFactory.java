@@ -9,7 +9,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.DeserializationContext;
@@ -29,9 +29,11 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
  * TODO: Get rid of PropertyValues. Although the idea was to make it more strongly typed than "Object"
  * TODO: to only allow certain types, in practice it complicates the API too much
  *
+ * @deprecated just use Objects instead of PropertyValues
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 @SuppressWarnings({"UnusedDeclaration", "unchecked"})
+@Deprecated
 public class PropertyValueFactory extends StdDeserializer<PropertyValue<?>> {
     /**
      * The delimiter character for separating parts of a hierarchical property name.
@@ -148,7 +150,7 @@ public class PropertyValueFactory extends StdDeserializer<PropertyValue<?>> {
                                                            Charset.forName("UTF-8")));
                 case ListValue.HEADER_CHAR:
                     // BUG FIX: Some data was written by a previous version of the code that
-                    // wrote the structured headdre bytes followed by double-quoted string.
+                    // wrote the structured header bytes followed by double-quoted string.
                     // This should be interpreted as a string, not a list
                     return mapper.readValue(ArrayUtils.subarray(storeBytes,
                                                                 ListValue.UTF8_HEADER_BYTES.length,

@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -36,7 +36,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
- * // TODO: Add class description here.
+ * java.sql.PreparedStatement wrapper around a datastax PreparedStatement.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
