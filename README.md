@@ -33,7 +33,7 @@ by an index is used for embedded lists.
 
 `new Class1()` would be decomposed into the following path-value pairs:
 
-`a/b/@0/c/ -> 42`
+`a/b/@0/c/ -> 42`  
 `a/b/@1/c/ -> 43`
 
 
