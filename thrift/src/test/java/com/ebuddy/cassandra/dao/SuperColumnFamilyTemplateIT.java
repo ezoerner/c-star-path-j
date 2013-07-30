@@ -32,10 +32,12 @@ public class SuperColumnFamilyTemplateIT {
     private static final Logger LOG = Logger.getLogger(SuperColumnFamilyTemplateIT.class);
 
     private static final String CLUSTER_NAME = "Test Cluster";
-    private static final String HOST = "localhost";
+    private static final String HOST = "localhost:9171";
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+        // It starts only once. If this method has been already called, nothing will happen, Cassandra still be started
+        // For advanced usage: see https://github.com/jsevellec/cassandra-unit/wiki/How-to-use-it-in-your-code
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
 
         DataLoader dataLoader = new DataLoader(CLUSTER_NAME, HOST);

@@ -6,7 +6,7 @@ rpc_address: localhost
 
 # You may want to make the port non-standard if it might conflict
 # with an actual Cassandra server running on the same box.
-rpc_port: 9160
+rpc_port: 9171
 
 # Data stored in the target directory for this project
 data_file_directories:
