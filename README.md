@@ -1,5 +1,5 @@
-cassandra-data-access
-=====================
+cassandra-structured-data-access
+================================
 
 Support for reading and writing structured objects in Cassandra.
 Structured objects are accessed by a hierarchical path delimited by forward slashes.
@@ -11,14 +11,40 @@ Internally the object is decomposed into key value pairs using the
 [Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome). How objects are broken
 down can be customized by the caller using annotations supported by Jackson.
 
+Paths can be used to access structured data at different levels within the structure. Special encoding using '@' followed
+by an index is used for embedded lists.
+**Note:** Special support for Sets of simple values is also planned but not yet implemented.
+
+###Example:
+
+    Class1 {
+        Class2 a = new Class2();
+    }
+
+    Class2 {
+        List<Class3> b = Arrays.asList(new Class3(42), new Class3(43));
+    }
+
+    Class3 {
+        int c;
+
+        Class3(int c) { this.c = c }
+    }
+
+`new Class1()` would be decomposed into the following path-value pairs:
+
+`a/b/@0/c/ -> 42`
+`a/b/@1/c/ -> 43`
+
+
 api
 ---
-The interfaces and helper classes for StructuredDataAccessSupport.
+The main interface `StructuredDataAccessSupport` and helper classes.
 
 cql
 ---
-Implementation of StructuredDataAccessSupport for CQL3. Uses the Datastax Java Driver for transport and low level
-operations.
+Implementation of `StructuredDataAccessSupport` for CQL3. Uses the
+[Datastax Java Driver](https://github.com/datastax/java-driver) for transport and low level operations.
 
 Note: The tests currently are all system tests and require a local Cassandra 1.2+ database to be running.
 
@@ -33,10 +59,11 @@ i.e. the next element of the primary key after the partition key.
 
 thrift
 ------
-Implementations of StructuredDataAccessSupport for column and super column family access, using the Hector client
-library (and therefore Thrift) for transport and low level operations.
+Implementations of `StructuredDataAccessSupport` for column and super column family access, using the
+[Hector client](https://github.com/hector-client/hector) library (and therefore Thrift) for transport and
+low level operations.
 
 core
 ----
 
-Shared code used by both thrift and cql modules for implementation.
+Shared code used by both thrift and cql modules.
