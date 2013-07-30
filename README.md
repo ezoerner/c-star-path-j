@@ -12,7 +12,7 @@ Internally the object is decomposed into key value pairs using the
 down can be customized by the caller using annotations supported by Jackson.
 
 Paths can be used to access structured data at different levels within the structure. Special encoding using '@' followed
-by an index is used for embedded lists.
+by an index is used for embedded lists.  
 **Note:** Special support for Sets of simple values is also planned but not yet implemented.
 
 ###Example:
