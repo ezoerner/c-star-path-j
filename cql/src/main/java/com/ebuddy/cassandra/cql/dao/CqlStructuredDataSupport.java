@@ -38,6 +38,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Implementation of StructuredDataSupport for CQL.
  *
+ * To use structured data in CQL3, the following data modeling rules apply:
+ * <ul>
+ *     <li>There must be a designated path column and it must be the first clustering key, i.e. the next element of the
+ *         primary key after the partition key.</li>
+ *     <li>There must be a designated value column.</li>
+ *     <li>There can only be one designated path and one designated value column per table.</li>
+ *     <li>The designated path and value columns must be typed as a textual type.</li>
+ * </ul>
+ *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {

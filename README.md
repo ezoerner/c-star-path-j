@@ -1,18 +1,39 @@
 cassandra-data-access
 =====================
-Two modules for Cassandra Data Access.
+Support for reading and writing structured objects in Cassandra.
+Structured objects are accessed by a hierarchical path.
+
+Some special characters are used
+
+Internally the object is decomposed into key value pairs using the
+[Jackson JSON Processor][http://wiki.fasterxml.com/JacksonHome]. How objects are broken
+down can be customized by the caller using annotations supported by Jackson.
+
+api
+---
+The interfaces and helper classes for StructuredDataAccessSupport.
 
 cql
 ---
-Template object, will be either a working JDBCTemplate configured for CQL3, or a CqlTemplate in the style of JDBCTemplate. 
-Uses the Datastax Java Driver for transport and low level operations. 
-Also planned for this module is a layer of support for accessing structured data using dynamic column families, hierarchical paths and JSON.
+Implementation of StructuredDataAccessSupport for CQL3. Uses the Datastax Java Driver for transport and low level
+operations.
 
 Note: The tests currently are all system tests and require a local Cassandra 1.2+ database to be running.
 
+To use structured data in a CQL3 table, the following data modeling rules apply:
+
+* There must be a designated path column and it must be the first clustering key, i.e. the next element of the primary key after the partition key.
+* There must be a designated value column.
+* There can only be one designated path and one designated value column per table.
+* The designated path and value columns must be typed as a textual type.
+
+
 thrift
 ------
-Templates for column and super column family access, using the Hector library and Thrift for transport and low level operations. 
+Implementations of StructuredDataAccessSupport for column and super column family access, using the Hector client
+library (and therefore Thrift) for transport and low level operations.
 
+core
+----
 
-
+Shared code used by both thrift and cql modules for implementation.

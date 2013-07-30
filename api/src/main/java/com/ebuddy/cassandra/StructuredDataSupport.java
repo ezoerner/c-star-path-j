@@ -1,32 +1,35 @@
 package com.ebuddy.cassandra;
 
 /**
+ * <p>
  * Provides data access for structured objects in Cassandra.
  * Objects are read using a hierarchical path that must contain at least one path element.
  * When reading values, they will be constructed as the specified type in a TypeReference.
- * Any object that can be converted to JSON can be written to a path.
- *
- * Paths are delimited by forward slash and in general each element should be URLEncoded
- * by the caller. The URL encoding allows each path element to contain vertical bars and other special
- * characters used by the implementation (currently only '@'). It also allows support for
- * encoding maps that have special characters in the keys.
+ * Any object that can be converted to JSON can be written to a path. Jackson annotations can be used
+ * to customize how the object is converted. See <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Processor</a>.
+ * </p>
+ * Paths are delimited by forward slashes. Path elements within the path must not contain any of the special characters
+ * '/@#'. A workaround for this limitation might be for the caller to URL encode path elements. Internally map keys
+ * will be automatically URL encoded by the implementation.
  *
  * Paths that refer to list elements use a special notation, the '@' symbol followed by
  * the element index within the list (as a string).
  *
  * @param <K> The row key type
- *
- * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
+ * @see <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Processor</a>
+ * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com>Jackson </a>
  */
 public interface StructuredDataSupport<K> {
 
     /**
      * Read an object from a path in the database.
      * @param rowKey the row key for the object to be read
-     * @param pathString the path to the object to be read
+     * @param pathString the path to the object to be read. Elements are delimited by forward slashes '/', and
+     *                   elements must not contain any of the special characters '/@#'
      * @param type a TypeReference for the type of object to be returned
      * @param <T> the type of the object to be returned
      * @return the object of type T, or null if not found
+     * @throws IllegalArgumentException if pathString is empty or contains any of the special characters '@#'
      */
     <T> T readFromPath(K rowKey, String pathString, TypeReference<T> type);
 

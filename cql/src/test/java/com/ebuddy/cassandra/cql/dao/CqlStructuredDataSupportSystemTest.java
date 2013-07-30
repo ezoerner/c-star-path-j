@@ -27,7 +27,7 @@ import com.ebuddy.cassandra.cql.jdbc.DataStaxDataSource;
 public class CqlStructuredDataSupportSystemTest {
     private static final String LOCALHOST_IP = "localhost";
     private static final String CASSANDRA_HOSTS_SYSTEM_PROPERTY = "cassandra.hosts";
-    private static final String TEST_KEYSPACE = "cqltest";
+    private static final String TEST_KEYSPACE = "cqlstructureddatasupportsystemtest";
 
     private final String tableName = "testpojo";
 
