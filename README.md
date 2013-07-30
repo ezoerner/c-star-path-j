@@ -40,12 +40,12 @@ in a path using '@' followed by a integer index encoded into the path.
 `a/b/@1/c/ -> 43`
 
 
-api
----
+api module
+----------
 The main interface `StructuredDataAccessSupport` and helper classes.
 
-cql
----
+cql module
+----------
 Implementation of `StructuredDataAccessSupport` for CQL3. Uses the
 [Datastax Java Driver](https://github.com/datastax/java-driver) for transport and low level operations.
 
@@ -60,14 +60,13 @@ i.e. the next element of the primary key after the partition key.
 * The designated path and value columns must be typed as a textual type.
 
 
-thrift
-------
+thrift module
+-------------
 Implementations of `StructuredDataAccessSupport` for standard column family access, using the
 [Hector client](https://github.com/hector-client/hector) library (and therefore Thrift) for transport and
 low level operations.  
 **Note:** Support for super column families is planned but not yet implemented.
 
-core
-----
-
+core module
+-----------
 Shared code used by both thrift and cql modules.
