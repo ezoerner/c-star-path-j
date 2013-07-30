@@ -37,6 +37,7 @@ public class SuperColumnFamilyTemplateIT {
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         // It starts only once. If this method has been already called, nothing will happen, Cassandra still be started
+        // We can clean the whole database and stop ;)
         // For advanced usage: see https://github.com/jsevellec/cassandra-unit/wiki/How-to-use-it-in-your-code
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
 
