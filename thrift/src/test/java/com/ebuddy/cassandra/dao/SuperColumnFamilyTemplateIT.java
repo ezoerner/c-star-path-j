@@ -53,7 +53,9 @@ public class SuperColumnFamilyTemplateIT {
                 StringSerializer.get());
 
         final CountDownLatch latch = new CountDownLatch(2);
-        template.multiGetAllSuperColumns(Arrays.asList("27e988f7-6d60-4410-ada5-fb3ebf884c68", "9081707c-82cb-4d32-948d-25c4733453fc"), new SuperColumnsMapper<Object,String,String,String,String>() {
+        template.multiGetAllSuperColumns(Arrays.asList("27e988f7-6d60-4410-ada5-fb3ebf884c68",
+                                                       "9081707c-82cb-4d32-948d-25c4733453fc"),
+                                         new SuperColumnsMapper<Object,String,String,String,String>() {
 
             @Override
             public List<Object> mapSuperColumns(String rowKey, List<HSuperColumn<String,String,String>> hColumns) {
