@@ -28,6 +28,7 @@ import me.prettyprint.hector.api.factory.HFactory;
  * @author Aliaksandr Kazlou
  */
 
+// TODO: Create abstract TestNG class for IT support (which will start the server, load the data set and provide access to keyspace)
 public class SuperColumnFamilyTemplateIT {
     private static final Logger LOG = Logger.getLogger(SuperColumnFamilyTemplateIT.class);
 
