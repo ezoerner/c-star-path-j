@@ -243,8 +243,8 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                 SuperSlice<SN,N,V> slice = row.getSuperSlice();
 
                 List<HSuperColumn<SN,N,V>> columns = slice.getSuperColumns();
-                List<T> mappedSuperColumn = superColumnsMapper.mapSuperColumns(key, columns);
-                superColumns.addAll(mappedSuperColumn);
+                List<T> mappedSuperColumns = superColumnsMapper.mapSuperColumns(key, columns);
+                superColumns.addAll(mappedSuperColumns);
             }
 
         } catch (HectorException e) {
