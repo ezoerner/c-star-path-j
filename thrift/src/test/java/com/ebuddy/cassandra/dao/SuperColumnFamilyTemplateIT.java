@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.cassandraunit.DataLoader;
 import org.cassandraunit.dataset.yaml.ClassPathYamlDataSet;
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -30,11 +31,13 @@ import me.prettyprint.hector.api.factory.HFactory;
 public class SuperColumnFamilyTemplateIT {
     private static final Logger LOG = Logger.getLogger(SuperColumnFamilyTemplateIT.class);
 
-    private static final String CLUSTER_NAME = "cu";
+    private static final String CLUSTER_NAME = "Test Cluster";
     private static final String HOST = "localhost";
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+
         DataLoader dataLoader = new DataLoader(CLUSTER_NAME, HOST);
         ClassPathYamlDataSet dataSet = new ClassPathYamlDataSet("super-column-family-template-data.yaml");
         dataLoader.load(dataSet);
