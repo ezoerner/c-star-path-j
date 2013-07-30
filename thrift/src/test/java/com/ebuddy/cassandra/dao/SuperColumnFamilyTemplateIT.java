@@ -41,7 +41,7 @@ public class SuperColumnFamilyTemplateIT {
     }
 
     @Test(groups = "system")
-    public void shouldRun() throws Exception {
+    public void shouldMultiGetAllSuperColumns() throws Exception {
         Keyspace keyspace = getKeyspace();
         SuperColumnFamilyTemplate<String,String,String,String> template = new
                 SuperColumnFamilyTemplate<String,String,String,String>(
