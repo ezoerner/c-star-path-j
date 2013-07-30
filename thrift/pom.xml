@@ -16,6 +16,7 @@
         <hector.groupId>org.hectorclient</hector.groupId>
         <cassandra.version>1.2.3</cassandra.version>
         <aspectj.version>1.7.2</aspectj.version>
+        <commons.lang.version>2.6</commons.lang.version>
     </properties>
 
     <dependencies>
@@ -30,6 +31,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons.lang.version}</version>
         </dependency>
 
         <dependency>
@@ -103,6 +110,21 @@
             <artifactId>persistence-api</artifactId>
             <version>1.0</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Cassandra Unit -->
+        <dependency>
+            <groupId>org.cassandraunit</groupId>
+            <artifactId>cassandra-unit</artifactId>
+            <version>1.2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.9</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
