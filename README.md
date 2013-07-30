@@ -7,12 +7,15 @@ Structured objects are accessed by a hierarchical path delimited by forward slas
 Some special characters are used internally in paths, so paths should not contain any of the special characters
 '@#', and of course a path element cannot contain a forward slash '/'.
 
-Internally the object is decomposed into key value pairs using the
-[Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome). How objects are broken
-down can be customized by the caller using annotations supported by Jackson.
+On `writeToPath`, the object is first converted into maps, lists, and simple objects with the help of
+[Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome). How objects are converted can be
+customized by using annotations supported by Jackson. These structures are then decomposed into key-value pairs
+where the keys are paths.
 
-Paths can be used to access structured data at different levels within the structure. Special encoding using '@' followed
-by an index is used for embedded lists.  
+On `readFromPath`, the reverse process is used to recompose the key-value pairs back into a structured object or POJO.
+
+Paths can be used to access structured data at different levels within the structure. Lists have a specidal encoding
+in a path using '@' followed by a integer index encoded into the path.  
 **Note:** Special support for Sets of simple values is also planned but not yet implemented.
 
 ###Example:
