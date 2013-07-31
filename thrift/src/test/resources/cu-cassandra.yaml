@@ -33,7 +33,7 @@ disk_access_mode: auto
 concurrent_reads: 2
 concurrent_writes: 4
 #sliced_buffer_size_in_kb: 64
-storage_port: 7000
+storage_port: 7001
 rpc_keepalive: true
 thrift_framed_transport_size_in_mb: 15
 thrift_max_message_length_in_mb: 16
