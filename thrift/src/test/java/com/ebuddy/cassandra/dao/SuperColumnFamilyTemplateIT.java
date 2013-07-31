@@ -3,7 +3,6 @@ package com.ebuddy.cassandra.dao;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -65,7 +64,7 @@ public class SuperColumnFamilyTemplateIT {
                                          new SuperColumnsMapper<Object,String,String,String,String>() {
 
             @Override
-            public List<Object> mapSuperColumns(String rowKey, List<HSuperColumn<String,String,String>> hColumns) {
+            public Void mapSuperColumns(String rowKey, List<HSuperColumn<String,String,String>> hColumns) {
 
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Mapping SuperColumns: rowKey=" + rowKey +
@@ -89,7 +88,7 @@ public class SuperColumnFamilyTemplateIT {
                     latch.countDown();
                 }
 
-                return new ArrayList<Object>();
+                return null;
             }
         });
 
