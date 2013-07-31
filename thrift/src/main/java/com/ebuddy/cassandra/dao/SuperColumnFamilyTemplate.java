@@ -225,7 +225,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
     @Override
     public <T> List<T> multiGetAllSuperColumns(Collection<K> rowKeys, SuperColumnsMapper<T,K,SN,N,V> superColumnsMapper) {
-        List<T> superColumns = new LinkedList<T>();
+        List<T> result = new LinkedList<T>();
         try {
             MultigetSuperSliceQuery<K,SN,N,V> query = HFactory.createMultigetSuperSliceQuery(keyspace,
                                                                                              keySerializer,
@@ -236,21 +236,21 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                     setColumnFamily(columnFamily).
                     setRange(null, null, false, ALL);
 
-            QueryResult<SuperRows<K,SN,N,V>> result = query.execute();
+            QueryResult<SuperRows<K,SN,N,V>> queryResult = query.execute();
 
-            for (SuperRow<K,SN,N,V> row : result.get()) {
+            for (SuperRow<K,SN,N,V> row : queryResult.get()) {
                 K key = row.getKey();
                 SuperSlice<SN,N,V> slice = row.getSuperSlice();
 
                 List<HSuperColumn<SN,N,V>> columns = slice.getSuperColumns();
-                T mappedSuperColumns = superColumnsMapper.mapSuperColumns(key, columns);
-                superColumns.add(mappedSuperColumns);
+                T t = superColumnsMapper.mapSuperColumns(key, columns);
+                result.add(t);
             }
 
         } catch (HectorException e) {
             throw EXCEPTION_TRANSLATOR.translate(e);
         }
-        return superColumns;
+        return result;
     }
 
 
