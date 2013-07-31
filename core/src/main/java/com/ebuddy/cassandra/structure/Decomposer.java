@@ -2,13 +2,14 @@ package com.ebuddy.cassandra.structure;
 
 import static org.apache.commons.lang3.ObjectUtils.NULL;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Support for decomposing complex objects into paths to simple objects and vice-versa, i.e. composing
- * paths to objects back into complex objects.
+ * Support for decomposing complex objects into paths to simple objects.
  * Only the basic JSON structures are supported, i.e. Maps, Lists, Strings, Numbers, Booleans, and null.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
@@ -82,12 +83,26 @@ public class Decomposer {
         for (Map.Entry<?,?> entry : map.entrySet()) {
 
             Object key = entry.getKey();
-            Path keyPath = key instanceof Path ? (Path)key : Path.fromString(key.toString());
+            if (!Types.isSimple(key)) {
+                throw new IllegalArgumentException(String.format("map key of type %s not supported",
+                                                                 key.getClass().getSimpleName()));
+            }
+            Path keyPath = key instanceof Path ? (Path)key : Path.fromString(urlEncode(key));
 
             Object value = entry.getValue();
             normalized.put(keyPath, value);
         }
         return normalized;
+    }
+
+    private String urlEncode(Object key) {
+        String keyString;
+        try {
+             keyString = URLEncoder.encode(key.toString(), "UTF-8");
+        } catch (UnsupportedEncodingException ignored) {
+            throw new AssertionError("UTF-8 is unknown");
+        }
+        return keyString;
     }
 
     private Map<Path,Object> normalizeList(List<?> list) {

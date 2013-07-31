@@ -21,6 +21,9 @@ package com.ebuddy.cassandra;
  */
 public interface StructuredDataSupport<K> {
 
+    BatchContext beginBatch();
+    void applyBatch(BatchContext batchContext);
+
     /**
      * Read an object from a path in the database.
      * @param rowKey the row key for the object to be read

@@ -51,11 +51,10 @@ Implementation of `StructuredDataAccessSupport` for CQL3. Uses the
 
 To use structured data in a CQL3 table, the following data modeling rules apply:
 
-* There must be a designated path column and it must be the first clustering key,
-i.e. the next element of the primary key after the partition key.
-* There must be a designated value column.
-* There can only be one designated path and one designated value column per table.
-* The designated path and value columns must be typed as a textual type.
+* The table should have one path column that is the first clustering key, i.e. the second column in the primary
+  key after the partition key.
+* There should be one other column for the values.
+* The path and value columns should be typed as a textual type.
 
 Note: The tests include system tests that require a local Cassandra 1.2+ database to be running.
 These tests are in the "system" TestNG test group.
