@@ -270,11 +270,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         @Override
         public void processRow(ResultSet rs) throws SQLException {
             String valueString = rs.getString(valueColumnName);
-            if (valueString == null) {
-                // a "real" null here means that this is a deleted row!! See comment in deletePath
-                return;
-            }
-
             Path path = Path.fromString(rs.getString(pathColumnName));
 
             if (!path.startsWith(pathPrefix)) {
