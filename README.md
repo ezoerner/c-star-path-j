@@ -1,5 +1,5 @@
-cassandra-structured-data-access
-================================
+C* Path
+=======
 
 Support for reading and writing structured objects in Cassandra.
 Structured objects are accessed by a hierarchical path delimited by forward slashes.
