@@ -119,6 +119,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         } else {
             jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
         }
+        ((CqlBatchContext)batchContext).reset();
     }
 
     @Override
@@ -287,7 +288,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     private static class CqlBatchContext implements BatchContext {
-        private final Batch batch = batch();
+        private Batch batch = batch();
         private final List<Object> bindArguments = new LinkedList<Object>();
 
         private Batch getBatch() {
@@ -296,6 +297,11 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         private List<Object> getBindArguments() {
             return bindArguments;
+        }
+
+        private void reset() {
+            batch = batch();
+            bindArguments.clear();
         }
     }
 }
