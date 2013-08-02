@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -9,7 +9,7 @@ import java.sql.Statement;
 import com.datastax.driver.core.Session;
 
 /**
- * // TODO: Class description.
+ * java.sql.Statement wrapper around a datastax Statement.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */

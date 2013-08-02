@@ -1,16 +1,18 @@
 package com.ebuddy.cassandra.property;
 
+import java.io.IOException;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.type.TypeReference;
 
-import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.util.List;
-
 /**
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
+@Deprecated
 public class ListValue extends StructuredValue<List<String>> {
     private static final Logger LOG = Logger.getLogger(ListValue.class);
 

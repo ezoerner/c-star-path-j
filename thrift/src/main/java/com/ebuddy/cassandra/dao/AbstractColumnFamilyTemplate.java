@@ -2,6 +2,8 @@ package com.ebuddy.cassandra.dao;
 
 import javax.annotation.Nullable;
 
+import com.ebuddy.cassandra.BatchContext;
+
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.exceptions.HectorException;
@@ -33,19 +35,20 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
      * The serializer used for column values, or null if not specific to one column family..
      */
     @Nullable
-    protected final Serializer<V> valueSerializer;
+    private final Serializer<V> valueSerializer;
 
-    /**
-     * The column family for this DAO, or null if not specific to a single column family.
-     */
-    @Nullable
-    protected final String columnFamily;
 
     /**
      * The serializer for a standard column name or a super-column name, or null if not specific to one column family.
      */
     @Nullable
-    protected final Serializer<N> topSerializer;
+    private final Serializer<N> topSerializer;
+
+    /**
+     * The default column family for this DAO, or null if not specific to a single column family.
+     */
+    @Nullable
+    private final String columnFamily;
 
     /**
      * Constructor.
@@ -54,8 +57,8 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
      * @param columnFamily  the name of the column family or null if this is not specific to a column family.
      * @param keySerializer the serializer for row keys
      * @param topSerializer the serializer for the top columns (columns for a Column Family,
-*                      superColumns for a Super Column Family).
-*                      If null, then this instance is not specific to one Column Family.
+     *                      superColumns for a Super Column Family).
+     *                      If null, then this instance is not specific to one Column Family.
      */
     protected AbstractColumnFamilyTemplate(Keyspace keyspace,
                                            @Nullable String columnFamily,
@@ -79,13 +82,13 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
     }
 
     /**
-     * Remove the entire row.
+     * Remove the entire row in the default column family.
      * @param rowKey the row key
-     * @param txnContext optional TransactionContext
+     * @param batchContext optional BatchContext
      */
     public final void removeRow(K rowKey,
-                                @Nullable TransactionContext txnContext) {
-        Mutator<K> mutator = validateAndGetMutator(txnContext);
+                                @Nullable BatchContext batchContext) {
+        Mutator<K> mutator = validateAndGetMutator(batchContext);
         try {
             if (mutator == null) {
                 createMutator().delete(rowKey, columnFamily, null, null);
@@ -98,8 +101,27 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
     }
 
     protected final Mutator<K> createMutator() {
-        return HFactory.createMutator(keyspace, keySerializer);
+        return HFactory.createMutator(getKeyspace(), getKeySerializer());
     }
 
+    protected final Serializer<V> getValueSerializer() {
+        // the assumption is that if this method is called then null is not acceptable
+        if (valueSerializer == null) {
+            throw new IllegalStateException("value serializer is null");
+        }
+        return valueSerializer;
+    }
 
+    protected final Serializer<N> getTopSerializer() {
+        // the assumption is that if this method is called then null is not acceptable
+        if (topSerializer == null) {
+            throw new IllegalStateException("top serializer is null");
+        }
+        return topSerializer;
+    }
+
+    @Nullable
+    public String getColumnFamily() {
+        return columnFamily;
+    }
 }

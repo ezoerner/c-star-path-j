@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
@@ -22,18 +23,18 @@ import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 public interface SuperColumnFamilyOperations<K,SN,N,V>  {
 
     /**
-     * Create a TransactionContext for use with this keyspace.
+     * Create a BatchContext for use with this keyspace.
      *
-     * @return the TransactionContext
+     * @return the BatchContext
      */
-    TransactionContext begin();
+    BatchContext begin();
 
     /**
-     * Execute a batch of mutations using a mutator.
+     * Execute a batch of updates.
      *
-     * @param transactionContext the TransactionContext
+     * @param batchContext the BatchContext
      */
-    void commit(@Nonnull TransactionContext transactionContext);
+    void commit(@Nonnull BatchContext batchContext);
 
     V readColumnValue(K rowKey, SN superColumnName, N columnName);
 
@@ -71,27 +72,27 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
 
     void writeColumns(K rowKey, SN superColumnName, Map<N,V> columnMap);
 
-    void writeColumns(K rowKey, SN superColumnName, Map<N,V> columnMap, @Nonnull TransactionContext txnContext);
+    void writeColumns(K rowKey, SN superColumnName, Map<N,V> columnMap, @Nonnull BatchContext batchContext);
 
     void writeColumn(K rowKey, SN superColumnName, N columnName, V columnValue);
 
-    void writeColumn(K rowKey, SN superColumnName, N columnName, V columnValue, @Nonnull TransactionContext txnContext);
+    void writeColumn(K rowKey, SN superColumnName, N columnName, V columnValue, @Nonnull BatchContext batchContext);
 
     void deleteColumns(K rowKey, SN superColumnName, Iterable<N> subcolumnNames);
 
     void deleteColumns(K rowKey,
                        SN superColumnName,
                        Iterable<N> subcolumnNames,
-                       @Nonnull TransactionContext txnContext);
+                       @Nonnull BatchContext batchContext);
 
     /**
      * Remove the named super column as part of a larger transaction.
      *
      * @param rowKey the row key
      * @param superColumnName the name of the super column being removed
-     * @param txnContext the transactional context for batch operations.
+     * @param batchContext the transactional context for batch operations.
      */
-    void deleteSuperColumn(K rowKey, SN superColumnName, @Nonnull TransactionContext txnContext);
+    void deleteSuperColumn(K rowKey, SN superColumnName, @Nonnull BatchContext batchContext);
 
     /**
      * Remove the named super column.
@@ -103,5 +104,5 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
 
     void removeRow(K rowKey);
 
-    void removeRow(K rowKey, TransactionContext txnContext);
+    void removeRow(K rowKey, BatchContext batchContext);
 }

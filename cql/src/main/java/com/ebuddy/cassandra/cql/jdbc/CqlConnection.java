@@ -1,4 +1,4 @@
-package com.ebuddy.cassandra.cql;
+package com.ebuddy.cassandra.cql.jdbc;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -21,7 +21,7 @@ import java.util.Properties;
 import com.datastax.driver.core.Session;
 
 /**
- * // TODO: Class description.
+ * java.sql.Connection wrapper around a datastax Connection.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */

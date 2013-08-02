@@ -1,11 +1,11 @@
 package com.ebuddy.cassandra.property;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.type.TypeReference;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * A PropertyValue implementation that stores a map of PropertyValues.
@@ -14,6 +14,7 @@ import java.util.Map;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 // needs to be public so jackson can access getValue() by reflection
+@Deprecated
 public final class NestedProperties extends StructuredValue<Map<String, PropertyValue<?>>> {
     private static final Logger LOG = Logger.getLogger(NestedProperties.class);
 

@@ -1,8 +1,8 @@
 package com.ebuddy.cassandra.dao.mapper;
 
-import me.prettyprint.hector.api.beans.HColumn;
-
 import java.util.List;
+
+import me.prettyprint.hector.api.beans.HColumn;
 
 /**
  * Maps supercolumns into a parameterized type.

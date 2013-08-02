@@ -1,8 +1,8 @@
 package com.ebuddy.cassandra.property;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-
 import java.nio.ByteBuffer;
+
+import me.prettyprint.cassandra.serializers.StringSerializer;
 
 /**
  * An implementation of PropertyValue that stores a String.
@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 // needs to be public so jackson can access getValue() by reflection
+@Deprecated
 public final class StringValue implements PropertyValue<String> {
     private final String value;
 

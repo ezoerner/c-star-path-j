@@ -2,8 +2,9 @@ package com.ebuddy.cassandra.dao;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 
+import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.HectorExceptionTranslator;
 import com.ebuddy.cassandra.NoSQLExceptionTranslator;
 
@@ -29,32 +30,38 @@ public class KeyspaceTemplate<K> implements KeyspaceOperations {
     /**
      * The keyspace for operations.
      */
-    protected final Keyspace keyspace;
+    private final Keyspace keyspace;
     /**
      * The serializer for row keys.
      */
-    protected final Serializer<K> keySerializer;
+    private final Serializer<K> keySerializer;
 
     public KeyspaceTemplate(Keyspace keyspace, Serializer<K> keySerializer) {
+        if (keySerializer == null) {
+            throw new IllegalArgumentException("keySerializer is null");
+        }
+        if (keyspace == null) {
+            throw new IllegalArgumentException("keyspace is null");
+        }
         this.keyspace = keyspace;
         this.keySerializer = keySerializer;
     }
 
     /**
-     * Create a TransactionContext for use with batch operations.
+     * Create a BatchContext for use with batch operations.
      */
     @Override
-    public final TransactionContext begin() {
-        return new HectorTransactionContext(keyspace, keySerializer);
+    public final BatchContext begin() {
+        return new HectorBatchContext(keyspace, keySerializer);
     }
 
     /**
      * Execute a batch.
      *
-     * @param txnContext the  TransactionContext
+     * @param txnContext the  BatchContext
      */
     @Override
-    public final void commit(@Nonnull TransactionContext txnContext) {
+    public final void commit(@Nonnull BatchContext txnContext) {
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         Validate.notNull(mutator);
         try {
@@ -64,26 +71,34 @@ public class KeyspaceTemplate<K> implements KeyspaceOperations {
         }
     }
 
-    protected final Mutator<K> validateAndGetMutator(TransactionContext txnContext) {
+    protected final Mutator<K> validateAndGetMutator(BatchContext txnContext) {
         if (txnContext == null) {
             return null;
         }
 
         //noinspection UnnecessarilyQualifiedInnerClassAccess
-        Validate.isTrue(txnContext instanceof KeyspaceTemplate.HectorTransactionContext,
-                        "TransactionContext not valid for this DAO implementation");
+        Validate.isTrue(txnContext instanceof KeyspaceTemplate.HectorBatchContext,
+                        "BatchContext not valid for this DAO implementation");
 
         @SuppressWarnings({"unchecked", "ConstantConditions"})
-        HectorTransactionContext htc = (HectorTransactionContext)txnContext;
+        HectorBatchContext htc = (HectorBatchContext)txnContext;
 
         htc.validateSameKeyspace(keyspace);
         return htc.getMutator();
     }
 
-    class HectorTransactionContext implements TransactionContext {
+    protected final Serializer<K> getKeySerializer() {
+        return keySerializer;
+    }
+
+    protected final Keyspace getKeyspace() {
+        return keyspace;
+    }
+
+    class HectorBatchContext implements BatchContext {
         final Mutator<K> mutator;
 
-        private HectorTransactionContext(Keyspace keyspace, Serializer<K> keySerializer) {
+        private HectorBatchContext(Keyspace keyspace, Serializer<K> keySerializer) {
             mutator = HFactory.createMutator(keyspace, keySerializer);
         }
 
