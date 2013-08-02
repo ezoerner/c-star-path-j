@@ -59,8 +59,8 @@ public class ComposerTest {
     @Test(groups = "unit")
     public void composeSimpleObjectsWithLongerPaths() throws Exception {
         Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
-        simpleObjects.put(Path.fromString("a/b/c"), "");
-        simpleObjects.put(Path.fromString("a/b/d"), 42);
+        simpleObjects.put(Path.fromString("a%2F%40%23/b/c"), "");
+        simpleObjects.put(Path.fromString("a%2F%40%23/b/d"), 42);
         simpleObjects.put(Path.fromString("d/e/f"), true);
         simpleObjects.put(Path.fromString("d/f/g"), false);
         simpleObjects.put(Path.fromString("j/k/l"), null);
@@ -157,7 +157,7 @@ public class ComposerTest {
         Map<String,Object> innerMap2 = new HashMap<String,Object>() {{
             put("b", innerMap1);
         }};
-        result.put("a", innerMap2);
+        result.put("a/@#", innerMap2);
 
         final Map<String,Object> innerMapF = new HashMap<String,Object>() {{
             put("f", true);
