@@ -58,8 +58,8 @@ public class DecomposerTest {
     @Test(groups = "unit")
     public void decomposeSimpleObjectsWithLongerPaths() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
-        structures.put(Path.fromString("a/b/c"), "");
-        structures.put(Path.fromString("d/e/f"), 42);
+        structures.put(Path.fromString("a/b@/c"), "");
+        structures.put(Path.fromString("d/e#/f"), 42);
         structures.put(Path.fromString("g/h/i"), true);
         structures.put(Path.fromString("j/k/l"), null);
 
@@ -67,8 +67,9 @@ public class DecomposerTest {
 
         assertNotSame(result, structures);
 
-        // output of only simple objects is still equal to the input
-        // with one exception, nulls are replaced by the NULL token
+        // output of only simple objects is equal to the input
+        //  except nulls are replaced by the NULL token.
+        //  Note that the special characters are not URL-encoded in input paths  
         structures.put(Path.fromString("j/k/l"), ObjectUtils.NULL);
         assertEquals(result, structures);
     }
@@ -100,10 +101,13 @@ public class DecomposerTest {
         Map<Path,Object> structures = new HashMap<Path,Object>();
         Map<String,Object> nestedMap = new HashMap<String,Object>();
         nestedMap.put("y", "test");
+        nestedMap.put("@##//", "special@#");
         structures.put(Path.fromString("a/b/c"), nestedMap);
 
+        // map keys are URL-encoded, values are not
         Map<Path,Object> expected  = new HashMap<Path,Object>();
         expected.put(Path.fromString("a/b/c/y"), "test");
+        expected.put(Path.fromString("a/b/c/%40%23%23%2F%2F"), "special@#");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertTrue(result.equals(expected));
