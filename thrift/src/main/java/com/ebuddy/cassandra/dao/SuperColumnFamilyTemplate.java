@@ -15,6 +15,7 @@ import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
+import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 
 import me.prettyprint.hector.api.Keyspace;
@@ -24,11 +25,14 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.beans.Rows;
+import me.prettyprint.hector.api.beans.SuperRow;
+import me.prettyprint.hector.api.beans.SuperRows;
 import me.prettyprint.hector.api.beans.SuperSlice;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.MultigetSubSliceQuery;
+import me.prettyprint.hector.api.query.MultigetSuperSliceQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SubColumnQuery;
 import me.prettyprint.hector.api.query.SubSliceQuery;
@@ -222,6 +226,37 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                  SN superColumnName,
                                                  SuperColumnMapper<T,K,SN,N,V> superColumnMapper) {
         return basicMultiGetSubSlice(rowKeys, superColumnName, superColumnMapper, null);
+    }
+
+    @Override
+    public <T> List<T> multiGetAllSuperColumns(Collection<K> rowKeys, SuperColumnFamilyRowMapper<T,K,SN,N,V>
+            superColumnFamilyRowMapper) {
+        List<T> result = new LinkedList<T>();
+        try {
+            MultigetSuperSliceQuery<K,SN,N,V> query = HFactory.createMultigetSuperSliceQuery(getKeyspace(),
+                                                                                             getKeySerializer(),
+                                                                                             getTopSerializer(),
+                                                                                             subSerializer,
+                                                                                             getValueSerializer());
+            query.setKeys(rowKeys).
+                    setColumnFamily(getColumnFamily()).
+                    setRange(null, null, false, ALL);
+
+            QueryResult<SuperRows<K,SN,N,V>> queryResult = query.execute();
+
+            for (SuperRow<K,SN,N,V> row : queryResult.get()) {
+                K key = row.getKey();
+                SuperSlice<SN,N,V> slice = row.getSuperSlice();
+
+                List<HSuperColumn<SN,N,V>> columns = slice.getSuperColumns();
+                T t = superColumnFamilyRowMapper.mapRow(key, columns);
+                result.add(t);
+            }
+
+        } catch (HectorException e) {
+            throw EXCEPTION_TRANSLATOR.translate(e);
+        }
+        return result;
     }
 
 

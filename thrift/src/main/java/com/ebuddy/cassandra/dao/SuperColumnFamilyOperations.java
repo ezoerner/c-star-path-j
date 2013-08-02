@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
+import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 
 /**
@@ -56,6 +57,9 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
     <T> List<T> multiGetSuperColumn(Collection<K> rowKeys,
                                     SN superColumnName,
                                     SuperColumnMapper<T,K,SN,N,V> superColumnMapper);
+
+    <T> List<T> multiGetAllSuperColumns(Collection<K> rowKeys,
+                                        SuperColumnFamilyRowMapper<T,K,SN,N,V> superColumnFamilyRowMapper);
 
     <T> List<T> multiGetColumns(Collection<K> rowKeys,
                                 SN superColumnName,

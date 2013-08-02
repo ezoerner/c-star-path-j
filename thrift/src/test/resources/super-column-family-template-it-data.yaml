@@ -1,0 +1,29 @@
+name: SuperColumnFamilyTemplateIT
+replicationFactor: 1
+strategy: org.apache.cassandra.locator.SimpleStrategy
+columnFamilies:
+- name: SuperCF1
+  type: SUPER
+  keyType: UTF8Type
+  comparatorType: UTF8Type
+  subComparatorType: UTF8Type
+  defaultColumnValueType: UTF8Type
+  rows:
+  - key: '27e988f7-6d60-4410-ada5-fb3ebf884c68'
+    superColumns:
+    - name: alex
+      columns:
+      - {name: age, value: 27}
+      - {name: rank, value: 5}
+      - {name: city, value: Amsterdam}
+    - name: tom
+      columns:
+      - {name: age, value: 19}
+      - {name: rank, value: 1}
+      - {name: city, value: London}
+  - key: '9081707c-82cb-4d32-948d-25c4733453fc'
+    superColumns:
+    - name: mike
+      columns:
+      - {name: age, value: 25}
+      - {name: rank, value: 2}
