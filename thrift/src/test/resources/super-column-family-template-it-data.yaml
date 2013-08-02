@@ -1,4 +1,4 @@
-name: SuperColumnFamilyTemplate
+name: SuperColumnFamilyTemplateIT
 replicationFactor: 1
 strategy: org.apache.cassandra.locator.SimpleStrategy
 columnFamilies:

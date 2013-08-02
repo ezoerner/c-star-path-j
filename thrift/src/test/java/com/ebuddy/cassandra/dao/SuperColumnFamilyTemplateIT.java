@@ -1,12 +1,9 @@
 package com.ebuddy.cassandra.dao;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.cassandraunit.DataLoader;
@@ -34,6 +31,11 @@ public class SuperColumnFamilyTemplateIT {
     private static final String CLUSTER_NAME = "Test Cluster";
     private static final String HOST = "localhost:9171";
 
+    private static final String ALEX_ROW_KEY = "27e988f7-6d60-4410-ada5-fb3ebf884c68";
+    private static final String MIKE_ROW_KEY = "9081707c-82cb-4d32-948d-25c4733453fc";
+    private static final String SUPER_COLUMN_FAMILY = "SuperCF1";
+    private static final String KEYSPACE_NAME = "SuperColumnFamilyTemplateIT";
+
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         // It starts only once. If this method has been already called, nothing will happen, Cassandra still be started
@@ -42,7 +44,7 @@ public class SuperColumnFamilyTemplateIT {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
 
         DataLoader dataLoader = new DataLoader(CLUSTER_NAME, HOST);
-        ClassPathYamlDataSet dataSet = new ClassPathYamlDataSet("super-column-family-template-data.yaml");
+        ClassPathYamlDataSet dataSet = new ClassPathYamlDataSet("super-column-family-template-it-data.yaml");
         dataLoader.load(dataSet);
     }
 
@@ -52,15 +54,13 @@ public class SuperColumnFamilyTemplateIT {
         SuperColumnFamilyTemplate<String,String,String,String> template = new
                 SuperColumnFamilyTemplate<String,String,String,String>(
                 keyspace,
-                "SuperCF1",
+                SUPER_COLUMN_FAMILY,
                 StringSerializer.get(),
                 StringSerializer.get(),
                 StringSerializer.get(),
                 StringSerializer.get());
 
-        final CountDownLatch latch = new CountDownLatch(2);
-        template.multiGetAllSuperColumns(Arrays.asList("27e988f7-6d60-4410-ada5-fb3ebf884c68",
-                                                       "9081707c-82cb-4d32-948d-25c4733453fc"),
+        template.multiGetAllSuperColumns(Arrays.asList(ALEX_ROW_KEY, MIKE_ROW_KEY),
                                          new SuperColumnsMapper<Object,String,String,String,String>() {
 
             @Override
@@ -71,36 +71,25 @@ public class SuperColumnFamilyTemplateIT {
                                       ";hColumns=" + hColumns);
                 }
 
-                if (rowKey.equals("27e988f7-6d60-4410-ada5-fb3ebf884c68")) {
+                if (rowKey.equals(ALEX_ROW_KEY)) {
                     assertEquals(hColumns.size(), 2);
                     assertEquals(hColumns.get(0).getName(), "alex");
                     assertEquals(hColumns.get(1).getName(), "tom");
                 }
 
-                if (rowKey.equals("9081707c-82cb-4d32-948d-25c4733453fc")) {
+                if (rowKey.equals(MIKE_ROW_KEY)) {
                     assertEquals(hColumns.size(), 1);
                     assertEquals(hColumns.get(0).getName(), "mike");
-                }
-
-
-                if (rowKey.equals("27e988f7-6d60-4410-ada5-fb3ebf884c68") ||
-                        rowKey.equals("9081707c-82cb-4d32-948d-25c4733453fc")) {
-                    latch.countDown();
                 }
 
                 return null;
             }
         });
-
-        boolean timeout = !latch.await(10, TimeUnit.SECONDS);
-        if (timeout) {
-            fail("Expect callbacks to be called 2 times, so await should be completed before the timeout!");
-        }
     }
 
     private Keyspace getKeyspace() {
         Cluster cluster = HFactory.getOrCreateCluster(CLUSTER_NAME, HOST);
-        Keyspace keyspace = HFactory.createKeyspace("SuperColumnFamilyTemplate", cluster);
+        Keyspace keyspace = HFactory.createKeyspace(KEYSPACE_NAME, cluster);
 
         return keyspace;
     }
