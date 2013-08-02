@@ -14,8 +14,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang.Validate;
 
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
+import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
-import com.ebuddy.cassandra.dao.mapper.SuperColumnsMapper;
 
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
@@ -224,7 +224,8 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     }
 
     @Override
-    public <T> List<T> multiGetAllSuperColumns(Collection<K> rowKeys, SuperColumnsMapper<T,K,SN,N,V> superColumnsMapper) {
+    public <T> List<T> multiGetAllSuperColumns(Collection<K> rowKeys, SuperColumnFamilyRowMapper<T,K,SN,N,V>
+            superColumnFamilyRowMapper) {
         List<T> result = new LinkedList<T>();
         try {
             MultigetSuperSliceQuery<K,SN,N,V> query = HFactory.createMultigetSuperSliceQuery(keyspace,
@@ -243,7 +244,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                 SuperSlice<SN,N,V> slice = row.getSuperSlice();
 
                 List<HSuperColumn<SN,N,V>> columns = slice.getSuperColumns();
-                T t = superColumnsMapper.mapSuperColumns(key, columns);
+                T t = superColumnFamilyRowMapper.mapRow(key, columns);
                 result.add(t);
             }
 

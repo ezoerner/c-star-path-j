@@ -12,7 +12,7 @@ import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.ebuddy.cassandra.dao.mapper.SuperColumnsMapper;
+import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Cluster;
@@ -61,10 +61,10 @@ public class SuperColumnFamilyTemplateIT {
                 StringSerializer.get());
 
         template.multiGetAllSuperColumns(Arrays.asList(ALEX_ROW_KEY, MIKE_ROW_KEY),
-                                         new SuperColumnsMapper<Object,String,String,String,String>() {
+                                         new SuperColumnFamilyRowMapper<Object,String,String,String,String>() {
 
             @Override
-            public Void mapSuperColumns(String rowKey, List<HSuperColumn<String,String,String>> hColumns) {
+            public Void mapRow(String rowKey, List<HSuperColumn<String,String,String>> hColumns) {
 
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Mapping SuperColumns: rowKey=" + rowKey +
