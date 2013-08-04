@@ -44,6 +44,16 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
+    public BatchContext beginBatch() {
+        return operations.begin();
+    }
+
+    @Override
+    public void applyBatch(BatchContext batchContext) {
+        operations.commit(batchContext);
+    }
+
+    @Override
     public <T> T readFromPath(K rowKey, String pathString, TypeReference<T> type) {
         validateArgs(rowKey, pathString);
         Path inputPath = Path.fromString(pathString);
@@ -104,7 +114,11 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         Path inputPath = Path.fromString(path);
         String start = inputPath.toString();
         String finish = start + Character.MAX_VALUE;
-        operations.deleteColumns(rowKey, start, finish);
+        if (batchContext == null) {
+            operations.deleteColumns(rowKey, start, finish);
+        } else {
+            operations.deleteColumns(rowKey, start, finish, batchContext);
+        }
     }
 
     /**

@@ -2,6 +2,8 @@ package com.ebuddy.cassandra.structure;
 
 import static java.util.AbstractMap.SimpleEntry;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -133,39 +135,56 @@ public class Composer {
     private Object transformLists(Map<String,Object> map) {
         // go through nested maps and transform maps into lists where possible
         if (Path.isList(map)) {
-            SortedMap<Integer,Object> sortedMap = new TreeMap<Integer,Object>();
-            List<Object> list = new ArrayList<Object>(map.size());
-
-            // convert keys into integer indexes and sort
-            for (Map.Entry<String,Object> entry : map.entrySet()) {
-                Object value = entry.getValue();
-                Object transformedValue;
-                if (Types.isSimple(value)) {
-                    transformedValue = value;
-                } else if (value instanceof Map) {
-                    transformedValue = transformLists((Map<String,Object>)value);
-                } else {
-                    throw new IllegalStateException("found strange object in structure: " + value);
-                }
-                sortedMap.put(Path.getListIndex(entry.getKey()), transformedValue);
-            }
-
-            // copy values into list in sorted order
-            for (Object value : sortedMap.values()) {
-                list.add(value);
-            }
-            return list;
+            return transformActualList(map);
         }
-        // if not a list, then just recursively transform the structure
+        // if not a list, then just recursively transform the structure, and also URLDecode the keys
+        Map<String,Object> newMap = new HashMap<String,Object>(map.size());
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map) {
                 Object transformedValue = transformLists((Map<String,Object>)value);
-                entry.setValue(transformedValue);
-            } else if (!Types.isSimple(value) ) {
+                newMap.put(urlDecode(entry.getKey()), transformedValue);
+            } else if (Types.isSimple(value)) {
+                newMap.put(urlDecode(entry.getKey()), entry.getValue());
+            } else {
                 throw new IllegalStateException("found strange object in structure: " + value);
             }
         }
-        return map;
+        return newMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object transformActualList(Map<String,Object> map) {
+        SortedMap<Integer,Object> sortedMap = new TreeMap<Integer,Object>();
+        List<Object> list = new ArrayList<Object>(map.size());
+
+        // convert keys into integer indexes and sort
+        for (Map.Entry<String,Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            Object transformedValue;
+            if (Types.isSimple(value)) {
+                transformedValue = value;
+            } else if (value instanceof Map) {
+                transformedValue = transformLists((Map<String,Object>)value);
+            } else {
+                throw new IllegalStateException("found strange object in structure: " + value);
+            }
+            sortedMap.put(Path.getListIndex(entry.getKey()), transformedValue);
+        }
+
+        // copy values into list in sorted order
+        for (Object value : sortedMap.values()) {
+            list.add(value);
+        }
+        return list;
+    }
+
+    private String urlDecode(String head) {
+        try {
+            head = URLDecoder.decode(head, "UTF-8");
+        } catch (UnsupportedEncodingException ignored) {
+            throw new AssertionError("UTF-8 is unknown");
+        }
+        return head;
     }
 }

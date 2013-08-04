@@ -4,8 +4,10 @@ C* Path
 Support for reading and writing structured objects in Cassandra.
 Structured objects can be accessed *in toto* or in part by a hierarchical path delimited by forward slashes.
 
-Some special characters are used internally in paths, so paths should not contain any of the special characters
-'@#', and of course a path element cannot contain a forward slash '/'.
+Some special characters are used internally in the implementation, so paths should not contain any of the special
+characters '@#', and, as you would expect, a path element cannot contain a forward slash '/' since this character
+separates path elements. In order to represent map keys that may contain such characters, the caller should URL-encode
+the individual path elements. Paths elements are automatically URL-decoded by the implementation when recomposing maps.
 
 On `writeToPath`, the object is first converted into maps, lists, and simple objects with the help of
 [Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome). How objects are converted can be
@@ -34,11 +36,10 @@ in a path using '@' followed by a integer index encoded into the path.
         Class3(int c) { this.c = c }
     }
 
-`new Class1()` would be decomposed into the following path-value pairs:
+`new Class1()` would be decomposed into the following key-value pairs:
 
 `a/b/@0/c/ -> 42`  
 `a/b/@1/c/ -> 43`
-
 
 api module
 ----------
@@ -51,11 +52,10 @@ Implementation of `StructuredDataAccessSupport` for CQL3. Uses the
 
 To use structured data in a CQL3 table, the following data modeling rules apply:
 
-* There must be a designated path column and it must be the first clustering key,
-i.e. the next element of the primary key after the partition key.
-* There must be a designated value column.
-* There can only be one designated path and one designated value column per table.
-* The designated path and value columns must be typed as a textual type.
+* The table should have one path column that is the first clustering key, i.e. the second column in the primary
+  key after the partition key.
+* There should be one other column for the values.
+* The path and value columns should be typed as a textual type.
 
 Note: The tests include system tests that require a local Cassandra 1.2+ database to be running.
 These tests are in the "system" TestNG test group.

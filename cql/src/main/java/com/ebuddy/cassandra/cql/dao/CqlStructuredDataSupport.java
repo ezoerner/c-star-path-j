@@ -106,6 +106,23 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
+    public BatchContext beginBatch() {
+        return new CqlBatchContext();
+    }
+
+    @Override
+    public void applyBatch(BatchContext batchContext) {
+        Batch batch = validateAndGetBatch(batchContext);
+        List<Object> bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
+        if (bindArguments.isEmpty()) {
+            jdbcTemplate.execute(batch.getQueryString());
+        } else {
+            jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+        }
+        ((CqlBatchContext)batchContext).reset();
+    }
+
+    @Override
     public <T> T readFromPath(K rowKey, String pathString, TypeReference<T> type) {
         validateArgs(rowKey, pathString);
         Path inputPath = Path.fromString(pathString);
@@ -142,17 +159,20 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                             String pathString,
                             Object structuredValue,
                             BatchContext batchContext) {
-        if (batchContext != null) {
-            throw new UnsupportedOperationException("Batch updates not yet implemented");
-        }
+        Batch batch = validateAndGetBatch(batchContext);
 
         validateArgs(rowKey, pathString);
         Object simplifiedStructure = writeMapper.convertValue(structuredValue, Object.class);
         Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), simplifiedStructure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
-        Batch batch = batch();
-        List<Object> bindArguments = new LinkedList<Object>();
+        List<Object> bindArguments;
+        if (batchContext == null) {
+            batch = batch();
+            bindArguments = new LinkedList<Object>();
+        } else {
+            bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
+        }
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
             batch.add(insertStatement);
 
@@ -163,8 +183,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             bindArguments.add(stringValue);
         }
 
-        // use queryForList since for some reason JdbcTemplate lacks a parameter binding method for execute
-        jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+        if (batchContext == null) {
+            jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+        }
     }
 
     @Override
@@ -174,9 +195,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     @Override
     public void deletePath(K rowKey, String pathString, BatchContext batchContext) {
-        if (batchContext != null) {
-            throw new UnsupportedOperationException("Batch updates not yet implemented");
-        }
+        Batch batch = validateAndGetBatch(batchContext);
 
         validateArgs(rowKey, pathString);
         Path inputPath = Path.fromString(pathString);
@@ -188,9 +207,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         // would like to just do a delete with a where clause, but unfortunately Cassandra can't do that in CQL (either)
         // with >= and <=
 
-        // Also, we can't delete primary key columns without deleting the whole row, so we delete here only the
-        // value column. However, this leaves the row behind with a null value. So in our query for readFromPath
-        // we filter out null values. Strange.
+        // Since the path column is in the primary key, we need to just delete whole rows.
 
         Object[] args = {rowKey,start,finish};
         List<String> pathsToDelete = jdbcTemplate.queryForList(readForDeleteString, args, String.class);
@@ -199,25 +216,43 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             return;
         }
 
-        Delete deleteStatement = delete(valueColumnName)
-                .from(tableName);
+        Delete deleteStatement = delete() .from(tableName);
         deleteStatement
                 .where(eq(partitionKeyColumnName, rowKey))
                 .and(eq(pathColumnName, bindMarker()));
 
-        Batch batch = batch();
-        List<Object> bindArguments = new LinkedList<Object>();
+
+        List<Object> bindArguments;
+        if (batchContext == null) {
+            batch = batch();
+            bindArguments = new LinkedList<Object>();
+        } else {
+            bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
+        }
+
         for (String pathToDelete : pathsToDelete) {
             batch.add(deleteStatement);
             bindArguments.add(pathToDelete);
         }
 
-        jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+        if (batchContext == null) {
+          jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+        }
     }
 
     private void validateArgs(K rowKey, String pathString) {
         Validate.notEmpty(pathString);
         Validate.notNull(rowKey);
+    }
+
+    private Batch validateAndGetBatch(BatchContext batchContext) {
+        if (batchContext == null) {
+            return null;
+        }
+        if (!(batchContext instanceof CqlBatchContext)) {
+            throw new IllegalArgumentException("batchContext is not a CQL batch context");
+        }
+        return ((CqlBatchContext)batchContext).getBatch();
     }
 
     private class PathMapRowCallbackHandler implements RowCallbackHandler {
@@ -235,11 +270,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         @Override
         public void processRow(ResultSet rs) throws SQLException {
             String valueString = rs.getString(valueColumnName);
-            if (valueString == null) {
-                // a "real" null here means that this is a deleted row!! See comment in deletePath
-                return;
-            }
-
             Path path = Path.fromString(rs.getString(pathColumnName));
 
             if (!path.startsWith(pathPrefix)) {
@@ -249,6 +279,24 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             Object value = StructureConverter.get().fromString(valueString);
             // this can be a null converted from a JSON null
             resultMap.put(path, value);
+        }
+    }
+
+    private static class CqlBatchContext implements BatchContext {
+        private Batch batch = batch();
+        private final List<Object> bindArguments = new LinkedList<Object>();
+
+        private Batch getBatch() {
+            return batch;
+        }
+
+        private List<Object> getBindArguments() {
+            return bindArguments;
+        }
+
+        private void reset() {
+            batch = batch();
+            bindArguments.clear();
         }
     }
 }
