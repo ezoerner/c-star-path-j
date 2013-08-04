@@ -2,7 +2,7 @@ C* Path
 =======
 
 Support for reading and writing structured objects in Cassandra.
-Structured objects can be accessed in toto or in parts by a hierarchical path delimited by forward slashes.
+Structured objects can be accessed *in toto* or in part by a hierarchical path delimited by forward slashes.
 
 Some special characters are used internally in paths, so paths should not contain any of the special characters
 '@#', and of course a path element cannot contain a forward slash '/'.
