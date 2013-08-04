@@ -8,16 +8,15 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import org.jboss.netty.util.internal.StringUtil;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
-import com.ebuddy.cassandra.cql.jdbc.DataStaxDataSource;
 
 /**
  * System tests for CqlStructuredDataSupport.
@@ -29,14 +28,11 @@ public class CqlStructuredDataSupportSystemTest {
     private static final String CASSANDRA_HOSTS_SYSTEM_PROPERTY = "cassandra.hosts";
     private static final String TEST_KEYSPACE = "cqlstructureddatasupportsystemtest";
 
+    private Cluster cluster;
+    private Session session;
     private final String tableName = "testpojo";
 
-    private Cluster cluster;
-    private JdbcTemplate template;
-
     private StructuredDataSupport<UUID> dao;
-    private DataStaxDataSource dataSource;
-
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
@@ -48,10 +44,9 @@ public class CqlStructuredDataSupportSystemTest {
             clusterBuilder.addContactPoint(host);
         }
         cluster = clusterBuilder.build();
-        dataSource = new DataStaxDataSource(cluster);
-        template = new JdbcTemplate(dataSource);
+        session = cluster.connect(TEST_KEYSPACE);
 
-        dao = new CqlStructuredDataSupport<UUID>(tableName, template);
+        dao = new CqlStructuredDataSupport<UUID>(tableName, session);
         dropAndCreateSchema();
     }
 
@@ -80,17 +75,15 @@ public class CqlStructuredDataSupportSystemTest {
 
     private void dropAndCreateSchema() {
         dropKeyspaceIfExists();
-        template.execute("CREATE KEYSPACE " + TEST_KEYSPACE + " WITH replication " + "= {'class':'SimpleStrategy', " +
-                                 "'replication_factor':1};");
-        // now can specify default keyspace
-        dataSource.setDefaultKeyspace(TEST_KEYSPACE);
+        session.execute("CREATE KEYSPACE " + TEST_KEYSPACE + " WITH replication " + "= {'class':'SimpleStrategy', " +
+                                "'replication_factor':1};");
 
-        template.execute("CREATE TABLE " + tableName + " (key uuid, column1 text, value text, PRIMARY KEY (key, column1));");
+        session.execute("CREATE TABLE " + tableName + " (key uuid, column1 text, value text, PRIMARY KEY (key, column1));");
     }
 
     private void dropKeyspaceIfExists() {
         try {
-            template.execute("drop keyspace " + TEST_KEYSPACE);
+            session.execute("drop keyspace " + TEST_KEYSPACE);
         } catch (InvalidQueryException ignored) {
             // doesn't exist
         }

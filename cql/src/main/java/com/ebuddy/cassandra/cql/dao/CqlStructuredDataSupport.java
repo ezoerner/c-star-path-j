@@ -1,3 +1,18 @@
+/*
+ *      Copyright (C) 2013 eBuddy B.V.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.ebuddy.cassandra.cql.dao;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
@@ -9,8 +24,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.lte;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -18,12 +32,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.Validate;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
 
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
-import com.datastax.driver.core.querybuilder.Insert;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
@@ -53,56 +69,66 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private static final String DEFAULT_VALUE_COLUMN = "value";
     private static final String DEFAULT_PATH_COLUMN = "column1";
     private static final String DEFAULT_PARTITION_KEY_COLUMN = "key";
-    private final JdbcTemplate jdbcTemplate;
+
+    private final Session session;
     private final String pathColumnName;
     private final String valueColumnName;
     private final ObjectMapper writeMapper;
     private final ObjectMapper readMapper;
-    private final String readPathQueryString;
-    private final Insert insertStatement;
-    private final String readForDeleteString;
+
+    private final PreparedStatement readPathQuery;
+    private final Statement insertStatement;
+    private final PreparedStatement readForDeleteQuery;
+
     private final String tableName;
     private final String partitionKeyColumnName;
 
     /**
      * Used for tables that are upgraded from a thrift dynamic column family that still has the default column names.
+     * @param session a Session configured with the keyspace
      */
-    public CqlStructuredDataSupport(String tableName, JdbcTemplate jdbcTemplate) {
-        this(tableName, DEFAULT_PARTITION_KEY_COLUMN, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, jdbcTemplate);
+    public CqlStructuredDataSupport(String tableName, Session session) {
+        this(tableName, DEFAULT_PARTITION_KEY_COLUMN, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, session);
     }
 
+    /**
+     * Construct an instance of CqlStructuredDataSupport with the specified table and column names.
+     * @param session a Session configured with the keyspace
+     */
     public CqlStructuredDataSupport(String tableName,
                                     String partitionKeyColumnName,
                                     String pathColumnName,
                                     String valueColumnName,
-                                    JdbcTemplate jdbcTemplate) {
+                                    Session session) {
         Validate.notEmpty(tableName);
-        this.jdbcTemplate = jdbcTemplate;
+        this.session = session;
         this.pathColumnName = pathColumnName;
         this.valueColumnName = valueColumnName;
 
         writeMapper = new ObjectMapper();
         writeMapper.setDefaultTyping(new CustomTypeResolverBuilder());
         readMapper = new ObjectMapper();
+        this.tableName = tableName;
+        this.partitionKeyColumnName = partitionKeyColumnName;
 
-        readPathQueryString = select(pathColumnName, valueColumnName)
+        readPathQuery = session.prepare(select(pathColumnName, valueColumnName)
                 .from(tableName)
                 .where(eq(partitionKeyColumnName, bindMarker()))
-                .and(gte(pathColumnName, bindMarker()))
-                .and(lte(pathColumnName, bindMarker()))
-                .getQueryString();
-        readForDeleteString = select(pathColumnName)
-                .from(tableName)
-                .where(eq(partitionKeyColumnName, bindMarker()))
-                .and(gte(pathColumnName, bindMarker()))
-                .and(lte(pathColumnName, bindMarker()))
-                .getQueryString();
+                    .and(gte(pathColumnName, bindMarker()))
+                    .and(lte(pathColumnName, bindMarker()))
+                .getQueryString());
+
+        readForDeleteQuery = session.prepare(select(pathColumnName)
+                                                     .from(tableName)
+                                                     .where(eq(partitionKeyColumnName, bindMarker()))
+                                                        .and(gte(pathColumnName, bindMarker()))
+                                                        .and(lte(pathColumnName, bindMarker()))
+                                                     .getQueryString());
+
         insertStatement = insertInto(tableName)
                 .value(partitionKeyColumnName, bindMarker())
                 .value(pathColumnName, bindMarker())
                 .value(valueColumnName, bindMarker());
-        this.tableName = tableName;
-        this.partitionKeyColumnName = partitionKeyColumnName;
     }
 
     @Override
@@ -115,9 +141,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         Batch batch = validateAndGetBatch(batchContext);
         List<Object> bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
         if (bindArguments.isEmpty()) {
-            jdbcTemplate.execute(batch.getQueryString());
+            session.execute(batch.getQueryString());
         } else {
-            jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+            session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
         }
         ((CqlBatchContext)batchContext).reset();
     }
@@ -131,13 +157,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         String start = inputPath.toString();
         String finish = start + Character.MAX_VALUE;
 
-        PathMapRowCallbackHandler rowCallbackHandler = new PathMapRowCallbackHandler(inputPath);
-
         // note: prepared statements should be cached and reused by the connection pooling component....
 
         Object[] args = {rowKey,start,finish};
-        jdbcTemplate.query(readPathQueryString, args, rowCallbackHandler);
-        Map<Path,Object> pathMap = rowCallbackHandler.getResultMap();
+        ResultSet resultSet = session.execute(readPathQuery.bind(args));
+
+        Map<Path,Object> pathMap = getPathMap(inputPath, resultSet);
+
         if (pathMap.isEmpty()) {
             // not found
             return null;
@@ -166,13 +192,11 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), simplifiedStructure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
-        List<Object> bindArguments;
-        if (batchContext == null) {
-            batch = batch();
-            bindArguments = new LinkedList<Object>();
-        } else {
-            bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
-        }
+        batch = batchContext == null ? batch() : batch;
+        List<Object> bindArguments = batchContext == null ?
+                                        new ArrayList<Object>() :
+                                        ((CqlBatchContext)batchContext).getBindArguments();
+
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
             batch.add(insertStatement);
 
@@ -184,7 +208,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
 
         if (batchContext == null) {
-            jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+            session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
         }
     }
 
@@ -210,33 +234,30 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         // Since the path column is in the primary key, we need to just delete whole rows.
 
         Object[] args = {rowKey,start,finish};
-        List<String> pathsToDelete = jdbcTemplate.queryForList(readForDeleteString, args, String.class);
-        if (pathsToDelete.isEmpty()) {
+        ResultSet resultSet = session.execute(readForDeleteQuery.bind(args));
+        if (resultSet.isExhausted()) {
             // not found
             return;
         }
 
-        Delete deleteStatement = delete() .from(tableName);
+        Delete deleteStatement = delete().from(tableName);
         deleteStatement
                 .where(eq(partitionKeyColumnName, rowKey))
                 .and(eq(pathColumnName, bindMarker()));
 
+        batch = batchContext == null ? batch() : batch;
+        List<Object> bindArguments = batchContext == null ?
+                new ArrayList<Object>() :
+                ((CqlBatchContext)batchContext).getBindArguments();
 
-        List<Object> bindArguments;
-        if (batchContext == null) {
-            batch = batch();
-            bindArguments = new LinkedList<Object>();
-        } else {
-            bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
-        }
-
-        for (String pathToDelete : pathsToDelete) {
+        for (Row row : resultSet) {
+            String pathToDelete = row.getString(0);
             batch.add(deleteStatement);
             bindArguments.add(pathToDelete);
         }
 
         if (batchContext == null) {
-          jdbcTemplate.queryForList(batch.getQueryString(), Void.class, bindArguments.toArray());
+          session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
         }
     }
 
@@ -255,32 +276,24 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         return ((CqlBatchContext)batchContext).getBatch();
     }
 
-    private class PathMapRowCallbackHandler implements RowCallbackHandler {
-        private final Path pathPrefix;
-        private final Map<Path,Object> resultMap = new HashMap<Path,Object>();
+    private Map<Path,Object> getPathMap(Path inputPath, ResultSet resultSet) {
+        Map<Path,Object> pathMap = new HashMap<Path,Object>();
 
-        private PathMapRowCallbackHandler(Path pathPrefix) {
-            this.pathPrefix = pathPrefix;
-        }
+        for (Row row : resultSet) {
+            String valueString = row.getString(valueColumnName);
+            Path path = Path.fromString(row.getString(pathColumnName));
 
-        private Map<Path,Object> getResultMap() {
-            return resultMap;
-        }
-
-        @Override
-        public void processRow(ResultSet rs) throws SQLException {
-            String valueString = rs.getString(valueColumnName);
-            Path path = Path.fromString(rs.getString(pathColumnName));
-
-            if (!path.startsWith(pathPrefix)) {
+            if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
-            path = path.tail(pathPrefix.size());
+            path = path.tail(inputPath.size());
             Object value = StructureConverter.get().fromString(valueString);
             // this can be a null converted from a JSON null
-            resultMap.put(path, value);
+            pathMap.put(path, value);
         }
+        return pathMap;
     }
+
 
     private static class CqlBatchContext implements BatchContext {
         private Batch batch = batch();
