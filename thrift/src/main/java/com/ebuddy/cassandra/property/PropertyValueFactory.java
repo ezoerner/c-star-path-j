@@ -179,6 +179,8 @@ public class PropertyValueFactory extends StdDeserializer<PropertyValue<?>> {
         // currently we only support lists, maps, and string values
         switch (t) {
             case VALUE_STRING:
+            case VALUE_NUMBER_INT:
+            case VALUE_NUMBER_FLOAT:
                 return StringValue.fromString(jp.getText());
             case START_OBJECT:
             {

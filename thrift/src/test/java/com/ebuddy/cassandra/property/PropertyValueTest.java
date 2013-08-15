@@ -1,5 +1,7 @@
 package com.ebuddy.cassandra.property;
 
+import static org.testng.Assert.assertNotNull;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertSame;
@@ -7,6 +9,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +22,7 @@ import org.testng.annotations.Test;
 /**
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-@SuppressWarnings({"JavaDoc"})
+@SuppressWarnings("deprecation")
 public class PropertyValueTest {
 
     @Test(groups = {"unit"})
@@ -84,6 +87,23 @@ public class PropertyValueTest {
         assertSame(newValue.getClass(), NestedProperties.class);
 
         assertEquals(newValue, propertyValue);
+    }
+
+    @Test(groups = {"unit"})
+    public void testJsonNestedNumberProperties() throws Exception {
+        String jsonString = "{\"version\":5,\"favorites\":[\"1\",2,3.45]}";
+        NestedProperties nested = new NestedProperties(jsonString);
+        Map<String, PropertyValue<?>> actual = nested.getValue();
+        assertNotNull(actual);
+        assertEquals(actual.size(), 2);
+        assertNotNull(actual.get("version"));
+        assertEquals(actual.get("version"), PropertyValueFactory.get().createPropertyValue("5"));
+
+        assertNotNull(actual.get("favorites"));
+        assertEquals(actual.get("favorites").getClass(), ListValue.class);
+        ListValue lv = (ListValue) actual.get("favorites");
+        assertEquals(lv.getValue().size(), 3);
+        assertEquals(lv.getValue(), Arrays.asList("1", "2", "3.45"));
     }
 
     @Test(groups = {"unit"})
