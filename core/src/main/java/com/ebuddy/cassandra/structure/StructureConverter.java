@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.springframework.dao.DataRetrievalFailureException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -50,6 +49,9 @@ public class StructureConverter {
         return INSTANCE;
     }
 
+    /**
+     * @throws DataFormatException if format of the string is incorrect and could not be parsed as JSON
+     */
     @SuppressWarnings("fallthrough")
     public Object fromString(String str) {
         if (str == null) {
@@ -68,7 +70,7 @@ public class StructureConverter {
                 try {
                     return JSON_MAPPER.readValue(str.substring(1), Object.class);
                 } catch (IOException e) {
-                    throw new DataRetrievalFailureException("Could not parse JSON", e);
+                    throw new DataFormatException("Could not parse JSON", e);
                 }
             default:
                 // if no special header, then just a string
@@ -76,6 +78,9 @@ public class StructureConverter {
         }
     }
 
+    /**
+     * @throws DataFormatException if the object could not be encoded as JSON
+     */
     public String toString(Object obj) {
         if (obj == null) {
             return null;
@@ -98,6 +103,9 @@ public class StructureConverter {
         return new String(chars);
     }
 
+    /**
+     * @throws DataFormatException if object cannot be encoded as JSON
+     */
     public ByteBuffer toByteBuffer(Object obj) {
         if (obj == null) {
             return null;
@@ -120,6 +128,9 @@ public class StructureConverter {
         return ByteBuffer.wrap(result);
     }
 
+    /**
+     * @throws DataFormatException is data in the byte buffer is incorrect and cannot be decoded
+     */
     public Object fromByteBuffer(ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
             return null;
@@ -147,7 +158,7 @@ public class StructureConverter {
                     return UTF_8_CHARSET.decode(ByteBuffer.wrap(bytes)).toString();
             }
         } catch (IOException ioe) {
-            throw new DataRetrievalFailureException("Could not parse JSON", ioe);
+            throw new DataFormatException("Could not parse JSON", ioe);
         }
     }
 
@@ -157,7 +168,7 @@ public class StructureConverter {
             jsonString = JSON_MAPPER.writeValueAsString(value);
             return jsonString;
         } catch (IOException ioe) {
-            throw new DataRetrievalFailureException("Could not encode object as JSON: class=" + value.getClass().getName(), ioe);
+            throw new DataFormatException("Could not encode object as JSON: class=" + value.getClass().getName(), ioe);
         }
     }
 }

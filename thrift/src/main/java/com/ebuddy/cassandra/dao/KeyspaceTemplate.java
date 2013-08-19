@@ -5,12 +5,9 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
-import com.ebuddy.cassandra.HectorExceptionTranslator;
-import com.ebuddy.cassandra.NoSQLExceptionTranslator;
 
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 
@@ -21,12 +18,7 @@ import me.prettyprint.hector.api.mutation.Mutator;
 
 // See comment in AbstractColumnFamilyTemplate.
 public class KeyspaceTemplate<K> implements KeyspaceOperations {
-    /**
-     * The exception translator to translate HectorExceptions to Spring
-     * Data Access exceptions.
-     */
-    protected static final NoSQLExceptionTranslator<HectorException> EXCEPTION_TRANSLATOR
-            = new HectorExceptionTranslator();
+
     /**
      * The keyspace for operations.
      */
@@ -64,11 +56,10 @@ public class KeyspaceTemplate<K> implements KeyspaceOperations {
     public final void commit(@Nonnull BatchContext txnContext) {
         Mutator<K> mutator = validateAndGetMutator(txnContext);
         Validate.notNull(mutator);
-        try {
-            mutator.execute();
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+
+        // could translate the hector exception here in a try/catch to a library specific exception;
+        // we used to translate to spring exceptions, but spring dependency has been removed
+        mutator.execute();
     }
 
     protected final Mutator<K> validateAndGetMutator(BatchContext txnContext) {

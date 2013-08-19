@@ -32,12 +32,6 @@
             <artifactId>core</artifactId>
             <version>${version}</version>
         </dependency>
-        <dependency>
-            <!-- used for the spring data access exceptions -->
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -110,13 +104,6 @@
             </exclusions>
         </dependency>
 
-        <dependency> <!-- this is only here because of a spring compilation issue -->
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Cassandra Unit -->
         <dependency>
             <groupId>org.cassandraunit</groupId>
@@ -142,7 +129,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Needed for cassandra-unit, because was excluded from cassandra-all -->
+        <!-- Needed for cassandra-unit, was excluded from cassandra-all -->
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr</artifactId>

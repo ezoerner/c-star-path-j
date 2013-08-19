@@ -9,6 +9,7 @@ import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 
 /**
+ * This is a fix for the CompositeSerializer in the hector library.
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public final class CompositeSerializerFix extends CompositeSerializer {

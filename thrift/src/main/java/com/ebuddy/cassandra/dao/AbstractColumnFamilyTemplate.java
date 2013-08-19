@@ -6,7 +6,6 @@ import com.ebuddy.cassandra.BatchContext;
 
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 
@@ -89,15 +88,13 @@ public abstract class AbstractColumnFamilyTemplate<K,N,V> extends KeyspaceTempla
     public final void removeRow(K rowKey,
                                 @Nullable BatchContext batchContext) {
         Mutator<K> mutator = validateAndGetMutator(batchContext);
-        try {
-            if (mutator == null) {
-                createMutator().delete(rowKey, columnFamily, null, null);
-            } else {
-                mutator.addDeletion(rowKey, columnFamily);
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+
+        if (mutator == null) {
+            createMutator().delete(rowKey, columnFamily, null, null);
+        } else {
+            mutator.addDeletion(rowKey, columnFamily);
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     protected final Mutator<K> createMutator() {

@@ -26,7 +26,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -97,7 +96,7 @@ public class ColumnFamilyTemplateTest {
         assertEquals(value.getValue(), columnValue);
     }
 
-    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = HectorTransportException.class)
     public void testReadColumnValueTranslateHectorException() throws Exception {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         columnFamilyTestDao.readColumnValue(rowKey, columnName);
@@ -207,7 +206,7 @@ public class ColumnFamilyTemplateTest {
         assertEquals(resultMap, expectedResultMap);
     }
 
-    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = HectorTransportException.class)
     public void testReadColumnsAsMapTranslateHectorException() throws Exception {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         columnFamilyTestDao.readColumnsAsMap(rowKey);
@@ -233,11 +232,9 @@ public class ColumnFamilyTemplateTest {
         assertTrue(areColumnsEqual(actualColumn, column));
     }
 
-    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = HectorTransportException.class)
     public void testWriteColumnTranslateHectorException() throws Exception {
-        when(mutator.addInsertion(eq(rowKey),
-                                  eq(columnFamily),
-                                  any(HColumn.class))).
+        when(mutator.addInsertion(eq(rowKey), eq(columnFamily), any(HColumn.class))).
                 thenThrow(new HectorTransportException("test hector exception"));
 
         PropertyValue<?> propertyValue = PropertyValueFactory.get().createPropertyValue(columnValue);
@@ -264,9 +261,9 @@ public class ColumnFamilyTemplateTest {
                                               StringSerializer.get(),
                                               PropertyValueSerializer.get());
         HColumn column2 = HFactory.createColumn(columnNames.get(1),
-                                              PropertyValueFactory.get().createPropertyValue(columnValues.get(1)),
-                                              StringSerializer.get(),
-                                              PropertyValueSerializer.get());
+                                                PropertyValueFactory.get().createPropertyValue(columnValues.get(1)),
+                                                StringSerializer.get(),
+                                                PropertyValueSerializer.get());
         ArgumentCaptor<HColumn> columnCaptor =  ArgumentCaptor.forClass(HColumn.class);
         verify(mutator, times(2)).addInsertion(eq(rowKey), eq(columnFamily), columnCaptor.capture());
         List<HColumn> actualColumns = columnCaptor.getAllValues();
@@ -274,7 +271,7 @@ public class ColumnFamilyTemplateTest {
         assertTrue(areColumnsEqual(actualColumns.get(1), column2));
     }
 
-    @Test(groups = {"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups = {"unit"}, expectedExceptions = HectorTransportException.class)
     public void testWriteColumnsTranslateHectorException() throws Exception {
         when(mutator.addInsertion(eq(rowKey),
                                   eq(columnFamily),

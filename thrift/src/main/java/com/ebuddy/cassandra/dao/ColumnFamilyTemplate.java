@@ -24,7 +24,6 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.beans.Rows;
-import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
@@ -80,21 +79,18 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
      */
     @Override
     public V readColumnValue(K rowKey, N columnName) {
-        try {
-            ColumnQuery<K,N,V> query = HFactory.createColumnQuery(getKeyspace(),
-                                                                  getKeySerializer(),
-                                                                  getColumnNameSerializer(),
-                                                                  getValueSerializer());
-            QueryResult<HColumn<N,V>> result = query.
-                    setKey(rowKey).
-                    setColumnFamily(getColumnFamily()).
-                    setName(columnName).
-                    execute();
-            HColumn<N,V> column = result.get();
-            return column != null ? column.getValue() : null;
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+        ColumnQuery<K,N,V> query = HFactory.createColumnQuery(getKeyspace(),
+                                                              getKeySerializer(),
+                                                              getColumnNameSerializer(),
+                                                              getValueSerializer());
+        QueryResult<HColumn<N,V>> result = query.
+                setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setName(columnName).
+                execute();
+        HColumn<N,V> column = result.get();
+        return column != null ? column.getValue() : null;
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -118,24 +114,21 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
     @Override
     public Map<N,V> readColumnsAsMap(K rowKey, N start, N finish, int count, boolean reversed) {
         Map<N,V> maps = new HashMap<N,V>();
-        try {
-            SliceQuery<K,N,V> query = HFactory.createSliceQuery(getKeyspace(),
-                                                                getKeySerializer(),
-                                                                getColumnNameSerializer(),
-                                                                getValueSerializer());
-            QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(start, finish, reversed, count).
-                    execute();
-            ColumnSlice<N,V> slice = result.get();
+        SliceQuery<K,N,V> query = HFactory.createSliceQuery(getKeyspace(),
+                                                            getKeySerializer(),
+                                                            getColumnNameSerializer(),
+                                                            getValueSerializer());
+        QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setRange(start, finish, reversed, count).
+                execute();
+        ColumnSlice<N,V> slice = result.get();
 
-            for (HColumn<N,V> column : slice.getColumns()) {
-                maps.put(column.getName(),
-                         column.getValue());
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        for (HColumn<N,V> column : slice.getColumns()) {
+            maps.put(column.getName(),
+                     column.getValue());
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return maps;
     }
 
@@ -152,23 +145,21 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
                                    boolean reversed,
                                    ColumnMapper<T,N,V> columnMapper) {
         List<T> resultList = new ArrayList<T>();
-        try {
-            SliceQuery<K,N,V> query = HFactory.createSliceQuery(getKeyspace(),
-                                                                getKeySerializer(),
-                                                                getColumnNameSerializer(),
-                                                                getValueSerializer());
-            QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(start, finish, reversed, count).
-                    execute();
-            ColumnSlice<N,V> slice = result.get();
 
-            for (HColumn<N,V> column : slice.getColumns()) {
-                resultList.add(columnMapper.mapColumn(column.getName(), column.getValue()));
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        SliceQuery<K,N,V> query = HFactory.createSliceQuery(getKeyspace(),
+                                                            getKeySerializer(),
+                                                            getColumnNameSerializer(),
+                                                            getValueSerializer());
+        QueryResult<ColumnSlice<N,V>> result = query.setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setRange(start, finish, reversed, count).
+                execute();
+        ColumnSlice<N,V> slice = result.get();
+
+        for (HColumn<N,V> column : slice.getColumns()) {
+            resultList.add(columnMapper.mapColumn(column.getName(), column.getValue()));
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return resultList;
     }
 
@@ -204,28 +195,27 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
     @Override
     public Map<K,Map<N,V>> readRowsAsMap() {
         Map<K,Map<N,V>> resultMap = new HashMap<K,Map<N,V>>();
-        try {
-            RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(getKeyspace(),
-                                                                                         getKeySerializer(),
-                                                                                         getColumnNameSerializer(),
-                                                                                         getValueSerializer());
-            rangeSlicesQuery.setColumnFamily(getColumnFamily());
-            rangeSlicesQuery.setRange(null, null, false, ALL);
-            rangeSlicesQuery.setRowCount(ALL);
-            QueryResult<OrderedRows<K, N, V>> result = rangeSlicesQuery.execute();
-            for (Row<K,N,V> row : result.get()) {
-                K key = row.getKey();
-                ColumnSlice<N,V> slice = row.getColumnSlice();
-                Map<N,V> columns = new HashMap<N,V>();
-                for (HColumn<N,V> column : slice.getColumns()) {
-                    V value = column.getValue();
-                    columns.put(column.getName(), value);
-                }
-                resultMap.put(key, columns);
+        RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(getKeyspace(),
+                                                                                     getKeySerializer(),
+                                                                                     getColumnNameSerializer(),
+                                                                                     getValueSerializer());
+        rangeSlicesQuery.setColumnFamily(getColumnFamily());
+        rangeSlicesQuery.setRange(null, null, false, ALL);
+        rangeSlicesQuery.setRowCount(ALL);
+        QueryResult<OrderedRows<K, N, V>> result = rangeSlicesQuery.execute();
+        for (Row<K,N,V> row : result.get()) {
+            K key = row.getKey();
+            ColumnSlice<N,V> slice = row.getColumnSlice();
+            Map<N,V> columns = new HashMap<N,V>();
+            for (HColumn<N,V> column : slice.getColumns()) {
+                V value = column.getValue();
+                columns.put(column.getName(), value);
             }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+            resultMap.put(key, columns);
         }
+
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Returning result from multiGetColumnsAsMap: " + resultMap);
         }
@@ -329,11 +319,8 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
      */
     @Override
     public void writeColumns(K rowKey, Map<N,V> map) {
-        try {
-            insertColumns(rowKey, map);
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+        insertColumns(rowKey, map);
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -347,11 +334,8 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
     public void writeColumns(K rowKey, Map<N,V> map, @Nonnull BatchContext batchContext) {
         Validate.notNull(batchContext);
         Mutator<K> mutator = validateAndGetMutator(batchContext);
-        try {
-            addInsertions(rowKey, map, mutator);
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+        addInsertions(rowKey, map, mutator);
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     @Override
@@ -361,18 +345,15 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
         }
 
         Mutator<K> mutator = createMutator();
-        try {
-            if (columnNames.length == 1) {
-                mutator.delete(rowKey, getColumnFamily(), columnNames[0], getColumnNameSerializer());
-            } else {
-                for (N columnName : columnNames) {
-                    mutator.addDeletion(rowKey, getColumnFamily(), columnName, getColumnNameSerializer());
-                }
-                mutator.execute();
+        if (columnNames.length == 1) {
+            mutator.delete(rowKey, getColumnFamily(), columnNames[0], getColumnNameSerializer());
+        } else {
+            for (N columnName : columnNames) {
+                mutator.addDeletion(rowKey, getColumnFamily(), columnName, getColumnNameSerializer());
             }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+            mutator.execute();
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     @Override
@@ -392,26 +373,23 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
             mutator = validateAndGetMutator(batchContext);
         }
 
-        try {
-            // unfortunately the thrift API to Cassandra does not support deleting with a SliceRange.
-            // !! We have read before delete -- performance and thread safety issue
-            // get column names to delete using a slice query
-            List<N> columnNamesToDelete = readColumns(rowKey,
-                                                      start,
-                                                      finish,
-                                                      ALL,
-                                                      false,
-                                                      columnMapperToGetColumnNames);
-            for (N columnName : columnNamesToDelete) {
-                mutator.addDeletion(rowKey, getColumnFamily(), columnName, getColumnNameSerializer());
-            }
-
-            if (shouldExecute) {
-                mutator.execute();
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        // unfortunately the thrift API to Cassandra does not support deleting with a SliceRange.
+        // !! We have read before delete -- performance and thread safety issue
+        // get column names to delete using a slice query
+        List<N> columnNamesToDelete = readColumns(rowKey,
+                                                  start,
+                                                  finish,
+                                                  ALL,
+                                                  false,
+                                                  columnMapperToGetColumnNames);
+        for (N columnName : columnNamesToDelete) {
+            mutator.addDeletion(rowKey, getColumnFamily(), columnName, getColumnNameSerializer());
         }
+
+        if (shouldExecute) {
+            mutator.execute();
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -424,32 +402,29 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
     private Map<K,Map<N,V>> basicMultiGetAsMap(Iterable <K> rowKeys, @Nullable N[] columnNames) {
 
         Map<K,Map<N,V>> resultMap = new HashMap<K,Map<N,V>>();
-        try {
-            MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(getKeyspace(),
-                                                                                getKeySerializer(),
-                                                                                getColumnNameSerializer(),
-                                                                                getValueSerializer());
-            query.setKeys(rowKeys).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(null, null, false, ALL);
-            if (columnNames != null) {
-                query.setColumnNames(columnNames);
-            }
-            QueryResult<Rows<K,N,V>> result = query.execute();
-
-            for (Row<K,N,V> row : result.get()) {
-                K key = row.getKey();
-                ColumnSlice<N,V> slice = row.getColumnSlice();
-                Map<N,V> columns = new HashMap<N,V>();
-                for (HColumn<N,V> column : slice.getColumns()) {
-                    V value = column.getValue();
-                    columns.put(column.getName(), value);
-                }
-                resultMap.put(key, columns);
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(getKeyspace(),
+                                                                            getKeySerializer(),
+                                                                            getColumnNameSerializer(),
+                                                                            getValueSerializer());
+        query.setKeys(rowKeys).
+                setColumnFamily(getColumnFamily()).
+                setRange(null, null, false, ALL);
+        if (columnNames != null) {
+            query.setColumnNames(columnNames);
         }
+        QueryResult<Rows<K,N,V>> result = query.execute();
+
+        for (Row<K,N,V> row : result.get()) {
+            K key = row.getKey();
+            ColumnSlice<N,V> slice = row.getColumnSlice();
+            Map<N,V> columns = new HashMap<N,V>();
+            for (HColumn<N,V> column : slice.getColumns()) {
+                V value = column.getValue();
+                columns.put(column.getName(), value);
+            }
+            resultMap.put(key, columns);
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         if (LOG.isDebugEnabled()) {
             LOG.debug("Returning result from multiGetColumnsAsMap: " + resultMap);
         }
@@ -468,31 +443,29 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
                                       @Nullable N[] columnNames) {
 
         List<T> resultList = new ArrayList<T>();
-        try {
-            MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(getKeyspace(),
-                                                                                getKeySerializer(),
-                                                                                getColumnNameSerializer(),
-                                                                                getValueSerializer());
-            query.setKeys(rowKeys).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(null, null, false, ALL);
-            if (columnNames != null) {
-                query.setColumnNames(columnNames);
-            }
-            QueryResult<Rows<K,N,V>> result = query.execute();
 
-            for (Row<K,N,V> row : result.get()) {
-                K key = row.getKey();
-                ColumnSlice<N,V> slice = row.getColumnSlice();
-                List<HColumn<N,V>> columns = new ArrayList<HColumn<N,V>>();
-                for (HColumn<N,V> column : slice.getColumns()) {
-                    columns.add(column);
-                }
-                resultList.add(rowMapper.mapRow(key, columns));
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        MultigetSliceQuery<K,N,V> query = HFactory.createMultigetSliceQuery(getKeyspace(),
+                                                                            getKeySerializer(),
+                                                                            getColumnNameSerializer(),
+                                                                            getValueSerializer());
+        query.setKeys(rowKeys).
+                setColumnFamily(getColumnFamily()).
+                setRange(null, null, false, ALL);
+        if (columnNames != null) {
+            query.setColumnNames(columnNames);
         }
+        QueryResult<Rows<K,N,V>> result = query.execute();
+
+        for (Row<K,N,V> row : result.get()) {
+            K key = row.getKey();
+            ColumnSlice<N,V> slice = row.getColumnSlice();
+            List<HColumn<N,V>> columns = new ArrayList<HColumn<N,V>>();
+            for (HColumn<N,V> column : slice.getColumns()) {
+                columns.add(column);
+            }
+            resultList.add(rowMapper.mapRow(key, columns));
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         if (LOG.isDebugEnabled()) {
             LOG.debug("Returning result from multiGetColumnsAsMap: " + resultList);
         }
@@ -533,15 +506,13 @@ public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,
                                            getColumnNameSerializer(),
                                            getValueSerializer());
         }
-        try {
-            if (mutator == null) {
-                createMutator().insert(rowKey, getColumnFamily(), column);
-            } else {
-                mutator.addInsertion(rowKey, getColumnFamily(), column);
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+
+        if (mutator == null) {
+            createMutator().insert(rowKey, getColumnFamily(), column);
+        } else {
+            mutator.addInsertion(rowKey, getColumnFamily(), column);
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     private void addInsertions(K rowKey, Map<N,V> properties, Mutator<K> mutator) {
