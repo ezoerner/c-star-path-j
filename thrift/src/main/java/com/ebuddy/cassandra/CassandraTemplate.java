@@ -29,8 +29,6 @@ import me.prettyprint.hector.api.exceptions.HectorException;
 @Deprecated
 public class CassandraTemplate {
 
-	private static final NoSQLExceptionTranslator<HectorException> EXCEPTION_TRANSLATOR = new HectorExceptionTranslator();
-    
     private final Cluster cluster;
 
     private final CassandraHostConfigurator hostConfigurator;
@@ -152,7 +150,9 @@ public class CassandraTemplate {
 
 
     private void handleHectorException(HectorException he) {
-        throw EXCEPTION_TRANSLATOR.translate(he);
+        // can translate the hector exception here to a library specific exception.
+        // we used to translate to spring exceptions, but spring dependency has been removed
+        throw he;
     }
 
     public TimeUnit getClockResolution() {

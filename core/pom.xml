@@ -16,13 +16,6 @@
         </dependency>
 
         <dependency>
-            <!-- used for the spring data access exceptions -->
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.ebuddy.cassandra</groupId>
             <artifactId>api</artifactId>
             <version>${version}</version>

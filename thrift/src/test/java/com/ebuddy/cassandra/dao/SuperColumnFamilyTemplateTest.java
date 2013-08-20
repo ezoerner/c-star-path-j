@@ -21,7 +21,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -97,7 +96,7 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(value.getValue(), columnValue);
     }
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testReadColumnValueAndTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.readColumnValue(rowKey, superColumnName, columnName);
@@ -130,7 +129,7 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(actualResult, testResultMap);
     }
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testReadColumnsAsMapAndTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.readColumnsAsMap(rowKey, superColumnName);
@@ -184,7 +183,7 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(result, expectedResult);
     }
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testMultiGetColumnsAsMapTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.multiGetColumnsAsMap(rowKeys, superColumnName);
@@ -227,7 +226,7 @@ public class SuperColumnFamilyTemplateTest {
         assertEquals(result, expectedResult);
     }
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testReadRowAsMapTranslateHectorException() {
         when(executionResult.get()).thenThrow(new HectorTransportException("test hector exception"));
         superColumnFamilyTestDao.readRowAsMap(rowKey);
@@ -264,7 +263,7 @@ public class SuperColumnFamilyTemplateTest {
         assertTrue(areSuperColumnsEqual(actualSuperColumn, superColumn));
     }
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testWriteColumnsTranslateHectorException() {
         when(mutator.addInsertion(eq(rowKey),
                                   eq(columnFamily),
@@ -309,7 +308,7 @@ public class SuperColumnFamilyTemplateTest {
     }
 
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testWriteColumnTranslateHectorException() {
 
         when(mutator.addInsertion(eq(rowKey),
@@ -341,7 +340,7 @@ public class SuperColumnFamilyTemplateTest {
         }
     }
 
-    @Test(groups={"unit"}, expectedExceptions = DataAccessResourceFailureException.class)
+    @Test(groups={"unit"}, expectedExceptions = HectorTransportException.class)
     public void testDeleteColumnsTranslateHectorException() {
         when(mutator.addSubDelete(anyString(),
                                   anyString(),

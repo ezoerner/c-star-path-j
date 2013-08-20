@@ -28,7 +28,6 @@ import me.prettyprint.hector.api.beans.Rows;
 import me.prettyprint.hector.api.beans.SuperRow;
 import me.prettyprint.hector.api.beans.SuperRows;
 import me.prettyprint.hector.api.beans.SuperSlice;
-import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.MultigetSubSliceQuery;
@@ -81,23 +80,21 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      */
     @Override
     public V readColumnValue(K rowKey, SN superColumnName, N columnName) {
-        try {
-            SubColumnQuery<K,SN,N,V> query = HFactory.createSubColumnQuery(getKeyspace(),
-                                                                           getKeySerializer(),
-                                                                           getSuperColumnNameSerializer(),
-                                                                           getSubcolumnNameSerializer(),
-                                                                           getValueSerializer());
-            QueryResult<HColumn<N,V>> result = query.
-                    setKey(rowKey).
-                    setColumnFamily(getColumnFamily()).
-                    setSuperColumn(superColumnName).
-                    setColumn(columnName).
-                    execute();
-            HColumn<N,V> column = result.get();
-            return column != null ? column.getValue() : null;
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+
+        SubColumnQuery<K,SN,N,V> query = HFactory.createSubColumnQuery(getKeyspace(),
+                                                                       getKeySerializer(),
+                                                                       getSuperColumnNameSerializer(),
+                                                                       getSubcolumnNameSerializer(),
+                                                                       getValueSerializer());
+        QueryResult<HColumn<N,V>> result = query.
+                setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setSuperColumn(superColumnName).
+                setColumn(columnName).
+                execute();
+        HColumn<N,V> column = result.get();
+        return column != null ? column.getValue() : null;
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -111,32 +108,30 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     @Override
     public Map<N,V> readColumnsAsMap(K rowKey, SN superColumnName, N... columnNames) {
         Map<N,V> columns = new HashMap<N,V>();
-        try {
-            SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
-                                                                         getKeySerializer(),
-                                                                         getSuperColumnNameSerializer(),
-                                                                         getSubcolumnNameSerializer(),
-                                                                         getValueSerializer());
-            query.setKey(rowKey).
-                    setColumnFamily(getColumnFamily()).
-                    setSuperColumn(superColumnName).
-                    setRange(null, null, false, ALL);
-            if (columnNames.length == 0) {
-                query.setRange(null, null, false, ALL);
-            } else {
-                query.setColumnNames(columnNames);
-            }
 
-            QueryResult<ColumnSlice<N,V>> result = query.execute();
-            ColumnSlice<N,V> slice = result.get();
-
-            for (HColumn<N,V> column : slice.getColumns()) {
-                V value = column.getValue();
-                columns.put(column.getName(), value);
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
+                                                                     getKeySerializer(),
+                                                                     getSuperColumnNameSerializer(),
+                                                                     getSubcolumnNameSerializer(),
+                                                                     getValueSerializer());
+        query.setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setSuperColumn(superColumnName).
+                setRange(null, null, false, ALL);
+        if (columnNames.length == 0) {
+            query.setRange(null, null, false, ALL);
+        } else {
+            query.setColumnNames(columnNames);
         }
+
+        QueryResult<ColumnSlice<N,V>> result = query.execute();
+        ColumnSlice<N,V> slice = result.get();
+
+        for (HColumn<N,V> column : slice.getColumns()) {
+            V value = column.getValue();
+            columns.put(column.getName(), value);
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return columns;
     }
 
@@ -162,27 +157,25 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                    boolean reversed,
                                    ColumnMapper<T,N,V> columnMapper) {
         List<T> resultList = new ArrayList<T>();
-        try {
-            SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
-                                                                         getKeySerializer(),
-                                                                         getSuperColumnNameSerializer(),
-                                                                         getSubcolumnNameSerializer(),
-                                                                         getValueSerializer());
-            query.setKey(rowKey).
-                    setColumnFamily(getColumnFamily()).
-                    setSuperColumn(superColumnName).
-                    setRange(start, finish, reversed, count);
 
-            QueryResult<ColumnSlice<N,V>> result = query.execute();
-            ColumnSlice<N,V> slice = result.get();
+        SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
+                                                                     getKeySerializer(),
+                                                                     getSuperColumnNameSerializer(),
+                                                                     getSubcolumnNameSerializer(),
+                                                                     getValueSerializer());
+        query.setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setSuperColumn(superColumnName).
+                setRange(start, finish, reversed, count);
 
-            for (HColumn<N,V> column : slice.getColumns()) {
-                V value = column.getValue();
-                resultList.add(columnMapper.mapColumn(column.getName(), value));
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        QueryResult<ColumnSlice<N,V>> result = query.execute();
+        ColumnSlice<N,V> slice = result.get();
+
+        for (HColumn<N,V> column : slice.getColumns()) {
+            V value = column.getValue();
+            resultList.add(columnMapper.mapColumn(column.getName(), value));
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return resultList;
     }
 
@@ -232,30 +225,28 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     public <T> List<T> multiGetAllSuperColumns(Collection<K> rowKeys, SuperColumnFamilyRowMapper<T,K,SN,N,V>
             superColumnFamilyRowMapper) {
         List<T> result = new LinkedList<T>();
-        try {
-            MultigetSuperSliceQuery<K,SN,N,V> query = HFactory.createMultigetSuperSliceQuery(getKeyspace(),
-                                                                                             getKeySerializer(),
-                                                                                             getTopSerializer(),
-                                                                                             subSerializer,
-                                                                                             getValueSerializer());
-            query.setKeys(rowKeys).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(null, null, false, ALL);
 
-            QueryResult<SuperRows<K,SN,N,V>> queryResult = query.execute();
+        MultigetSuperSliceQuery<K,SN,N,V> query = HFactory.createMultigetSuperSliceQuery(getKeyspace(),
+                                                                                         getKeySerializer(),
+                                                                                         getTopSerializer(),
+                                                                                         subSerializer,
+                                                                                         getValueSerializer());
+        query.setKeys(rowKeys).
+                setColumnFamily(getColumnFamily()).
+                setRange(null, null, false, ALL);
 
-            for (SuperRow<K,SN,N,V> row : queryResult.get()) {
-                K key = row.getKey();
-                SuperSlice<SN,N,V> slice = row.getSuperSlice();
+        QueryResult<SuperRows<K,SN,N,V>> queryResult = query.execute();
 
-                List<HSuperColumn<SN,N,V>> columns = slice.getSuperColumns();
-                T t = superColumnFamilyRowMapper.mapRow(key, columns);
-                result.add(t);
-            }
+        for (SuperRow<K,SN,N,V> row : queryResult.get()) {
+            K key = row.getKey();
+            SuperSlice<SN,N,V> slice = row.getSuperSlice();
 
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+            List<HSuperColumn<SN,N,V>> columns = slice.getSuperColumns();
+            T t = superColumnFamilyRowMapper.mapRow(key, columns);
+            result.add(t);
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
+
         return result;
     }
 
@@ -287,31 +278,29 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      */
     @Override
     public Map<SN,Map<N,V>> readRowAsMap(K key) {
-        try {
-            SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(getKeyspace(),
-                                                                             getKeySerializer(),
-                                                                             getSuperColumnNameSerializer(),
-                                                                             getSubcolumnNameSerializer(),
-                                                                             getValueSerializer());
-            query.setKey(key).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(null, null, false, ALL);
-            QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
-            Map<SN,Map<N,V>> results = new HashMap<SN,Map<N,V>>();
-            for (HSuperColumn<SN,N,V> superColumn : queryResult.get().getSuperColumns()) {
-                List<HColumn<N,V>> allColumns = superColumn.getColumns();
-                Map<N,V> columnMap = new HashMap<N,V>(allColumns.size());
-                for (HColumn<N,V> column : allColumns) {
-                    columnMap.put(column.getName(), column.getValue());
-                }
-                if (!columnMap.isEmpty()) {
-                    results.put(superColumn.getName(), columnMap);
-                }
+
+        SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(getKeyspace(),
+                                                                         getKeySerializer(),
+                                                                         getSuperColumnNameSerializer(),
+                                                                         getSubcolumnNameSerializer(),
+                                                                         getValueSerializer());
+        query.setKey(key).
+                setColumnFamily(getColumnFamily()).
+                setRange(null, null, false, ALL);
+        QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
+        Map<SN,Map<N,V>> results = new HashMap<SN,Map<N,V>>();
+        for (HSuperColumn<SN,N,V> superColumn : queryResult.get().getSuperColumns()) {
+            List<HColumn<N,V>> allColumns = superColumn.getColumns();
+            Map<N,V> columnMap = new HashMap<N,V>(allColumns.size());
+            for (HColumn<N,V> column : allColumns) {
+                columnMap.put(column.getName(), column.getValue());
             }
-            return results;
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+            if (!columnMap.isEmpty()) {
+                results.put(superColumn.getName(), columnMap);
+            }
         }
+        return results;
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -323,29 +312,27 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      */
     @Override
     public <T> List<T> readRow(K key, SuperColumnMapper<T,K,SN,N,V> superColumnMapper) {
-        try {
-            SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(getKeyspace(),
-                                                                             getKeySerializer(),
-                                                                             getSuperColumnNameSerializer(),
-                                                                             getSubcolumnNameSerializer(),
-                                                                             getValueSerializer());
-            query.setKey(key).
-                    setColumnFamily(getColumnFamily()).
-                    setRange(null, null, false, ALL);
-            QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
-            List<HSuperColumn<SN,N,V>> superColumns = queryResult.get().getSuperColumns();
-            List<T> results = new ArrayList<T>( superColumns.size());
-            for (HSuperColumn<SN,N,V> superColumn : superColumns) {
-                T mappedSuperColumn = superColumnMapper.mapSuperColumn(key, superColumn.getName(), superColumn.getColumns());
-                // don't include null
-                if (mappedSuperColumn != null) {
-                    results.add(mappedSuperColumn);
-                }
+
+        SuperSliceQuery<K,SN,N,V> query = HFactory.createSuperSliceQuery(getKeyspace(),
+                                                                         getKeySerializer(),
+                                                                         getSuperColumnNameSerializer(),
+                                                                         getSubcolumnNameSerializer(),
+                                                                         getValueSerializer());
+        query.setKey(key).
+                setColumnFamily(getColumnFamily()).
+                setRange(null, null, false, ALL);
+        QueryResult<SuperSlice<SN,N,V>> queryResult = query.execute();
+        List<HSuperColumn<SN,N,V>> superColumns = queryResult.get().getSuperColumns();
+        List<T> results = new ArrayList<T>( superColumns.size());
+        for (HSuperColumn<SN,N,V> superColumn : superColumns) {
+            T mappedSuperColumn = superColumnMapper.mapSuperColumn(key, superColumn.getName(), superColumn.getColumns());
+            // don't include null
+            if (mappedSuperColumn != null) {
+                results.add(mappedSuperColumn);
             }
-            return results;
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
         }
+        return results;
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -415,18 +402,15 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     @Override
     public void deleteColumns(K rowKey, SN superColumnName, Iterable<N> subcolumnNames) {
         Mutator<K> mutator = createMutator();
-        try {
-            for (N subcolumnName : subcolumnNames) {
-                mutator.subDelete(rowKey,
-                                  getColumnFamily(),
-                                  superColumnName,
-                                  subcolumnName,
-                                  getSuperColumnNameSerializer(),
-                                  getSubcolumnNameSerializer());
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        for (N subcolumnName : subcolumnNames) {
+            mutator.subDelete(rowKey,
+                              getColumnFamily(),
+                              superColumnName,
+                              subcolumnName,
+                              getSuperColumnNameSerializer(),
+                              getSubcolumnNameSerializer());
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     /**
@@ -444,29 +428,24 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                     @Nonnull BatchContext txnContext) {
         Validate.notNull(txnContext);
         Mutator<K> mutator = validateAndGetMutator(txnContext);
-        try {
-            for (N subcolumn : subcolumnNames) {
-                mutator.addSubDelete(rowKey,
-                                     getColumnFamily(),
-                                     superColumnName,
-                                     subcolumn,
-                                     getSuperColumnNameSerializer(),
-                                     getSubcolumnNameSerializer());
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+
+        for (N subcolumn : subcolumnNames) {
+            mutator.addSubDelete(rowKey,
+                                 getColumnFamily(),
+                                 superColumnName,
+                                 subcolumn,
+                                 getSuperColumnNameSerializer(),
+                                 getSubcolumnNameSerializer());
         }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     @Override
     public void deleteSuperColumn(K rowKey, SN superColumnName) {
 
         Mutator<K> mutator = createMutator();
-        try {
-            mutator.superDelete(rowKey, getColumnFamily(), superColumnName, getSuperColumnNameSerializer());
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+        mutator.superDelete(rowKey, getColumnFamily(), superColumnName, getSuperColumnNameSerializer());
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     @Override
@@ -475,11 +454,9 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         Validate.notNull(txnContext);
 
         Mutator<K> mutator = validateAndGetMutator(txnContext);
-        try {
-            mutator.superDelete(rowKey, getColumnFamily(), superColumnName, getSuperColumnNameSerializer());
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+
+        mutator.superDelete(rowKey, getColumnFamily(), superColumnName, getSuperColumnNameSerializer());
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     private void basicWriteColumn(K rowKey,
@@ -554,34 +531,32 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                @Nullable N[] columnNames) {
 
         Map<K,Map<N,V>> superColumns = new HashMap<K,Map<N,V>>();
-        try {
-            MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
-                                                                                         getKeySerializer(),
-                                                                                         getSuperColumnNameSerializer(),
-                                                                                         getSubcolumnNameSerializer(),
-                                                                                         getValueSerializer());
-            query.setKeys(rowKeys).
-                    setColumnFamily(getColumnFamily()).
-                    setSuperColumn(superColumnName).
-                    setRange(null, null, false, ALL);
-            if (columnNames != null) {
-                query.setColumnNames(columnNames);
-            }
-            QueryResult<Rows<K,N,V>> result = query.execute();
 
-            for (Row<K,N,V> row : result.get()) {
-                K key = row.getKey();
-                ColumnSlice<N,V> slice = row.getColumnSlice();
-                Map<N,V> columns = new HashMap<N,V>();
-                for (HColumn<N,V> column : slice.getColumns()) {
-                    V value = column.getValue();
-                    columns.put(column.getName(), value);
-                }
-                superColumns.put(key, columns);
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
+                                                                                     getKeySerializer(),
+                                                                                     getSuperColumnNameSerializer(),
+                                                                                     getSubcolumnNameSerializer(),
+                                                                                     getValueSerializer());
+        query.setKeys(rowKeys).
+                setColumnFamily(getColumnFamily()).
+                setSuperColumn(superColumnName).
+                setRange(null, null, false, ALL);
+        if (columnNames != null) {
+            query.setColumnNames(columnNames);
         }
+        QueryResult<Rows<K,N,V>> result = query.execute();
+
+        for (Row<K,N,V> row : result.get()) {
+            K key = row.getKey();
+            ColumnSlice<N,V> slice = row.getColumnSlice();
+            Map<N,V> columns = new HashMap<N,V>();
+            for (HColumn<N,V> column : slice.getColumns()) {
+                V value = column.getValue();
+                columns.put(column.getName(), value);
+            }
+            superColumns.put(key, columns);
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return superColumns;
     }
 
@@ -598,42 +573,37 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                               @Nullable N[] columnNames) {
 
         List<T> superColumns = new LinkedList<T>();
-        try {
-            MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
-                                                                                         getKeySerializer(),
-                                                                                         getSuperColumnNameSerializer(),
-                                                                                         getSubcolumnNameSerializer(),
-                                                                                         getValueSerializer());
-            query.setKeys(rowKeys).
-                    setColumnFamily(getColumnFamily()).
-                    setSuperColumn(superColumnName).
-                    setRange(null, null, false, ALL);
-            if (columnNames != null) {
-                query.setColumnNames(columnNames);
-            }
-            QueryResult<Rows<K,N,V>> result = query.execute();
 
-            for (Row<K,N,V> row : result.get()) {
-                K key = row.getKey();
-                ColumnSlice<N,V> slice = row.getColumnSlice();
-                List<HColumn<N,V>> columns = slice.getColumns();
-                T mappedSuperColumn = superColumnMapper.mapSuperColumn(key, superColumnName, columns);
-                superColumns.add(mappedSuperColumn);
-            }
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
+        MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
+                                                                                     getKeySerializer(),
+                                                                                     getSuperColumnNameSerializer(),
+                                                                                     getSubcolumnNameSerializer(),
+                                                                                     getValueSerializer());
+        query.setKeys(rowKeys).
+                setColumnFamily(getColumnFamily()).
+                setSuperColumn(superColumnName).
+                setRange(null, null, false, ALL);
+        if (columnNames != null) {
+            query.setColumnNames(columnNames);
         }
+        QueryResult<Rows<K,N,V>> result = query.execute();
+
+        for (Row<K,N,V> row : result.get()) {
+            K key = row.getKey();
+            ColumnSlice<N,V> slice = row.getColumnSlice();
+            List<HColumn<N,V>> columns = slice.getColumns();
+            T mappedSuperColumn = superColumnMapper.mapSuperColumn(key, superColumnName, columns);
+            superColumns.add(mappedSuperColumn);
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return superColumns;
     }
 
 
     private void insertSuperColumn(K rowKey,
                                    HSuperColumn<SN,N,V> superColumn) {
-        try {
-            createMutator().insert(rowKey, getColumnFamily(), superColumn);
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+        createMutator().insert(rowKey, getColumnFamily(), superColumn);
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
 
@@ -642,11 +612,9 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                    @Nonnull BatchContext txnContext) {
         Validate.notNull(txnContext);
         Mutator<K> mutator = validateAndGetMutator(txnContext);
-        try {
-            mutator.addInsertion(rowKey, getColumnFamily(), superColumn);
-        } catch (HectorException e) {
-            throw EXCEPTION_TRANSLATOR.translate(e);
-        }
+
+        mutator.addInsertion(rowKey, getColumnFamily(), superColumn);
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }
 
     private Serializer<SN> getSuperColumnNameSerializer() {

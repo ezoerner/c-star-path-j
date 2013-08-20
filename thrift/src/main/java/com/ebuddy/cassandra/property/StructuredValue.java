@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializableWithType;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializerProvider;
 import org.codehaus.jackson.map.TypeSerializer;
-import org.springframework.util.ObjectUtils;
 
 /**
  * An implementation of PropertyValue that stores a structured object as JSON.
@@ -85,7 +85,7 @@ public abstract class StructuredValue<T> implements PropertyValue<T>, JsonSerial
         }
         Object value = getValue();
         Object otherValue = ((PropertyValue<?>)obj).getValue();
-        return ObjectUtils.nullSafeEquals(value, otherValue);
+        return ObjectUtils.equals(value, otherValue);
     }
 
     @Override
