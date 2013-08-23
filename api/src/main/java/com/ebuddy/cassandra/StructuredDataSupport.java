@@ -58,4 +58,9 @@ public interface StructuredDataSupport<K> {
     void deletePath(K rowKey, String pathString);
 
     void deletePath(K rowKey, String pathString, BatchContext batchContext);
+
+    /**
+     * Utility method for creating path strings from individual string elements.
+     */
+    String createPath(String... elements);
 }

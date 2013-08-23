@@ -121,6 +121,11 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         }
     }
 
+    @Override
+    public String createPath(String... elements) {
+        return Path.fromElements(elements).toString();
+    }
+
     /**
      * Convert strings to paths and remove the start of the paths that match the inputPath.
      */

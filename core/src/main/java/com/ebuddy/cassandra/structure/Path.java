@@ -23,6 +23,10 @@ public class Path implements Comparable<Path> {
         this.pathElements = pathElements;
     }
 
+    public static Path fromElements(String... elements) {
+        return new Path(Arrays.asList(elements));
+    }
+
     public Path concatenate(Path other) {
         List<String> newPathElements = new LinkedList<String>();
         newPathElements.addAll(pathElements);

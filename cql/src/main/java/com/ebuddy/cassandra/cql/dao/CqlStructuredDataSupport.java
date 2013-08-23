@@ -261,6 +261,11 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
     }
 
+    @Override
+    public String createPath(String... elements) {
+        return Path.fromElements(elements).toString();
+    }
+
     private void validateArgs(K rowKey, String pathString) {
         Validate.notEmpty(pathString);
         Validate.notNull(rowKey);
@@ -293,7 +298,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
         return pathMap;
     }
-
 
     private static class CqlBatchContext implements BatchContext {
         private Batch batch = batch();
