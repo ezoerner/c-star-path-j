@@ -1,6 +1,7 @@
 package com.ebuddy.cassandra.structure.jackson;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -107,6 +108,13 @@ public class CustomTypeResolverBuilderTest {
         assertEquals(list.size(), 2);
         assertTrue(list.contains("x"));
         assertTrue(list.contains("y"));
+    }
+
+    @Test(groups = {"unit"})
+    public void shouldConvertNormallyNoCollectionsWithAnnotations() throws Exception {
+        TestPojoWithAnnotations testPojo = new TestPojoWithAnnotations("abc", "xyz");
+        Map<?,?> simplifiedStructure = (Map<?,?>)mapper.convertValue(testPojo, Object.class);
+        assertFalse(simplifiedStructure.containsKey("value"));
     }
 
     private TestPojoWithSet getTestPojoWithoutSubclassedSets() {
