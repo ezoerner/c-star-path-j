@@ -18,7 +18,9 @@ On `readFromPath`, the reverse process is used to recompose the key-value pairs 
 
 Paths can be used to access structured data at different levels within the structure. Lists have a specidal encoding
 in a path using '@' followed by a integer index encoded into the path.  
+
 **Note:** Special support for Sets of simple values is also planned but not yet implemented.
+In the meantime sets can be modeled as maps.
 
 ###Example:
 
