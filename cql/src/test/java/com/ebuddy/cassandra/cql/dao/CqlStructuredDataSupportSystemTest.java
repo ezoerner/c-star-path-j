@@ -81,7 +81,7 @@ public class CqlStructuredDataSupportSystemTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(groups = {"unit"})
+    @Test(groups = {"system"})
     public void convertValueShouldRetainOrderingInMaps() throws Exception {
         SortedMap<String,String> map = new TreeMap<String,String>();
         map.put("b", "1");
