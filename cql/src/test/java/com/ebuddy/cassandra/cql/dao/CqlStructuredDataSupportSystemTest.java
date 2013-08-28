@@ -3,8 +3,13 @@ package com.ebuddy.cassandra.cql.dao;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.jboss.netty.util.internal.StringUtil;
@@ -17,6 +22,8 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
+import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * System tests for CqlStructuredDataSupport.
@@ -71,6 +78,20 @@ public class CqlStructuredDataSupportSystemTest {
         dao.deletePath(rowKey, pathString);
         TestPojo result2 = dao.readFromPath(rowKey, pathString, typeReference);
         assertNull(result2);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test(groups = {"unit"})
+    public void convertValueShouldRetainOrderingInMaps() throws Exception {
+        SortedMap<String,String> map = new TreeMap<String,String>();
+        map.put("b", "1");
+        map.put("a", "2");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setDefaultTyping(new CustomTypeResolverBuilder());
+        Object converted = mapper.convertValue(map, Object.class);
+        assertTrue(converted instanceof LinkedHashMap);
+        assertEquals(((Map<String,String>)converted).keySet().iterator().next(), "a");
     }
 
     private void dropAndCreateSchema() {

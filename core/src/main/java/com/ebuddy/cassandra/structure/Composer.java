@@ -7,6 +7,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -70,7 +71,7 @@ public class Composer {
     }
 
     private Map<String,Object> composeMap(Map<Path,Object> simpleObjects) {
-        Map<String,Object> composition = new HashMap<String,Object>(simpleObjects.size());
+        Map<String,Object> composition = new LinkedHashMap<String,Object>(simpleObjects.size());
         for (Map.Entry<Path,Object> entry : simpleObjects.entrySet()) {
             merge(entry, composition);
         }
