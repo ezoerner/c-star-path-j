@@ -87,18 +87,28 @@ public class Path implements Comparable<Path> {
      * Returns the first element in this path.
      * If this is an empty path, return null, otherwise return the first element in the path.
      */
-    public String head() {
+    public String first() {
         return pathElements.size() == 0 ? null : pathElements.get(0);
     }
 
     /**
      * Returns the rest of the path after the first element.
-     * If this is an empty path, return null,
+     * If this is an empty path, throws IndexOutOfBoundsException,
      * if this path has only one element, return an empty path,
-     * otherwise return a new path with elements starting after the head.
+     * otherwise return a new path with elements starting after the first.
      */
     public Path rest() {
-        return pathElements.size() == 0 ? null : tail(1);
+        return rest(1);
+    }
+
+    /**
+     * Return a new Path consisting of the rest of the path elements of this path starting with the specified index.
+     * @param startIndex 0-based start index
+     * @return new Path
+     * @throws IndexOutOfBoundsException if path has insufficient size
+     */
+    public Path rest(int startIndex) {
+        return new Path(pathElements.subList(startIndex, pathElements.size()));
     }
 
     public boolean isEmpty() {
@@ -129,14 +139,6 @@ public class Path implements Comparable<Path> {
         return pathElements.subList(0, path.size()).equals(path.pathElements);
     }
 
-    /**
-     * Return a new Path consisting of the rest of the path elements of this path starting with the specified index.
-     * @param startIndex 0-based start index
-     */
-    public Path tail(int startIndex) {
-        return new Path(pathElements.subList(startIndex, pathElements.size()));
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -160,7 +162,7 @@ public class Path implements Comparable<Path> {
     }
 
     /**
-     * Return true if the head element in this path is a list index.
+     * Return true if the first element in this path is a list index.
      */
     private static boolean isListIndex(String pathElement) {
         if (!pathElement.startsWith(LIST_INDEX_PREFIX)) {

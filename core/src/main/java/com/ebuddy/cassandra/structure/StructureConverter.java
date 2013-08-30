@@ -4,25 +4,21 @@ import static org.apache.commons.lang3.ObjectUtils.NULL;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PushbackReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-
-import org.apache.commons.lang3.ArrayUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Serializer for legacy format of property values without using PropertyValue itself.
- * NOTE: Experimental, not sure yet if this will actually be used anywhere.
- * // TODO: integrate this into spring Converter framework
+ * Converter for embedded objects in values encoded as bytes.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class StructureConverter {
     private static final String UTF_8 = "UTF-8";
-    private static final Charset UTF_8_CHARSET = Charset.forName(UTF_8);
+    private static final Charset UTF8_CHARSET = Charset.forName(UTF_8);
     private static final StructureConverter INSTANCE = new StructureConverter();
     protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
@@ -52,30 +48,11 @@ public class StructureConverter {
     /**
      * @throws DataFormatException if format of the string is incorrect and could not be parsed as JSON
      */
-    @SuppressWarnings("fallthrough")
     public Object fromString(String str) {
         if (str == null) {
             return null;
         }
-        if (str.isEmpty()) {
-            return str;
-        }
-
-        // look for header char to determine if a JSON object or legacy NestedProperties
-        int firstChar = str.charAt(0);
-        switch (firstChar) {
-            case '\uFFFF':
-                // legacy NestedProperties, obsolete and interpreted now as simply a JSON encoded Map
-            case HEADER_CHAR:
-                try {
-                    return JSON_MAPPER.readValue(str.substring(1), Object.class);
-                } catch (IOException e) {
-                    throw new DataFormatException("Could not parse JSON", e);
-                }
-            default:
-                // if no special header, then just a string
-                return str;
-        }
+        return decodeBytes(str.getBytes(UTF8_CHARSET));
     }
 
     /**
@@ -99,7 +76,7 @@ public class StructureConverter {
         String jsonString = encodeJson(obj);
         char[] chars = new char[jsonString.length() + 1];
         chars[0] = HEADER_CHAR;
-        jsonString.getChars(0,jsonString.length(),chars,1);
+        jsonString.getChars(0, jsonString.length(), chars, 1);
         return new String(chars);
     }
 
@@ -112,7 +89,7 @@ public class StructureConverter {
         }
 
         if (obj instanceof String) {
-            return ByteBuffer.wrap(((String)obj).getBytes(UTF_8_CHARSET));
+            return ByteBuffer.wrap(((String)obj).getBytes(UTF8_CHARSET));
         }
 
         // write as special header bytes followed by JSON
@@ -121,7 +98,7 @@ public class StructureConverter {
             obj = null;
         }
         String jsonString = encodeJson(obj);
-        byte[] jsonBytes = jsonString.getBytes(UTF_8_CHARSET);
+        byte[] jsonBytes = jsonString.getBytes(UTF8_CHARSET);
         byte[] result = new byte[jsonBytes.length + UTF8_HEADER_BYTES.length];
         System.arraycopy(UTF8_HEADER_BYTES, 0, result, 0, UTF8_HEADER_BYTES.length);
         System.arraycopy(jsonBytes, 0, result, UTF8_HEADER_BYTES.length, jsonBytes.length);
@@ -142,23 +119,44 @@ public class StructureConverter {
 
     @SuppressWarnings("fallthrough")
     private Object decodeBytes(byte[] bytes) {
+        if (bytes.length == 0) {
+            return "";
+        }
+
         // look for header char to determine if a JSON object or legacy NestedProperties
-        InputStream inputStream = new ByteArrayInputStream(bytes);
-        InputStreamReader reader = new InputStreamReader(inputStream, UTF_8_CHARSET);
+        PushbackReader reader = new PushbackReader(new InputStreamReader(new ByteArrayInputStream(bytes), UTF8_CHARSET));
+
         try {
             int firstChar = reader.read();
             switch (firstChar) {
                 case '\uFFFF':
-                    // legacy NestedProperties, obsolete and interpreted now as simply a JSON encoded Map
+                    // legacy NestedProperties, obsolete and interpreted now as simply a JSON encoded Map or
+                    // beginning of a list terminator
+
+                    // if the second character is \uFFFF then this is a list terminator value and just return it
+                    int secondChar = reader.read();
+                    if (secondChar == '\uFFFF') {
+                        return Types.LIST_TERMINATOR_VALUE;
+                    }
+                    if (secondChar == -1) {
+                        throw new DataFormatException("Found header FFFF but no data");
+                    }
+                    reader.unread(secondChar);
+                    // fall through and read as a JSON object
+
                 case HEADER_CHAR:
-                    return JSON_MAPPER.readValue(ArrayUtils.subarray(bytes, UTF8_HEADER_BYTES.length, bytes.length),
-                                                 Object.class);
+                    try {
+                        return JSON_MAPPER.readValue(reader, Object.class);
+                    } catch (IOException e) {
+                        throw new DataFormatException("Could not parse JSON", e);
+                    }
+
                 default:
-                    // if no special header, then just a string
-                    return UTF_8_CHARSET.decode(ByteBuffer.wrap(bytes)).toString();
+                    // if no special header, then bytes are just a string
+                    return new String(bytes, UTF8_CHARSET);
             }
         } catch (IOException ioe) {
-            throw new DataFormatException("Could not parse JSON", ioe);
+            throw new DataFormatException("Could read data", ioe);
         }
     }
 

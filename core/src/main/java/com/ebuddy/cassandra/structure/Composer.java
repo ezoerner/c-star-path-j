@@ -81,7 +81,7 @@ public class Composer {
     @SuppressWarnings("unchecked")
     private void merge(Map.Entry<Path,Object> simpleEntry, Map<String,Object> compositionMap) {
         Path path = simpleEntry.getKey();
-        String head = path.head();
+        String head = path.first();
         assert head != null;
         Object nextLevelComposition = compositionMap.get(head);
         Path rest = path.rest();
@@ -104,7 +104,7 @@ public class Composer {
             // Resolve this by putting this value at the special key "@ROOT".
             composition.put(INCONSISTENT_ROOT, simpleValue);
         } else {
-            // simply advance to next level since the head matches a key already there
+            // simply advance to next level since the first matches a key already there
             merge(new SimpleEntry<Path, Object>(rest, simpleValue), nextLevelComposition);
         }
     }
@@ -159,9 +159,16 @@ public class Composer {
         SortedMap<Integer,Object> sortedMap = new TreeMap<Integer,Object>();
         List<Object> list = new ArrayList<Object>(map.size());
 
+        int listSize = -1;
+
         // convert keys into integer indexes and sort
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
+            if (Types.isListTerminator(value)) {
+                listSize = Path.getListIndex(entry.getKey());
+                continue;
+            }
+
             Object transformedValue;
             if (Types.isSimple(value)) {
                 transformedValue = value;
@@ -173,9 +180,20 @@ public class Composer {
             sortedMap.put(Path.getListIndex(entry.getKey()), transformedValue);
         }
 
+        // if no listSize was found then something went wrong, but just warn and use whole list found
+        if (listSize == -1) {
+            // TODO: what log framework to use?
+            // log.warn("no list terminator found, using all list elements");
+        }
+
         // copy values into list in sorted order
+        int index = 0;
         for (Object value : sortedMap.values()) {
+            if (index == listSize) {
+                break;
+            }
             list.add(value);
+            index++;
         }
         return list;
     }

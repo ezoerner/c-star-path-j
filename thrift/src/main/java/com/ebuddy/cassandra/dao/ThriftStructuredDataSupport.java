@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> {
+    private static final int MAX_CODE_POINT = 0x10FFFF;
 
     private final ColumnFamilyOperations<K,String,Object> operations;
     private final ObjectMapper writeMapper;
@@ -62,7 +63,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
         String start = inputPath.toString();
-        String finish = start + Character.MAX_VALUE;
+        String finish = getFinishString(start);
         Map<String,Object> columnsMap = operations.readColumnsAsMap(rowKey, start, finish, count, reversed);
         if (columnsMap.isEmpty()) {
             return null;
@@ -113,7 +114,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         // normalize path
         Path inputPath = Path.fromString(path);
         String start = inputPath.toString();
-        String finish = start + Character.MAX_VALUE;
+        String finish = getFinishString(start);
         if (batchContext == null) {
             operations.deleteColumns(rowKey, start, finish);
         } else {
@@ -126,6 +127,17 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         return Path.fromElements(elements).toString();
     }
 
+    private String getFinishString(String start) {
+        int startCodePointCount = start.codePointCount(0, start.length());
+        int finishCodePointCount = startCodePointCount + 1;
+        int[] finishCodePoints = new int[finishCodePointCount];
+        for (int i = 0; i < startCodePointCount; i++) {
+            finishCodePoints[i] = start.codePointAt(i);
+        }
+        finishCodePoints[finishCodePointCount - 1] = MAX_CODE_POINT;
+        return new String(finishCodePoints, 0, finishCodePointCount);
+    }
+
     /**
      * Convert strings to paths and remove the start of the paths that match the inputPath.
      */
@@ -136,7 +148,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
-            path = path.tail(inputPath.size());
+            path = path.rest(inputPath.size());
             pathMap.put(path, entry.getValue());
         }
         return pathMap;

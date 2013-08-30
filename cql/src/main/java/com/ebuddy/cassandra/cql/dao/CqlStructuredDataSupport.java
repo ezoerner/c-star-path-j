@@ -70,6 +70,8 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private static final String DEFAULT_PATH_COLUMN = "column1";
     private static final String DEFAULT_PARTITION_KEY_COLUMN = "key";
 
+    private static final int MAX_CODE_POINT = 0x10FFFF;
+
     private final Session session;
     private final String pathColumnName;
     private final String valueColumnName;
@@ -155,7 +157,8 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
         String start = inputPath.toString();
-        String finish = start + Character.MAX_VALUE;
+        // use the maximum unicode code point to terminate the range
+        String finish = getFinishString(start);
 
         // note: prepared statements should be cached and reused by the connection pooling component....
 
@@ -226,7 +229,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
         String start = inputPath.toString();
-        String finish = start + Character.MAX_VALUE;
+        String finish = getFinishString(start);
 
         // would like to just do a delete with a where clause, but unfortunately Cassandra can't do that in CQL (either)
         // with >= and <=
@@ -266,6 +269,18 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         return Path.fromElements(elements).toString();
     }
 
+    private String getFinishString(String start) {
+        int startCodePointCount = start.codePointCount(0, start.length());
+        int finishCodePointCount = startCodePointCount + 1;
+        int[] finishCodePoints = new int[finishCodePointCount];
+        for (int i = 0; i < startCodePointCount; i++) {
+            finishCodePoints[i] = start.codePointAt(i);
+        }
+        finishCodePoints[finishCodePointCount - 1] = MAX_CODE_POINT;
+        return new String(finishCodePoints, 0, finishCodePointCount);
+    }
+
+
     private void validateArgs(K rowKey, String pathString) {
         Validate.notEmpty(pathString);
         Validate.notNull(rowKey);
@@ -291,7 +306,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
-            path = path.tail(inputPath.size());
+            path = path.rest(inputPath.size());
             Object value = StructureConverter.get().fromString(valueString);
             // this can be a null converted from a JSON null
             pathMap.put(path, value);

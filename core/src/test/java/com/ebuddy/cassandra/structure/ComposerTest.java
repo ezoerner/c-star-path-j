@@ -50,7 +50,7 @@ public class ComposerTest {
         // output of only simple objects is equal to the input, but has strings as keys instead of Paths
         Map<String,Object> expectedResult = new HashMap<String,Object>();
         for (Map.Entry<Path,Object> entry : simpleObjects.entrySet()) {
-            expectedResult.put(entry.getKey().head(), entry.getValue());
+            expectedResult.put(entry.getKey().first(), entry.getValue());
         }
 
         assertEquals(result, expectedResult);

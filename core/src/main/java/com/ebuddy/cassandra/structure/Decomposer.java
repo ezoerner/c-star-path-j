@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Support for decomposing complex objects into paths to simple objects.
- * Only the basic JSON structures are supported, i.e. Maps, Lists, Strings, Numbers, Booleans, and null.
+ * Only the basic JSON structures are currently supported, i.e. Maps, Lists, Strings, Numbers, Booleans, and null.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
@@ -116,6 +116,9 @@ public class Decomposer {
         for (int i = 0; i < listItself.size(); i++) {
             normalized.put(Path.fromIndex(i), listItself.get(i));
         }
+        // add terminator column, issue #20
+        normalized.put(Path.fromIndex(listItself.size()), Types.LIST_TERMINATOR_VALUE);
+
         return normalized;
     }
 }

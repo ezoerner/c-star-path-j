@@ -24,6 +24,7 @@ import com.ebuddy.cassandra.TypeReference;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class ThriftStructuredDataSupportTest {
+    private static final int MAX_CODE_POINT = 0x10FFFF;
 
     @Mock
     private ColumnFamilyOperations<String,String,Object> operations;
@@ -46,7 +47,7 @@ public class ThriftStructuredDataSupportTest {
 
         when(operations.readColumnsAsMap(rowKey,
                                          "a/b/c/",
-                                         "a/b/c/" + Character.MAX_VALUE,
+                                         getFinishString("a/b/c/"),
                                          Integer.MAX_VALUE,
                                          false)).thenReturn(stringObjectMap);
 
@@ -63,7 +64,7 @@ public class ThriftStructuredDataSupportTest {
 
         when(operations.readColumnsAsMap(rowKey,
                                          "a/b/c/",
-                                         "a/b/c/" + Character.MAX_VALUE,
+                                         getFinishString("a/b/c/"),
                                          Integer.MAX_VALUE,
                                          false)).thenReturn(Collections.<String,Object>emptyMap());
 
@@ -95,7 +96,7 @@ public class ThriftStructuredDataSupportTest {
         dao.deletePath(rowKey, pathString);
         //////////////////////
 
-        verify(operations).deleteColumns(rowKey, pathString + "/", pathString +"/" +Character.MAX_VALUE);
+        verify(operations).deleteColumns(rowKey, pathString + "/", getFinishString(pathString +"/"));
     }
 
     private Map<String,Object> getExpectedMap(boolean useNullToken) {
@@ -105,7 +106,19 @@ public class ThriftStructuredDataSupportTest {
         stringObjectMap.put("a/b/c/b/", true);
         stringObjectMap.put("a/b/c/list/@0/", "e1");
         stringObjectMap.put("a/b/c/list/@1/", "e2");
+        stringObjectMap.put("a/b/c/list/@2/", "\uFFFF\uFFFF");
         stringObjectMap.put("a/b/c/nullTest/", useNullToken ? NULL : null);
         return stringObjectMap;
+    }
+
+    private String getFinishString(String start) {
+        int startCodePointCount = start.codePointCount(0, start.length());
+        int finishCodePointCount = startCodePointCount + 1;
+        int[] finishCodePoints = new int[finishCodePointCount];
+        for (int i = 0; i < startCodePointCount; i++) {
+            finishCodePoints[i] = start.codePointAt(i);
+        }
+        finishCodePoints[finishCodePointCount - 1] = MAX_CODE_POINT;
+        return new String(finishCodePoints, 0, finishCodePointCount);
     }
 }
