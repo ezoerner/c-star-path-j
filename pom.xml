@@ -21,7 +21,7 @@
         <connection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</developerConnection>
         <url>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</url>
-        <tag>master</tag>
+        <tag>release-2.1</tag>
     </scm>
 
     <distributionManagement>
