@@ -164,8 +164,9 @@ public class Composer {
         // convert keys into integer indexes and sort
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
+            int listIndex = Path.getListIndex(entry.getKey());
             if (Types.isListTerminator(value)) {
-                listSize = Path.getListIndex(entry.getKey());
+                listSize = listSize == -1 ? listIndex : Math.min(listIndex, listSize);
                 continue;
             }
 
