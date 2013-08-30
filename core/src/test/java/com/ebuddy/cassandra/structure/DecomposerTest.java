@@ -122,6 +122,7 @@ public class DecomposerTest {
         expected.put(Path.fromString("list/@0"), "x");
         expected.put(Path.fromString("list/@1"), "y");
         expected.put(Path.fromString("list/@2"), "z");
+        expected.put(Path.fromString("list/@3"), "\uFFFF\uFFFF");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);
@@ -144,6 +145,7 @@ public class DecomposerTest {
         expected.put(Path.fromString("list/@0/k1"), "v1");
         expected.put(Path.fromString("list/@1/k2"), "v2");
         expected.put(Path.fromString("list/@2/k3"), "v3");
+        expected.put(Path.fromString("list/@3/"), "\uFFFF\uFFFF");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);
@@ -166,12 +168,15 @@ public class DecomposerTest {
         expected.put(Path.fromString("1/@0"), "a");
         expected.put(Path.fromString("1/@1"), "b");
         expected.put(Path.fromString("1/@2"), "c");
+        expected.put(Path.fromString("1/@3"), "\uFFFF\uFFFF");
         expected.put(Path.fromString("2/@0"), "d");
         expected.put(Path.fromString("2/@1"), "e");
         expected.put(Path.fromString("2/@2"), "f");
+        expected.put(Path.fromString("2/@3"), "\uFFFF\uFFFF");
         expected.put(Path.fromString("3/@0"), "g");
         expected.put(Path.fromString("3/@1"), "h");
         expected.put(Path.fromString("3/@2"), "i");
+        expected.put(Path.fromString("3/@3"), "\uFFFF\uFFFF");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);

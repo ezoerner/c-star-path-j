@@ -8,6 +8,10 @@ package com.ebuddy.cassandra.structure;
  */
 public class DataFormatException extends RuntimeException {
 
+    public DataFormatException(String message) {
+        super(message);
+    }
+
     public DataFormatException(String s, Exception cause) {
         super(s, cause);
     }

@@ -7,6 +7,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -79,6 +80,53 @@ public class CqlStructuredDataSupportSystemTest {
         TestPojo result2 = dao.readFromPath(rowKey, pathString, typeReference);
         assertNull(result2);
     }
+
+    @Test(groups = {"system"})
+    public void shouldShrinkList() throws Exception {
+        List<String> longList = Arrays.asList("1", "2", "3", "4", "5", "6");
+        UUID rowKey = UUID.randomUUID();
+        TypeReference<List<String>> typeReference = new TypeReference<List<String>>() { };
+
+        dao.writeToPath(rowKey, "x", longList);
+        List<String> resultLongList = dao.readFromPath(rowKey, "x", typeReference);
+        assertNotSame(resultLongList, longList);
+        assertEquals(resultLongList, longList);
+
+        List<String> shortList = Arrays.asList("1", "2", "3");
+
+        dao.writeToPath(rowKey, "x", shortList);
+        List<String> resultShortList = dao.readFromPath(rowKey, "x", typeReference);
+        assertNotSame(resultShortList, shortList);
+        assertEquals(resultShortList, shortList);
+    }
+
+    @Test(groups = {"system"})
+    public void shouldRemoveListCruftWhenDeleting() throws Exception {
+        List<String> longList = Arrays.asList("1", "2", "3", "4", "5", "6");
+        UUID rowKey = UUID.randomUUID();
+        TypeReference<List<String>> typeReference = new TypeReference<List<String>>() { };
+
+        dao.writeToPath(rowKey, "x", longList);
+        List<String> resultLongList = dao.readFromPath(rowKey, "x", typeReference);
+        assertNotSame(resultLongList, longList);
+        assertEquals(resultLongList, longList);
+
+        List<String> shortList = Arrays.asList("1", "2", "3");
+
+        dao.writeToPath(rowKey, "x", shortList);
+        List<String> resultShortList = dao.readFromPath(rowKey, "x", typeReference);
+        assertNotSame(resultShortList, shortList);
+        assertEquals(resultShortList, shortList);
+
+        String s = dao.readFromPath(rowKey,"x/@4", new TypeReference<String>() {});
+        assertEquals(s, "5"); // cruft
+
+        dao.deletePath(rowKey, "x");
+
+        s = dao.readFromPath(rowKey,"x/@4", new TypeReference<String>() {});
+        assertNull(s); // cruft gone
+    }
+
 
     @SuppressWarnings("unchecked")
     @Test(groups = {"system"})
