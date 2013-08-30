@@ -63,6 +63,12 @@ public class Composer {
             return Collections.emptyMap();
         }
 
+        // if this is a singleton map with and empty path as the key, then this represents itself a
+        // simple object, so just return the value
+        if (simpleObjects.size() == 1 && simpleObjects.keySet().iterator().next().size() == 0) {
+            return simpleObjects.values().iterator().next();
+        }
+
         // decompose into nested maps by merging the partial map from each path.
         // After composing into nested maps, go through the tree structure and transform SortedMaps into Lists.
         // The reason for a two-pass approach is that the lists may be "sparse" due to deleted indexes, and
