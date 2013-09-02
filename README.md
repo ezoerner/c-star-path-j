@@ -10,9 +10,9 @@ separates path elements. In order to represent map keys that may contain such ch
 the individual path elements. Paths elements are automatically URL-decoded by the implementation when recomposing maps.
 
 On `writeToPath`, the object is first converted into maps, lists, and simple objects with the help of
-[Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome). How objects are converted can be
-customized by using annotations supported by Jackson. These structures are then decomposed into key-value pairs
-where the keys are paths.
+[Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome) (the fasterxml.com version).
+How objects are converted can be customized by using annotations supported by Jackson. These structures are then
+decomposed into key-value pairs where the keys are paths.
 
 On `readFromPath`, the reverse process is used to recompose the key-value pairs back into a structured object or POJO.
 
