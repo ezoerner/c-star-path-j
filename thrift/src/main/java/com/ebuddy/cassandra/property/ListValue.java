@@ -5,16 +5,17 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 @Deprecated
 public class ListValue extends StructuredValue<List<String>> {
-    private static final Logger LOG = Logger.getLogger(ListValue.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ListValue.class);
 
     /** header char, a unicode non-character, used to flag a binary encoded StructuredValue. */
     static final int HEADER_CHAR = '\uFFFE';

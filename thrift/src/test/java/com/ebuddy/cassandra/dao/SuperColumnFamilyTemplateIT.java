@@ -5,10 +5,11 @@ import static org.testng.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.cassandraunit.DataLoader;
 import org.cassandraunit.dataset.yaml.ClassPathYamlDataSet;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -26,7 +27,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 
 // TODO: Create abstract TestNG class for IT support (which will start the server, load the data set and provide access to keyspace)
 public class SuperColumnFamilyTemplateIT {
-    private static final Logger LOG = Logger.getLogger(SuperColumnFamilyTemplateIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SuperColumnFamilyTemplateIT.class);
 
     private static final String CLUSTER_NAME = "Test Cluster";
     private static final String HOST = "localhost:9171";
