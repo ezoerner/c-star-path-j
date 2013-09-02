@@ -43,6 +43,24 @@ In the meantime sets can be modeled as maps.
 `a/b/@0/c/ -> 42`  
 `a/b/@1/c/ -> 43`
 
+
+Maven Dependency
+----------------
+To include C* Path in your project, use one of the following dependencies. Generally either the CQL or thrift dependency
+is used, but not both.
+
+    <dependency>
+        <groupId>com.ebuddy.cassandra</groupId>
+        <artifactId>cql-data-access</artifactId>
+        <version>2.1.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.ebuddy.cassandra</groupId>
+        <artifactId>thrift-data-access</artifactId>
+        <version>2.1.0</version>
+    </dependency>
+
 api module
 ----------
 The main interface `StructuredDataAccessSupport` and helper classes.
