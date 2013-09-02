@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -30,7 +31,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class DriverTest {
-    private static final Logger LOG = Logger.getLogger(DriverTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DriverTest.class);
 
     private static final String NODE = "127.0.0.1";
 

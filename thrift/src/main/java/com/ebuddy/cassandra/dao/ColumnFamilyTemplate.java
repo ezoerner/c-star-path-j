@@ -11,7 +11,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnFamilyRowMapper;
@@ -42,7 +43,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
  */
 public class ColumnFamilyTemplate<K,N,V> extends AbstractColumnFamilyTemplate<K,N,V>
         implements ColumnFamilyOperations<K,N,V> {
-    private static final Logger LOG = Logger.getLogger(ColumnFamilyTemplate.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ColumnFamilyTemplate.class);
 
     private final ColumnMapper<N,N,V> columnMapperToGetColumnNames = new ColumnMapper<N,N,V>() {
         @Override

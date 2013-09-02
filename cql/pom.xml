@@ -17,13 +17,32 @@
         <dependency>
             <groupId>com.ebuddy.cassandra</groupId>
             <artifactId>api</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.ebuddy.cassandra</groupId>
             <artifactId>core</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-all</artifactId>
+        </dependency>
+
+        <!-- log4j is used directly in cassandra-all library -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+        </dependency>
+
+        <!-- commons-logging is used directly in apache httpcomponents in thrift in cassandra-all -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>

@@ -13,7 +13,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 
-import org.jboss.netty.util.internal.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ public class CqlStructuredDataSupportSystemTest {
     public void setUp() throws Exception {
         // default to using cassandra on localhost, but can be overridden with a system property
         String cassandraHostsString = System.getProperty(CASSANDRA_HOSTS_SYSTEM_PROPERTY, LOCALHOST_IP);
-        String[] cassandraHosts = StringUtil.split(cassandraHostsString, ',');
+        String[] cassandraHosts = StringUtils.split(cassandraHostsString, ',');
         Cluster.Builder clusterBuilder = Cluster.builder();
         for (String host : cassandraHosts) {
             clusterBuilder.addContactPoint(host);

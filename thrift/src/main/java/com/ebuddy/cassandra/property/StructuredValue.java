@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializableWithType;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -26,7 +25,6 @@ import org.codehaus.jackson.map.TypeSerializer;
 // needs to be public so jackson can access getValue() by reflection
 @Deprecated
 public abstract class StructuredValue<T> implements PropertyValue<T>, JsonSerializableWithType {
-    private static final Logger LOG = Logger.getLogger(StructuredValue.class);
     protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     protected T value;
