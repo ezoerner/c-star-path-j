@@ -148,7 +148,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
-            path = path.rest(inputPath.size());
+            path = path.tail(inputPath.size());
             pathMap.put(path, entry.getValue());
         }
         return pathMap;

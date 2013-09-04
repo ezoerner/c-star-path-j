@@ -306,7 +306,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
-            path = path.rest(inputPath.size());
+            path = path.tail(inputPath.size());
             Object value = StructureConverter.get().fromString(valueString);
             // this can be a null converted from a JSON null
             pathMap.put(path, value);

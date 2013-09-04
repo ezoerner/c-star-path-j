@@ -97,8 +97,8 @@ public class Path implements Comparable<Path> {
      * if this path has only one element, return an empty path,
      * otherwise return a new path with elements starting after the first.
      */
-    public Path rest() {
-        return rest(1);
+    public Path tail() {
+        return tail(1);
     }
 
     /**
@@ -107,7 +107,7 @@ public class Path implements Comparable<Path> {
      * @return new Path
      * @throws IndexOutOfBoundsException if path has insufficient size
      */
-    public Path rest(int startIndex) {
+    public Path tail(int startIndex) {
         return new Path(pathElements.subList(startIndex, pathElements.size()));
     }
 

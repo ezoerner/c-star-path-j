@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Support for composing paths back to complex objects.
@@ -30,12 +33,14 @@ import java.util.TreeMap;
  * etc.
  *
  * If inconsistencies such as these are preventing data from being deserialized into a
- * particular POJO, the data can always be retrieved using an instance of (a sublcass of) TypeReference<Object>,
+ * particular POJO, the data can always be retrieved using an instance of (a subclass of) TypeReference<Object>,
  * which will return the basic JSON to Java mappings, i.e. Maps, Lists and Strings, etc.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class Composer {
+    private static Logger log = LoggerFactory.getLogger(Composer.class);
+
     private static final String INCONSISTENT_ROOT = "@ROOT";
     private static final Composer INSTANCE = new Composer();
 
@@ -77,7 +82,7 @@ public class Composer {
     }
 
     private Map<String,Object> composeMap(Map<Path,Object> simpleObjects) {
-        Map<String,Object> composition = new LinkedHashMap<String,Object>(simpleObjects.size());
+        Map<String,Object> composition = new LinkedHashMap<>(simpleObjects.size());
         for (Map.Entry<Path,Object> entry : simpleObjects.entrySet()) {
             merge(entry, composition);
         }
@@ -90,52 +95,56 @@ public class Composer {
         String head = path.first();
         assert head != null;
         Object nextLevelComposition = compositionMap.get(head);
-        Path rest = path.rest();
+        Path tail = path.tail();
         Object simpleValue = simpleEntry.getValue();
         if (nextLevelComposition == null) {
-            mergeEntryIntoEmptySlot(compositionMap, head, rest, simpleValue);
+            mergeEntryIntoEmptySlot(compositionMap, head, tail, simpleValue);
         } else if (Types.isSimple(nextLevelComposition)) {
-            mergeEntryWithSimple(compositionMap, nextLevelComposition, head, rest, simpleValue);
+            mergeEntryWithSimple(compositionMap, nextLevelComposition, head, tail, simpleValue);
         } else {
-            mergeEntryWithStructure(compositionMap, (Map<String,Object>)nextLevelComposition, rest, simpleValue);
+            mergeEntryWithStructure((Map<String,Object>)nextLevelComposition, tail, simpleValue);
         }
     }
 
-    private void mergeEntryWithStructure(Map<String,Object> composition,
-                                         Map<String,Object> nextLevelComposition,
-                                         Path rest,
-                                         Object simpleValue) {
-        if (rest.isEmpty()) {
+    private void mergeEntryWithStructure(Map<String,Object> nextLevelComposition, Path tail, Object simpleValue) {
+        if (tail.isEmpty()) {
             // INCONSISTENCY!! there is a simple value at the same level as a complex object
-            // Resolve this by putting this value at the special key "@ROOT".
-            composition.put(INCONSISTENT_ROOT, simpleValue);
+            // Resolve this by putting this value at the special key "@ROOT" inside the complex object.
+            Object previousValue = nextLevelComposition.put(INCONSISTENT_ROOT, simpleValue);
+            // not possible to have a previous value, there can only be one key with this path
+            if (previousValue != null) {
+                // merging two simple values at same level, this cannot happen because map keys are unique
+                throw new IllegalStateException("two simple values at same level?");
+            }
         } else {
             // simply advance to next level since the first matches a key already there
-            merge(new SimpleEntry<Path, Object>(rest, simpleValue), nextLevelComposition);
+            merge(new SimpleEntry<>(tail, simpleValue), nextLevelComposition);
         }
     }
 
-    private void mergeEntryIntoEmptySlot(Map<String,Object> composition, String head, Path rest, Object simpleValue) {
-        if (rest.isEmpty()) {
+    private void mergeEntryIntoEmptySlot(Map<String,Object> composition, String head, Path tail, Object simpleValue) {
+        if (tail.isEmpty()) {
             composition.put(head, simpleValue);
         } else {
-            composition.put(head, composeMap(Collections.singletonMap(rest, simpleValue)));
+            composition.put(head, composeMap(Collections.singletonMap(tail, simpleValue)));
         }
     }
 
     private void mergeEntryWithSimple(Map<String,Object> composition,
                                       Object nextLevelComposition,
                                       String head,
-                                      Path rest,
+                                      Path tail,
                                       Object simpleValue) {
-        if (rest.isEmpty()) {
+        if (tail.isEmpty()) {
             // merging two simple values at same level, this cannot happen because map keys are unique
-            throw new IllegalStateException("two simple values at same level");
+            throw new IllegalStateException("two simple values at same level?");
         }
 
         // merging longer path with simple value
-        composition.put(INCONSISTENT_ROOT, nextLevelComposition);
-        composition.put(head, composeMap(Collections.singletonMap(rest, simpleValue)));
+        Map<String,Object> map = composeMap(Collections.singletonMap(tail, simpleValue));
+        map.put(INCONSISTENT_ROOT, nextLevelComposition);
+        // replace the simple value with map containing simple value and inconsistent root
+        composition.put(head, map);
     }
 
     @SuppressWarnings("unchecked")
@@ -145,7 +154,7 @@ public class Composer {
             return transformActualList(map);
         }
         // if not a list, then just recursively transform the structure, and also URLDecode the keys
-        Map<String,Object> newMap = new HashMap<String,Object>(map.size());
+        Map<String,Object> newMap = new HashMap<>(map.size());
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map) {
@@ -162,8 +171,8 @@ public class Composer {
 
     @SuppressWarnings("unchecked")
     private Object transformActualList(Map<String,Object> map) {
-        SortedMap<Integer,Object> sortedMap = new TreeMap<Integer,Object>();
-        List<Object> list = new ArrayList<Object>(map.size());
+        SortedMap<Integer,Object> sortedMap = new TreeMap<>();
+        List<Object> list = new ArrayList<>(map.size());
 
         int listSize = -1;
 
@@ -189,8 +198,7 @@ public class Composer {
 
         // if no listSize was found then something went wrong, but just warn and use whole list found
         if (listSize == -1) {
-            // TODO: what log framework to use?
-            // log.warn("no list terminator found, using all list elements");
+            log.warn("no list terminator found, using all list elements");
         }
 
         // copy values into list in sorted order
@@ -205,12 +213,13 @@ public class Composer {
         return list;
     }
 
-    private String urlDecode(String head) {
+    private String urlDecode(String encodedString) {
+        String decodedString;
         try {
-            head = URLDecoder.decode(head, "UTF-8");
+            decodedString = URLDecoder.decode(encodedString, "UTF-8");
         } catch (UnsupportedEncodingException ignored) {
-            throw new AssertionError("UTF-8 is unknown");
+            throw new AssertionError("UTF-8 is unknown?");
         }
-        return head;
+        return decodedString;
     }
 }

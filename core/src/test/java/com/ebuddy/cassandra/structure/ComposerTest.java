@@ -10,6 +10,8 @@ import java.util.Map;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMap;
+
 /**
  * Tests for Composer.
  *
@@ -37,7 +39,7 @@ public class ComposerTest {
 
     @Test(groups = "unit")
     public void composeSimpleObjectsWithSimplePaths() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
+        Map<Path,Object> simpleObjects = new HashMap<>();
         simpleObjects.put(Path.fromString("x"), "");
         simpleObjects.put(Path.fromString("y"), 42);
         simpleObjects.put(Path.fromString("z"), true);
@@ -48,7 +50,7 @@ public class ComposerTest {
         /////////////
 
         // output of only simple objects is equal to the input, but has strings as keys instead of Paths
-        Map<String,Object> expectedResult = new HashMap<String,Object>();
+        Map<String,Object> expectedResult = new HashMap<>();
         for (Map.Entry<Path,Object> entry : simpleObjects.entrySet()) {
             expectedResult.put(entry.getKey().first(), entry.getValue());
         }
@@ -58,7 +60,7 @@ public class ComposerTest {
 
     @Test(groups = "unit")
     public void composeSimpleObjectsWithLongerPaths() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
+        Map<Path,Object> simpleObjects = new HashMap<>();
         simpleObjects.put(Path.fromString("a%2F%40%23/b/c"), "");
         simpleObjects.put(Path.fromString("a%2F%40%23/b/d"), 42);
         simpleObjects.put(Path.fromString("d/e/f"), true);
@@ -75,7 +77,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeList() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
+        Map<Path,Object> simpleObjects = new HashMap<>();
         simpleObjects.put(Path.fromString("a/@0"), "");
         simpleObjects.put(Path.fromString("a/@1"), 42);
 
@@ -83,7 +85,7 @@ public class ComposerTest {
         Object result = composer.compose(simpleObjects);
         /////////////
 
-        Map<String,Object> expectedResult = new HashMap<String,Object>();
+        Map<String,Object> expectedResult = new HashMap<>();
         expectedResult.put("a", Arrays.asList("", 42));
 
         assertEquals(result, expectedResult);
@@ -91,7 +93,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeListWithDeletedIndex() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
+        Map<Path,Object> simpleObjects = new HashMap<>();
         simpleObjects.put(Path.fromString("a/@0"), "");
         simpleObjects.put(Path.fromString("a/@2"), 42);
 
@@ -99,7 +101,7 @@ public class ComposerTest {
         Object result = composer.compose(simpleObjects);
         /////////////
 
-        Map<String,Object> expectedResult = new HashMap<String,Object>();
+        Map<String,Object> expectedResult = new HashMap<>();
         expectedResult.put("a", Arrays.asList("", 42));
 
         assertEquals(result, expectedResult);
@@ -107,7 +109,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeListOfMaps() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
+        Map<Path,Object> simpleObjects = new HashMap<>();
         simpleObjects.put(Path.fromString("a/@0/b"), "");
         simpleObjects.put(Path.fromString("a/@0/c"), 42);
         simpleObjects.put(Path.fromString("a/@1/b"), "");
@@ -117,7 +119,7 @@ public class ComposerTest {
         Object result = composer.compose(simpleObjects);
         /////////////
 
-        Map<String,Object> expectedResult = new HashMap<String,Object>();
+        Map<String,Object> expectedResult = new HashMap<>();
         Map<String,Object> innerMap = new HashMap<String,Object>() {{
             put("b", "");
             put("c", 42);
@@ -129,7 +131,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeMapOfLists() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
+        Map<Path,Object> simpleObjects = new HashMap<>();
         simpleObjects.put(Path.fromString("a/@0"), "");
         simpleObjects.put(Path.fromString("a/@1"), 42);
         simpleObjects.put(Path.fromString("b/@0"), "");
@@ -147,9 +149,43 @@ public class ComposerTest {
         assertEquals(result, expectedResult);
     }
 
+    @Test(groups = {"unit"},
+          description = "tests the inconsistent root when the structure comes first in iteration order")
+    public void shouldComposeInconsistentRoot() throws Exception {
+        Map<Path,Object> map = ImmutableMap.<Path,Object>of(Path.fromString("a/b/"), "c",
+                                                                Path.fromString("a/"), "d");
+        // inconsistent paths, cannot have both a map (with key b) at "a/" and also a simple object at "a/"
+
+        /////////////
+        Object result = composer.compose(map);
+        /////////////
+
+        // expected result has no loss of information with special key used for the inconsistent root
+        Map<String,Object> expectedResult = ImmutableMap.<String,Object>of("a", ImmutableMap.of("b", "c",
+                                                                                                "@ROOT", "d"));
+        assertEquals(result, expectedResult);
+    }
+
+    @Test(groups = {"unit"}, description = "tests the inconsistent root when the simple value comes first in iteration order")
+    public void shouldComposeInconsistentRootOtherOrder() throws Exception {
+        // guava ImmutableMaps have user-defined iteration order :-)
+        Map<Path,Object> map = ImmutableMap.<Path,Object>of(Path.fromString("a/"), "d",
+                                                            Path.fromString("a/b/"), "c");
+        // inconsistent paths, cannot have both a map (with key b) at "a/" and also a simple object at "a/"
+
+        /////////////
+        Object result = composer.compose(map);
+        /////////////
+
+        // expected result has no loss of information with special key used for the inconsistent root
+        Map<String,Object> expectedResult = ImmutableMap.<String,Object>of("a", ImmutableMap.of("b", "c",
+                                                                                                "@ROOT", "d"));
+        assertEquals(result, expectedResult);
+    }
+
 
     private Map<String,Object> getExpectedMapForComposeSimpleObjectWithLongerPaths() {
-        Map<String,Object> result = new HashMap<String,Object>();
+        Map<String,Object> result = new HashMap<>();
         final Map<String,Object> innerMap1 = new HashMap<String,Object>() {{
             put("c", "");
             put("d", 42);
