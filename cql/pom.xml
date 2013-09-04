@@ -10,7 +10,7 @@
     </parent>
 
     <properties>
-        <cassandra.java.driver.version>1.0.0</cassandra.java.driver.version>
+        <cassandra.java.driver.version>1.0.2</cassandra.java.driver.version>
     </properties>
 
     <dependencies>

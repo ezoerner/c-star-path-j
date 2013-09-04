@@ -63,7 +63,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${surefire.version}</version>
                         <configuration>
-                            <groups>unit,startup,system</groups>
+                            <groups>unit,system</groups>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -160,6 +160,10 @@
                     <exclusion>
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.datastax.cassandra</groupId>
+                        <artifactId>cassandra-driver-core</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
