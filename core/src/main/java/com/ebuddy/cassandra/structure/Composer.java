@@ -82,7 +82,7 @@ public class Composer {
     }
 
     private Map<String,Object> composeMap(Map<Path,Object> simpleObjects) {
-        Map<String,Object> composition = new LinkedHashMap<>(simpleObjects.size());
+        Map<String,Object> composition = new LinkedHashMap<String,Object>(simpleObjects.size());
         for (Map.Entry<Path,Object> entry : simpleObjects.entrySet()) {
             merge(entry, composition);
         }
@@ -118,7 +118,7 @@ public class Composer {
             }
         } else {
             // simply advance to next level since the first matches a key already there
-            merge(new SimpleEntry<>(tail, simpleValue), nextLevelComposition);
+            merge(new SimpleEntry<Path,Object>(tail, simpleValue), nextLevelComposition);
         }
     }
 
@@ -154,7 +154,7 @@ public class Composer {
             return transformActualList(map);
         }
         // if not a list, then just recursively transform the structure, and also URLDecode the keys
-        Map<String,Object> newMap = new HashMap<>(map.size());
+        Map<String,Object> newMap = new HashMap<String,Object>(map.size());
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map) {
@@ -171,8 +171,8 @@ public class Composer {
 
     @SuppressWarnings("unchecked")
     private Object transformActualList(Map<String,Object> map) {
-        SortedMap<Integer,Object> sortedMap = new TreeMap<>();
-        List<Object> list = new ArrayList<>(map.size());
+        SortedMap<Integer,Object> sortedMap = new TreeMap<Integer,Object>();
+        List<Object> list = new ArrayList<Object>(map.size());
 
         int listSize = -1;
 

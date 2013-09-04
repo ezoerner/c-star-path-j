@@ -39,7 +39,7 @@ public class ComposerTest {
 
     @Test(groups = "unit")
     public void composeSimpleObjectsWithSimplePaths() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<>();
+        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
         simpleObjects.put(Path.fromString("x"), "");
         simpleObjects.put(Path.fromString("y"), 42);
         simpleObjects.put(Path.fromString("z"), true);
@@ -50,7 +50,7 @@ public class ComposerTest {
         /////////////
 
         // output of only simple objects is equal to the input, but has strings as keys instead of Paths
-        Map<String,Object> expectedResult = new HashMap<>();
+        Map<String,Object> expectedResult = new HashMap<String,Object>();
         for (Map.Entry<Path,Object> entry : simpleObjects.entrySet()) {
             expectedResult.put(entry.getKey().first(), entry.getValue());
         }
@@ -60,7 +60,7 @@ public class ComposerTest {
 
     @Test(groups = "unit")
     public void composeSimpleObjectsWithLongerPaths() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<>();
+        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
         simpleObjects.put(Path.fromString("a%2F%40%23/b/c"), "");
         simpleObjects.put(Path.fromString("a%2F%40%23/b/d"), 42);
         simpleObjects.put(Path.fromString("d/e/f"), true);
@@ -77,7 +77,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeList() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<>();
+        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
         simpleObjects.put(Path.fromString("a/@0"), "");
         simpleObjects.put(Path.fromString("a/@1"), 42);
 
@@ -85,7 +85,7 @@ public class ComposerTest {
         Object result = composer.compose(simpleObjects);
         /////////////
 
-        Map<String,Object> expectedResult = new HashMap<>();
+        Map<String,Object> expectedResult = new HashMap<String,Object>();
         expectedResult.put("a", Arrays.asList("", 42));
 
         assertEquals(result, expectedResult);
@@ -93,7 +93,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeListWithDeletedIndex() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<>();
+        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
         simpleObjects.put(Path.fromString("a/@0"), "");
         simpleObjects.put(Path.fromString("a/@2"), 42);
 
@@ -101,7 +101,7 @@ public class ComposerTest {
         Object result = composer.compose(simpleObjects);
         /////////////
 
-        Map<String,Object> expectedResult = new HashMap<>();
+        Map<String,Object> expectedResult = new HashMap<String,Object>();
         expectedResult.put("a", Arrays.asList("", 42));
 
         assertEquals(result, expectedResult);
@@ -109,7 +109,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeListOfMaps() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<>();
+        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
         simpleObjects.put(Path.fromString("a/@0/b"), "");
         simpleObjects.put(Path.fromString("a/@0/c"), 42);
         simpleObjects.put(Path.fromString("a/@1/b"), "");
@@ -119,7 +119,7 @@ public class ComposerTest {
         Object result = composer.compose(simpleObjects);
         /////////////
 
-        Map<String,Object> expectedResult = new HashMap<>();
+        Map<String,Object> expectedResult = new HashMap<String,Object>();
         Map<String,Object> innerMap = new HashMap<String,Object>() {{
             put("b", "");
             put("c", 42);
@@ -131,7 +131,7 @@ public class ComposerTest {
 
     @Test(groups = {"unit"})
     public void composeMapOfLists() throws Exception {
-        Map<Path,Object> simpleObjects = new HashMap<>();
+        Map<Path,Object> simpleObjects = new HashMap<Path,Object>();
         simpleObjects.put(Path.fromString("a/@0"), "");
         simpleObjects.put(Path.fromString("a/@1"), 42);
         simpleObjects.put(Path.fromString("b/@0"), "");
@@ -185,7 +185,7 @@ public class ComposerTest {
 
 
     private Map<String,Object> getExpectedMapForComposeSimpleObjectWithLongerPaths() {
-        Map<String,Object> result = new HashMap<>();
+        Map<String,Object> result = new HashMap<String,Object>();
         final Map<String,Object> innerMap1 = new HashMap<String,Object>() {{
             put("c", "");
             put("d", 42);
