@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.ebuddy.cassandra.Path;
 import com.ebuddy.cassandra.TypeReference;
 
 /**
@@ -31,13 +32,14 @@ public class ThriftStructuredDataSupportTest {
 
     private ThriftStructuredDataSupport<String> dao ;
     private final String rowKey = "rowKey";
-    private final String pathString = "a/b/c";
     private final TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
+    private Path path;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         dao = new ThriftStructuredDataSupport<String>(operations);
+        path = dao.createPath("a","b","c");
     }
 
     @Test(groups = {"unit"})
@@ -52,7 +54,7 @@ public class ThriftStructuredDataSupportTest {
                                          false)).thenReturn(stringObjectMap);
 
         //////////////////////
-        TestPojo result = dao.readFromPath(rowKey, pathString, typeReference);
+        TestPojo result = dao.readFromPath(rowKey, path, typeReference);
         //////////////////////
 
         TestPojo expectedResult = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
@@ -69,7 +71,7 @@ public class ThriftStructuredDataSupportTest {
                                          false)).thenReturn(Collections.<String,Object>emptyMap());
 
         //////////////////////
-        TestPojo result = dao.readFromPath(rowKey, pathString, typeReference);
+        TestPojo result = dao.readFromPath(rowKey, path, typeReference);
         //////////////////////
 
         assertNull(result);
@@ -81,7 +83,7 @@ public class ThriftStructuredDataSupportTest {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
 
         //////////////////////
-        dao.writeToPath(rowKey, pathString, testObject);
+        dao.writeToPath(rowKey, path, testObject);
         //////////////////////
 
         Map<String,Object> stringObjectMap = getExpectedMap(true);
@@ -93,10 +95,10 @@ public class ThriftStructuredDataSupportTest {
     public void shouldDeletePath() throws Exception {
 
         //////////////////////
-        dao.deletePath(rowKey, pathString);
+        dao.deletePath(rowKey, path);
         //////////////////////
 
-        verify(operations).deleteColumns(rowKey, pathString + "/", getFinishString(pathString +"/"));
+        verify(operations).deleteColumns(rowKey, "a/b/c/", getFinishString("a/b/c/"));
     }
 
     private Map<String,Object> getExpectedMap(boolean useNullToken) {

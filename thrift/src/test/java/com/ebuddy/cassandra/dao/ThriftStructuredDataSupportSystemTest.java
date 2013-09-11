@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.ebuddy.cassandra.Path;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
 
@@ -70,16 +71,16 @@ public class ThriftStructuredDataSupportSystemTest {
     public void shouldWriteReadDeleteTestPojo() throws Exception {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
         String rowKey = "pojo0";
-        String pathString = "a/b/c";
+        Path path = dao.createPath("a","b","c");
         TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
 
-        dao.writeToPath(rowKey, pathString, testObject);
-        TestPojo result = dao.readFromPath(rowKey, pathString, typeReference);
+        dao.writeToPath(rowKey, path, testObject);
+        TestPojo result = dao.readFromPath(rowKey, path, typeReference);
         assertNotSame(result, testObject);
         assertEquals(result, testObject);
 
-        dao.deletePath(rowKey, pathString);
-        TestPojo result2 = dao.readFromPath(rowKey, pathString, typeReference);
+        dao.deletePath(rowKey, path);
+        TestPojo result2 = dao.readFromPath(rowKey, path, typeReference);
         assertNull(result2);
     }
 
@@ -87,16 +88,16 @@ public class ThriftStructuredDataSupportSystemTest {
     public void shouldWriteReadDeleteTestPojoWithSet() throws Exception {
         TestPojoWithSet testObject = getTestPojoWithSubclassedSets();
         String rowKey = "pojo1";
-        String pathString = "a/b/c";
+        Path path = dao.createPath("a","b","c");
         TypeReference<TestPojoWithSet> typeReference = new TypeReference<TestPojoWithSet>() { };
 
-        dao.writeToPath(rowKey, pathString, testObject);
-        TestPojoWithSet result = dao.readFromPath(rowKey, pathString, typeReference);
+        dao.writeToPath(rowKey, path, testObject);
+        TestPojoWithSet result = dao.readFromPath(rowKey, path, typeReference);
         assertNotSame(result, testObject);
         assertEquals(result, testObject);
 
-        dao.deletePath(rowKey, pathString);
-        TestPojoWithSet result2 = dao.readFromPath(rowKey, pathString, typeReference);
+        dao.deletePath(rowKey, path);
+        TestPojoWithSet result2 = dao.readFromPath(rowKey, path, typeReference);
         assertNull(result2);
     }
 

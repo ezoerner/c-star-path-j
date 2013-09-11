@@ -41,13 +41,14 @@ import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.ebuddy.cassandra.BatchContext;
+import com.ebuddy.cassandra.Path;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
 import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
+import com.ebuddy.cassandra.structure.DefaultPath;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
-import com.ebuddy.cassandra.structure.Path;
 import com.ebuddy.cassandra.structure.StructureConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -151,12 +152,10 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
-    public <T> T readFromPath(K rowKey, String pathString, TypeReference<T> type) {
-        validateArgs(rowKey, pathString);
-        Path inputPath = Path.fromString(pathString);
+    public <T> T readFromPath(K rowKey, Path path, TypeReference<T> type) {
+        validateArgs(rowKey, path);
 
-        // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
-        String start = inputPath.toString();
+        String start = path.toString();
         // use the maximum unicode code point to terminate the range
         String finish = getFinishString(start);
 
@@ -165,7 +164,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         Object[] args = {rowKey,start,finish};
         ResultSet resultSet = session.execute(readPathQuery.bind(args));
 
-        Map<Path,Object> pathMap = getPathMap(inputPath, resultSet);
+        Map<Path,Object> pathMap = getPathMap(path, resultSet);
 
         if (pathMap.isEmpty()) {
             // not found
@@ -179,20 +178,20 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
-    public void writeToPath(K rowKey, String pathString, Object value) {
-        writeToPath(rowKey, pathString, value, null);
+    public void writeToPath(K rowKey, Path path, Object value) {
+        writeToPath(rowKey, path, value, null);
     }
 
     @Override
     public void writeToPath(K rowKey,
-                            String pathString,
+                            Path path,
                             Object structuredValue,
                             BatchContext batchContext) {
         Batch batch = validateAndGetBatch(batchContext);
 
-        validateArgs(rowKey, pathString);
+        validateArgs(rowKey, path);
         Object simplifiedStructure = writeMapper.convertValue(structuredValue, Object.class);
-        Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), simplifiedStructure);
+        Map<Path,Object> pathMap = Collections.singletonMap(path, simplifiedStructure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
         batch = batchContext == null ? batch() : batch;
@@ -216,19 +215,18 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
-    public void deletePath(K rowKey, String path) {
+    public void deletePath(K rowKey, Path path) {
         deletePath(rowKey, path, null);
     }
 
     @Override
-    public void deletePath(K rowKey, String pathString, BatchContext batchContext) {
+    public void deletePath(K rowKey, Path path, BatchContext batchContext) {
         Batch batch = validateAndGetBatch(batchContext);
 
-        validateArgs(rowKey, pathString);
-        Path inputPath = Path.fromString(pathString);
+        validateArgs(rowKey, path);
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
-        String start = inputPath.toString();
+        String start = path.toString();
         String finish = getFinishString(start);
 
         // would like to just do a delete with a where clause, but unfortunately Cassandra can't do that in CQL (either)
@@ -265,8 +263,8 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     @Override
-    public String createPath(String... elements) {
-        return Path.fromElements(elements).toString();
+    public Path createPath(String... elements) {
+        return DefaultPath.fromStrings(elements);
     }
 
     private String getFinishString(String start) {
@@ -281,9 +279,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
 
-    private void validateArgs(K rowKey, String pathString) {
-        Validate.notEmpty(pathString);
-        Validate.notNull(rowKey);
+    private void validateArgs(K rowKey, Path path) {
+        Validate.isTrue(!path.isEmpty(), "Path must not be empty");
+        Validate.notNull(rowKey, "Row key must not be empty");
     }
 
     private Batch validateAndGetBatch(BatchContext batchContext) {
@@ -296,12 +294,12 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         return ((CqlBatchContext)batchContext).getBatch();
     }
 
-    private Map<Path,Object> getPathMap(Path inputPath, ResultSet resultSet) {
+    private Map<Path,Object> getPathMap(Path inputPath, Iterable<Row> resultSet) {
         Map<Path,Object> pathMap = new HashMap<Path,Object>();
 
         for (Row row : resultSet) {
             String valueString = row.getString(valueColumnName);
-            Path path = Path.fromString(row.getString(pathColumnName));
+            Path path = DefaultPath.fromEncodedPathString(row.getString(pathColumnName));
 
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);

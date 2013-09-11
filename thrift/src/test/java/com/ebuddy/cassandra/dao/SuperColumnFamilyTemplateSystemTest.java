@@ -26,8 +26,8 @@ import me.prettyprint.hector.api.factory.HFactory;
  */
 
 // TODO: Create abstract TestNG class for IT support (which will start the server, load the data set and provide access to keyspace)
-public class SuperColumnFamilyTemplateIT {
-    private static final Logger LOG = LoggerFactory.getLogger(SuperColumnFamilyTemplateIT.class);
+public class SuperColumnFamilyTemplateSystemTest {
+    private static final Logger LOG = LoggerFactory.getLogger(SuperColumnFamilyTemplateSystemTest.class);
 
     private static final String CLUSTER_NAME = "Test Cluster";
     private static final String HOST = "localhost:9171";
@@ -35,7 +35,7 @@ public class SuperColumnFamilyTemplateIT {
     private static final String ALEX_ROW_KEY = "27e988f7-6d60-4410-ada5-fb3ebf884c68";
     private static final String MIKE_ROW_KEY = "9081707c-82cb-4d32-948d-25c4733453fc";
     private static final String SUPER_COLUMN_FAMILY = "SuperCF1";
-    private static final String KEYSPACE_NAME = "SuperColumnFamilyTemplateIT";
+    private static final String KEYSPACE_NAME = "SuperColumnFamilyTemplateSystemTest";
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {

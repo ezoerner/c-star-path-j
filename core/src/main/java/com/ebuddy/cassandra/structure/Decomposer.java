@@ -2,11 +2,11 @@ package com.ebuddy.cassandra.structure;
 
 import static org.apache.commons.lang3.ObjectUtils.NULL;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.ebuddy.cassandra.Path;
 
 /**
  * Support for decomposing complex objects into paths to simple objects.
@@ -57,7 +57,7 @@ public class Decomposer {
             Map<Path,Object> decomposedMap = decomposeStructure(structure);
 
             for (Map.Entry<Path,Object> decomposedEntry : decomposedMap.entrySet()) {
-                decomposed.put(path.concatenate(decomposedEntry.getKey()), decomposedEntry.getValue());
+                decomposed.put(path.concat(decomposedEntry.getKey()), decomposedEntry.getValue());
             }
         }
         return decomposed;
@@ -87,22 +87,12 @@ public class Decomposer {
                 throw new IllegalArgumentException(String.format("map key of type %s not supported",
                                                                  key.getClass().getSimpleName()));
             }
-            Path keyPath = key instanceof Path ? (Path)key : Path.fromString(urlEncode(key));
+            Path keyPath = key instanceof Path ? (Path)key : DefaultPath.fromStrings(key.toString());
 
             Object value = entry.getValue();
             normalized.put(keyPath, value);
         }
         return normalized;
-    }
-
-    private String urlEncode(Object key) {
-        String keyString;
-        try {
-             keyString = URLEncoder.encode(key.toString(), "UTF-8");
-        } catch (UnsupportedEncodingException ignored) {
-            throw new AssertionError("UTF-8 is unknown");
-        }
-        return keyString;
     }
 
     private Map<Path,Object> normalizeList(List<?> list) {
@@ -114,10 +104,10 @@ public class Decomposer {
 
         Map<Path,Object> normalized = new HashMap<Path,Object>(listItself.size());
         for (int i = 0; i < listItself.size(); i++) {
-            normalized.put(Path.fromIndex(i), listItself.get(i));
+            normalized.put(DefaultPath.fromIndex(i), listItself.get(i));
         }
         // add terminator column, issue #20
-        normalized.put(Path.fromIndex(listItself.size()), Types.LIST_TERMINATOR_VALUE);
+        normalized.put(DefaultPath.fromIndex(listItself.size()), Types.LIST_TERMINATOR_VALUE);
 
         return normalized;
     }

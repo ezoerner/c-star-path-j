@@ -25,7 +25,7 @@ initial_token:
 auto_bootstrap: false
 hinted_handoff_enabled: true
 authenticator: org.apache.cassandra.auth.AllowAllAuthenticator
-authority: org.apache.cassandra.auth.AllowAllAuthority
+authorizer: org.apache.cassandra.auth.AllowAllAuthorizer
 partitioner: org.apache.cassandra.dht.RandomPartitioner
 commitlog_sync: periodic
 commitlog_sync_period_in_ms: 10000
@@ -47,7 +47,7 @@ dynamic_snitch_update_interval_in_ms: 100
 dynamic_snitch_reset_interval_in_ms: 600000
 dynamic_snitch_badness_threshold: 0.0
 request_scheduler: org.apache.cassandra.scheduler.NoScheduler
-encryption_options:
+server_encryption_options:
     internode_encryption: none
     keystore: conf/.keystore
     keystore_password: cassandra

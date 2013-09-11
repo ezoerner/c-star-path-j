@@ -14,7 +14,6 @@
         <hector.version>1.1-4</hector.version>
         <aspectj.version>1.7.2</aspectj.version>
         <commons.lang.version>2.6</commons.lang.version>
-        <antlr.version>3.2</antlr.version>
     </properties>
 
     <dependencies>

@@ -14,6 +14,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -22,6 +23,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ebuddy.cassandra.BatchContext;
+import com.ebuddy.cassandra.Path;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
 import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
@@ -38,13 +40,14 @@ public class CqlStructuredDataSupportSystemTest {
     private static final String TEST_KEYSPACE = "cqlstructureddatasupportsystemtest";
 
     private Cluster cluster;
-    private Session session;
     private final String tableName = "testpojo";
 
     private StructuredDataSupport<UUID> daoSupport;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+
         // default to using cassandra on localhost, but can be overridden with a system property
         String cassandraHostsString = System.getProperty(CASSANDRA_HOSTS_SYSTEM_PROPERTY, LOCALHOST_IP);
         String[] cassandraHosts = StringUtils.split(cassandraHostsString, ',');
@@ -52,11 +55,11 @@ public class CqlStructuredDataSupportSystemTest {
         for (String host : cassandraHosts) {
             clusterBuilder.addContactPoint(host);
         }
-        cluster = clusterBuilder.build();
+        cluster = clusterBuilder.withPort(9142).build();
         dropAndCreateSchema();
 
         // get new session using a default keyspace that we now know exists
-        session = cluster.connect(TEST_KEYSPACE);
+        Session session = cluster.connect(TEST_KEYSPACE);
         daoSupport = new CqlStructuredDataSupport<UUID>(tableName, session);
     }
 
@@ -70,16 +73,16 @@ public class CqlStructuredDataSupportSystemTest {
     public void shouldWriteReadDeleteTestPojo() throws Exception {
         TestPojo testObject = new TestPojo("v1", 42L, true, Arrays.asList("e1", "e2"));
         UUID rowKey = UUID.randomUUID();
-        String pathString = "a/b/c";
+        Path path = daoSupport.createPath("a","b","c");
         TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
 
-        daoSupport.writeToPath(rowKey, pathString, testObject);
-        TestPojo result = daoSupport.readFromPath(rowKey, pathString, typeReference);
+        daoSupport.writeToPath(rowKey, path, testObject);
+        TestPojo result = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(result, testObject);
         assertEquals(result, testObject);
 
-        daoSupport.deletePath(rowKey, pathString);
-        TestPojo result2 = daoSupport.readFromPath(rowKey, pathString, typeReference);
+        daoSupport.deletePath(rowKey, path);
+        TestPojo result2 = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNull(result2);
     }
 
@@ -90,19 +93,19 @@ public class CqlStructuredDataSupportSystemTest {
 
         UUID rowKey1 = UUID.randomUUID();
         UUID rowKey2 = UUID.randomUUID();
-        String pathString = "test";
+        Path path = daoSupport.createPath("test");
         TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
 
         BatchContext batchContext = daoSupport.beginBatch();
-        daoSupport.writeToPath(rowKey1, pathString, testObject1, batchContext);
-        daoSupport.writeToPath(rowKey2, pathString, testObject2, batchContext);
+        daoSupport.writeToPath(rowKey1, path, testObject1, batchContext);
+        daoSupport.writeToPath(rowKey2, path, testObject2, batchContext);
         daoSupport.applyBatch(batchContext);
 
-        TestPojo result1 = daoSupport.readFromPath(rowKey1, pathString, typeReference);
+        TestPojo result1 = daoSupport.readFromPath(rowKey1, path, typeReference);
         assertNotSame(result1, testObject1);
         assertEquals(result1, testObject1);
 
-        TestPojo result2 = daoSupport.readFromPath(rowKey2, pathString, typeReference);
+        TestPojo result2 = daoSupport.readFromPath(rowKey2, path, typeReference);
         assertNotSame(result2, testObject2);
         assertEquals(result2, testObject2);
     }
@@ -113,15 +116,17 @@ public class CqlStructuredDataSupportSystemTest {
         UUID rowKey = UUID.randomUUID();
         TypeReference<List<String>> typeReference = new TypeReference<List<String>>() { };
 
-        daoSupport.writeToPath(rowKey, "x", longList);
-        List<String> resultLongList = daoSupport.readFromPath(rowKey, "x", typeReference);
+        Path path = daoSupport.createPath("x");
+
+        daoSupport.writeToPath(rowKey, path, longList);
+        List<String> resultLongList = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(resultLongList, longList);
         assertEquals(resultLongList, longList);
 
         List<String> shortList = Arrays.asList("1", "2", "3");
 
-        daoSupport.writeToPath(rowKey, "x", shortList);
-        List<String> resultShortList = daoSupport.readFromPath(rowKey, "x", typeReference);
+        daoSupport.writeToPath(rowKey, path, shortList);
+        List<String> resultShortList = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(resultShortList, shortList);
         assertEquals(resultShortList, shortList);
     }
@@ -132,24 +137,27 @@ public class CqlStructuredDataSupportSystemTest {
         UUID rowKey = UUID.randomUUID();
         TypeReference<List<String>> typeReference = new TypeReference<List<String>>() { };
 
-        daoSupport.writeToPath(rowKey, "x", longList);
-        List<String> resultLongList = daoSupport.readFromPath(rowKey, "x", typeReference);
+        Path path = daoSupport.createPath("x");
+
+        daoSupport.writeToPath(rowKey, path, longList);
+        List<String> resultLongList = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(resultLongList, longList);
         assertEquals(resultLongList, longList);
 
         List<String> shortList = Arrays.asList("1", "2", "3");
 
-        daoSupport.writeToPath(rowKey, "x", shortList);
-        List<String> resultShortList = daoSupport.readFromPath(rowKey, "x", typeReference);
+        daoSupport.writeToPath(rowKey, path, shortList);
+        List<String> resultShortList = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(resultShortList, shortList);
         assertEquals(resultShortList, shortList);
 
-        String s = daoSupport.readFromPath(rowKey,"x/@4", new TypeReference<String>() {});
+        Path indexPath = daoSupport.createPath("x").withIndices(4);
+        String s = daoSupport.readFromPath(rowKey,indexPath, new TypeReference<String>() {});
         assertEquals(s, "5"); // cruft
 
-        daoSupport.deletePath(rowKey, "x");
+        daoSupport.deletePath(rowKey, path);
 
-        s = daoSupport.readFromPath(rowKey,"x/@4", new TypeReference<String>() {});
+        s = daoSupport.readFromPath(rowKey,indexPath, new TypeReference<String>() {});
         assertNull(s); // cruft gone
     }
 
