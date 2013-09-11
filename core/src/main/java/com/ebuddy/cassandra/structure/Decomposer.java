@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ebuddy.cassandra.Path;
+
 /**
  * Support for decomposing complex objects into paths to simple objects.
  * Only the basic JSON structures are currently supported, i.e. Maps, Lists, Strings, Numbers, Booleans, and null.
@@ -87,7 +89,7 @@ public class Decomposer {
                 throw new IllegalArgumentException(String.format("map key of type %s not supported",
                                                                  key.getClass().getSimpleName()));
             }
-            Path keyPath = key instanceof Path ? (Path)key : Path.fromString(urlEncode(key));
+            Path keyPath = key instanceof Path ? (Path)key : DefaultPath.fromString(urlEncode(key));
 
             Object value = entry.getValue();
             normalized.put(keyPath, value);
@@ -114,10 +116,10 @@ public class Decomposer {
 
         Map<Path,Object> normalized = new HashMap<Path,Object>(listItself.size());
         for (int i = 0; i < listItself.size(); i++) {
-            normalized.put(Path.fromIndex(i), listItself.get(i));
+            normalized.put(DefaultPath.fromIndex(i), listItself.get(i));
         }
         // add terminator column, issue #20
-        normalized.put(Path.fromIndex(listItself.size()), Types.LIST_TERMINATOR_VALUE);
+        normalized.put(DefaultPath.fromIndex(listItself.size()), Types.LIST_TERMINATOR_VALUE);
 
         return normalized;
     }

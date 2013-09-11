@@ -9,13 +9,14 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.Validate;
 
 import com.ebuddy.cassandra.BatchContext;
+import com.ebuddy.cassandra.Path;
 import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
 import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
+import com.ebuddy.cassandra.structure.DefaultPath;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
-import com.ebuddy.cassandra.structure.Path;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -55,21 +56,20 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public <T> T readFromPath(K rowKey, String pathString, TypeReference<T> type) {
-        validateArgs(rowKey, pathString);
-        Path inputPath = Path.fromString(pathString);
+    public <T> T readFromPath(K rowKey, Path path, TypeReference<T> type) {
+        validateArgs(rowKey, path);
         int count = Integer.MAX_VALUE;
         boolean reversed = false;
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
-        String start = inputPath.toString();
+        String start = path.toString();
         String finish = getFinishString(start);
         Map<String,Object> columnsMap = operations.readColumnsAsMap(rowKey, start, finish, count, reversed);
         if (columnsMap.isEmpty()) {
             return null;
         }
 
-        Map<Path,Object> pathMap = getTerminalPathMap(inputPath, columnsMap);
+        Map<Path,Object> pathMap = getTerminalPathMap(path, columnsMap);
         Object structure = Composer.get().compose(pathMap);
 
         // convert object structure into POJO of type referred to by TypeReference
@@ -77,20 +77,20 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public void writeToPath(K rowKey, String pathString, Object value) {
-        writeToPath(rowKey, pathString, value, null);
+    public void writeToPath(K rowKey, Path path, Object value) {
+        writeToPath(rowKey, path, value, null);
     }
 
     @Override
     public void writeToPath(K rowKey,
-                            String pathString,
+                            Path path,
                             Object value,
                             @Nullable BatchContext batchContext) {
-        validateArgs(rowKey, pathString);
+        validateArgs(rowKey, path);
 
         Object structure = writeMapper.convertValue(value, Object.class);
 
-        Map<Path,Object> pathMap = Collections.singletonMap(Path.fromString(pathString), structure);
+        Map<Path,Object> pathMap = Collections.singletonMap(path, structure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
         Map<String,Object> stringMap = new HashMap<String,Object>();
@@ -105,15 +105,14 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public void deletePath(K rowKey, String path) {
+    public void deletePath(K rowKey, Path path) {
         deletePath(rowKey, path, null);
     }
 
     @Override
-    public void deletePath(K rowKey, String path, @Nullable BatchContext batchContext) {
+    public void deletePath(K rowKey, Path path, @Nullable BatchContext batchContext) {
         // normalize path
-        Path inputPath = Path.fromString(path);
-        String start = inputPath.toString();
+        String start = path.toString();
         String finish = getFinishString(start);
         if (batchContext == null) {
             operations.deleteColumns(rowKey, start, finish);
@@ -123,8 +122,8 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public String createPath(String... elements) {
-        return Path.fromElements(elements).toString();
+    public Path createPath(String... elements) {
+        return DefaultPath.fromElements(elements);
     }
 
     private String getFinishString(String start) {
@@ -144,7 +143,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     private Map<Path,Object> getTerminalPathMap(Path inputPath, Map<String,Object> columnsMap) {
         Map<Path,Object> pathMap = new HashMap<Path,Object>(columnsMap.size());
         for (Map.Entry<String,Object> entry : columnsMap.entrySet()) {
-            Path path = Path.fromString(entry.getKey());
+            Path path = DefaultPath.fromString(entry.getKey());
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
@@ -154,8 +153,8 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         return pathMap;
     }
 
-    private void validateArgs(K rowKey, String pathString) {
-        Validate.notEmpty(pathString);
-        Validate.notNull(rowKey);
+    private void validateArgs(K rowKey, Path path) {
+        Validate.isTrue(!path.isEmpty(), "Path must not be empty");
+        Validate.notNull(rowKey, "Row key must not be empty");
     }
 }

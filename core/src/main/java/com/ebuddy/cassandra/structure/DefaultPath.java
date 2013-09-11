@@ -1,37 +1,41 @@
 package com.ebuddy.cassandra.structure;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.ebuddy.cassandra.Path;
+
 /**
  * A path used as column names in Cassandra for encoding structures and for querying elements of a structured object.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class Path implements Comparable<Path> {
+public class DefaultPath implements Path, Comparable<DefaultPath> {
     private static final char PATH_DELIMITER_CHAR = '/';
     private static final String LIST_INDEX_PREFIX = "@";
 
     private final List<String> pathElements;
 
     /** Create a path from a list of path element strings. */
-    private Path(List<String> pathElements) {
+    private DefaultPath(List<String> pathElements) {
         this.pathElements = pathElements;
     }
 
-    public static Path fromElements(String... elements) {
-        return new Path(Arrays.asList(elements));
+    public static DefaultPath fromElements(String... elements) {
+        return new DefaultPath(Arrays.asList(elements));
     }
 
+    @Override
     public Path concatenate(Path other) {
         List<String> newPathElements = new LinkedList<String>();
         newPathElements.addAll(pathElements);
-        newPathElements.addAll(other.pathElements);
-        return new Path(newPathElements);
+        newPathElements.addAll(other.getPathElements());
+        return new DefaultPath(newPathElements);
     }
 
     /**
@@ -49,8 +53,8 @@ public class Path implements Comparable<Path> {
         return builder.toString();
     }
 
-    public static Path fromIndex(int i) {
-        return new Path(Arrays.asList(LIST_INDEX_PREFIX + i));
+    public static DefaultPath fromIndex(int i) {
+        return new DefaultPath(Arrays.asList(LIST_INDEX_PREFIX + i));
     }
 
 
@@ -62,11 +66,11 @@ public class Path implements Comparable<Path> {
     // used for backward compatibility to specify the vertical bar as a delimiter
     public static Path fromString(String pathString, char delimiterChar) {
         String[] parts = StringUtils.split(pathString, delimiterChar);
-        return new Path(Arrays.asList(parts));
+        return new DefaultPath(Arrays.asList(parts));
     }
 
     @Override
-    public int compareTo(Path o) {
+    public int compareTo(DefaultPath o) {
         return toString().compareTo(o.toString());
     }
 
@@ -87,7 +91,8 @@ public class Path implements Comparable<Path> {
      * Returns the first element in this path.
      * If this is an empty path, return null, otherwise return the first element in the path.
      */
-    public String first() {
+    @Override
+    public String head() {
         return pathElements.size() == 0 ? null : pathElements.get(0);
     }
 
@@ -97,20 +102,23 @@ public class Path implements Comparable<Path> {
      * if this path has only one element, return an empty path,
      * otherwise return a new path with elements starting after the first.
      */
-    public Path tail() {
+    @Override
+    public DefaultPath tail() {
         return tail(1);
     }
 
     /**
-     * Return a new Path consisting of the rest of the path elements of this path starting with the specified index.
+     * Return a new DefaultPath consisting of the rest of the path elements of this path starting with the specified index.
      * @param startIndex 0-based start index
-     * @return new Path
+     * @return new DefaultPath
      * @throws IndexOutOfBoundsException if path has insufficient size
      */
-    public Path tail(int startIndex) {
-        return new Path(pathElements.subList(startIndex, pathElements.size()));
+    @Override
+    public DefaultPath tail(int startIndex) {
+        return new DefaultPath(pathElements.subList(startIndex, pathElements.size()));
     }
 
+    @Override
     public boolean isEmpty() {
         return pathElements.size() == 0;
     }
@@ -135,8 +143,9 @@ public class Path implements Comparable<Path> {
     /**
      * Return true if this path starts with the specified path.
      */
+    @Override
     public boolean startsWith(Path path) {
-        return pathElements.subList(0, path.size()).equals(path.pathElements);
+        return pathElements.subList(0, path.size()).equals(path.getPathElements());
     }
 
     @Override
@@ -148,7 +157,7 @@ public class Path implements Comparable<Path> {
             return false;
         }
 
-        return pathElements.equals(((Path)o).pathElements);
+        return pathElements.equals(((DefaultPath)o).pathElements);
 
     }
 
@@ -157,8 +166,14 @@ public class Path implements Comparable<Path> {
         return pathElements.hashCode();
     }
 
+    @Override
     public int size() {
         return pathElements.size();
+    }
+
+    @Override
+    public List<String> getPathElements() {
+        return Collections.unmodifiableList(pathElements);
     }
 
     /**
@@ -177,5 +192,4 @@ public class Path implements Comparable<Path> {
         }
         return index >= 0;
     }
-
 }

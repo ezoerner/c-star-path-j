@@ -16,6 +16,8 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ebuddy.cassandra.Path;
+
 
 /**
  * Support for composing paths back to complex objects.
@@ -92,7 +94,7 @@ public class Composer {
     @SuppressWarnings("unchecked")
     private void merge(Map.Entry<Path,Object> simpleEntry, Map<String,Object> compositionMap) {
         Path path = simpleEntry.getKey();
-        String head = path.first();
+        String head = path.head();
         assert head != null;
         Object nextLevelComposition = compositionMap.get(head);
         Path tail = path.tail();
@@ -117,7 +119,7 @@ public class Composer {
                 throw new IllegalStateException("two simple values at same level?");
             }
         } else {
-            // simply advance to next level since the first matches a key already there
+            // simply advance to next level since the head matches a key already there
             merge(new SimpleEntry<Path,Object>(tail, simpleValue), nextLevelComposition);
         }
     }
@@ -150,10 +152,10 @@ public class Composer {
     @SuppressWarnings("unchecked")
     private Object transformLists(Map<String,Object> map) {
         // go through nested maps and transform maps into lists where possible
-        if (Path.isList(map)) {
+        if (DefaultPath.isList(map)) {
             return transformActualList(map);
         }
-        // if not a list, then just recursively transform the structure, and also URLDecode the keys
+        // if not a list, then just recursively transform the structure, and also URL-Decode the keys
         Map<String,Object> newMap = new HashMap<String,Object>(map.size());
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
@@ -179,7 +181,7 @@ public class Composer {
         // convert keys into integer indexes and sort
         for (Map.Entry<String,Object> entry : map.entrySet()) {
             Object value = entry.getValue();
-            int listIndex = Path.getListIndex(entry.getKey());
+            int listIndex = DefaultPath.getListIndex(entry.getKey());
             if (Types.isListTerminator(value)) {
                 listSize = listSize == -1 ? listIndex : Math.min(listIndex, listSize);
                 continue;
@@ -193,7 +195,7 @@ public class Composer {
             } else {
                 throw new IllegalStateException("found strange object in structure: " + value);
             }
-            sortedMap.put(Path.getListIndex(entry.getKey()), transformedValue);
+            sortedMap.put(DefaultPath.getListIndex(entry.getKey()), transformedValue);
         }
 
         // if no listSize was found then something went wrong, but just warn and use whole list found
