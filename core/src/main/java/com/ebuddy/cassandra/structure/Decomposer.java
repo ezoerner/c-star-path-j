@@ -2,8 +2,6 @@ package com.ebuddy.cassandra.structure;
 
 import static org.apache.commons.lang3.ObjectUtils.NULL;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,22 +87,12 @@ public class Decomposer {
                 throw new IllegalArgumentException(String.format("map key of type %s not supported",
                                                                  key.getClass().getSimpleName()));
             }
-            Path keyPath = key instanceof Path ? (Path)key : DefaultPath.fromString(urlEncode(key));
+            Path keyPath = key instanceof Path ? (Path)key : DefaultPath.fromStrings(key.toString());
 
             Object value = entry.getValue();
             normalized.put(keyPath, value);
         }
         return normalized;
-    }
-
-    private String urlEncode(Object key) {
-        String keyString;
-        try {
-             keyString = URLEncoder.encode(key.toString(), "UTF-8");
-        } catch (UnsupportedEncodingException ignored) {
-            throw new AssertionError("UTF-8 is unknown");
-        }
-        return keyString;
     }
 
     private Map<Path,Object> normalizeList(List<?> list) {

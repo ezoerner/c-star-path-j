@@ -1,34 +1,49 @@
 package com.ebuddy.cassandra.structure;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.ebuddy.cassandra.Path;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 
 /**
- * A path used as column names in Cassandra for encoding structures and for querying elements of a structured object.
+ * Implementation of Path used as column names in Cassandra for encoding structures and for querying elements
+ * of a structured object.
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class DefaultPath implements Path, Comparable<DefaultPath> {
+public class DefaultPath implements Path {
     private static final char PATH_DELIMITER_CHAR = '/';
     private static final String LIST_INDEX_PREFIX = "@";
 
+    private static final Function<String,String> urlEncodeFunction = new UrlEncode();
+
     private final List<String> pathElements;
 
-    /** Create a path from a list of path element strings. */
-    private DefaultPath(List<String> pathElements) {
-        this.pathElements = pathElements;
+
+    /** Create a DefaultPath from a list of encoded path element strings. */
+    private DefaultPath(List<String> encodedPathElements) {
+        pathElements = encodedPathElements;
     }
 
-    public static DefaultPath fromElements(String... elements) {
-        return new DefaultPath(Arrays.asList(elements));
+    /** Create a DefaultPath from an array of encoded path element strings. */
+    private DefaultPath(String... encodedPathElements) {
+        this(Arrays.asList(encodedPathElements));
+    }
+
+    /** Create a DefaultPath from un-encoded string elements. */
+    public static DefaultPath fromStrings(String... elements) {
+        return new DefaultPath(Lists.transform(Arrays.asList(elements), urlEncodeFunction));
     }
 
     @Override
@@ -42,7 +57,7 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     /**
      * Paths always end with the delimiter character in order to facilitate
      * start/finish slice queries in Cassandra.
-     * @return the String representation of a path.
+     * @return the (encoded) String representation of a path.
      */
     @Override
     public String toString() {
@@ -58,49 +73,16 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
         return new DefaultPath(Arrays.asList(LIST_INDEX_PREFIX + i));
     }
 
-
-    /** Create a Path object given a path string. */
-    public static Path fromString(String pathString) {
-        return fromString(pathString, PATH_DELIMITER_CHAR);
-    }
-
-    // used for backward compatibility to specify the vertical bar as a delimiter
-    public static Path fromString(String pathString, char delimiterChar) {
-        String[] parts = StringUtils.split(pathString, delimiterChar);
-        return new DefaultPath(Arrays.asList(parts));
-    }
-
-    @Override
-    public int compareTo(DefaultPath o) {
-        return toString().compareTo(o.toString());
-    }
-
-    /**
-     * Returns the first element in this path.
-     * If this is an empty path, return null, otherwise return the first element in the path.
-     */
     @Override
     public String head() {
         return pathElements.size() == 0 ? null : pathElements.get(0);
     }
 
-    /**
-     * Returns the rest of the path after the first element.
-     * If this is an empty path, throws IndexOutOfBoundsException,
-     * if this path has only one element, return an empty path,
-     * otherwise return a new path with elements starting after the first.
-     */
     @Override
     public DefaultPath tail() {
         return tail(1);
     }
 
-    /**
-     * Return a new DefaultPath consisting of the rest of the path elements of this path starting with the specified index.
-     * @param startIndex 0-based start index
-     * @return new DefaultPath
-     * @throws IndexOutOfBoundsException if path has insufficient size
-     */
     @Override
     public DefaultPath tail(int startIndex) {
         return new DefaultPath(pathElements.subList(startIndex, pathElements.size()));
@@ -111,9 +93,6 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
         return pathElements.size() == 0;
     }
 
-    /**
-     * Return true if this path starts with the specified path.
-     */
     @Override
     public boolean startsWith(Path path) {
         return pathElements.subList(0, path.size()).equals(path.getElements());
@@ -148,10 +127,10 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     }
 
     @Override
-    public Path withListIndexes(int... listIndexes) {
-        List<String> newPathElements = new ArrayList<String>(pathElements.size() + listIndexes.length);
+    public Path withIndices(int... indices) {
+        List<String> newPathElements = new ArrayList<String>(pathElements.size() + indices.length);
         newPathElements.addAll(pathElements);
-        for (int index : listIndexes) {
+        for (int index : indices) {
             newPathElements.add(LIST_INDEX_PREFIX + index);
         }
         return new DefaultPath(newPathElements);
@@ -161,8 +140,15 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     public Path withElements(String... elements) {
         List<String> newPathElements = new ArrayList<String>(pathElements.size() + elements.length);
         newPathElements.addAll(pathElements);
-        Collections.addAll(newPathElements, elements);
+        newPathElements.addAll(Lists.transform(Arrays.asList(elements), urlEncodeFunction));
         return new DefaultPath(newPathElements);
+    }
+
+    /** Create a Path object from a String produced by the Path#toString method. */
+
+    public static Path fromEncodedPathString(String pathString) {
+        String[] parts = StringUtils.split(pathString, PATH_DELIMITER_CHAR);
+        return new DefaultPath(parts);
     }
 
     public static int getListIndex(String pathElement) {
@@ -183,19 +169,17 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     }
 
     /**
-     * Return true if all the keys in decomposedObjects are list indexes.
+     * Return true if all the given encoded path elements are list indexes.
      * @throws IllegalArgumentException if an empty path is found
      */
-    public static boolean isList(Map<String,Object> decomposedObjects) {
-        for (String key : decomposedObjects.keySet())  {
-            if (!isListIndex(key)) {
+    public static boolean isList(Iterable<String> encodedElements) {
+        for (String element : encodedElements)  {
+            if (!isListIndex(element)) {
                 return false;
             }
         }
         return true;
     }
-
-
 
     /**
      * Return true if the first element in this path is a list index.
@@ -212,5 +196,22 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
             return false;
         }
         return index >= 0;
+    }
+
+    private static class UrlEncode implements Function<String,String> {
+        @Nullable
+        @Override
+        public String apply(@Nullable String s) {
+            if (s == null) {
+                return null;
+            }
+            String encodedString;
+            try {
+                encodedString = URLEncoder.encode(s, "UTF-8");
+            } catch (UnsupportedEncodingException ignored) {
+                throw new AssertionError("UTF-8 is unknown?");
+            }
+            return encodedString;
+        }
     }
 }

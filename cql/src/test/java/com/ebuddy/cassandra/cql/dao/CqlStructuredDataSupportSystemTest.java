@@ -14,6 +14,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -45,6 +46,8 @@ public class CqlStructuredDataSupportSystemTest {
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+
         // default to using cassandra on localhost, but can be overridden with a system property
         String cassandraHostsString = System.getProperty(CASSANDRA_HOSTS_SYSTEM_PROPERTY, LOCALHOST_IP);
         String[] cassandraHosts = StringUtils.split(cassandraHostsString, ',');
@@ -52,7 +55,7 @@ public class CqlStructuredDataSupportSystemTest {
         for (String host : cassandraHosts) {
             clusterBuilder.addContactPoint(host);
         }
-        cluster = clusterBuilder.build();
+        cluster = clusterBuilder.withPort(9142).build();
         dropAndCreateSchema();
 
         // get new session using a default keyspace that we now know exists
@@ -148,7 +151,7 @@ public class CqlStructuredDataSupportSystemTest {
         assertNotSame(resultShortList, shortList);
         assertEquals(resultShortList, shortList);
 
-        Path indexPath = daoSupport.createPath("x").withListIndexes(4);
+        Path indexPath = daoSupport.createPath("x").withIndices(4);
         String s = daoSupport.readFromPath(rowKey,indexPath, new TypeReference<String>() {});
         assertEquals(s, "5"); // cruft
 

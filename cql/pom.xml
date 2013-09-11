@@ -48,5 +48,27 @@
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.java.driver.version}</version>
         </dependency>
+
+        <!-- Cassandra Unit -->
+        <dependency>
+            <groupId>org.cassandraunit</groupId>
+            <artifactId>cassandra-unit</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.9</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Needed for cassandra-unit, was excluded from cassandra-all -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr</artifactId>
+            <version>${antlr.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>

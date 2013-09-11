@@ -155,7 +155,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     public <T> T readFromPath(K rowKey, Path path, TypeReference<T> type) {
         validateArgs(rowKey, path);
 
-        // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
         String start = path.toString();
         // use the maximum unicode code point to terminate the range
         String finish = getFinishString(start);
@@ -265,7 +264,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     @Override
     public Path createPath(String... elements) {
-        return DefaultPath.fromElements(elements);
+        return DefaultPath.fromStrings(elements);
     }
 
     private String getFinishString(String start) {
@@ -300,7 +299,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         for (Row row : resultSet) {
             String valueString = row.getString(valueColumnName);
-            Path path = DefaultPath.fromString(row.getString(pathColumnName));
+            Path path = DefaultPath.fromEncodedPathString(row.getString(pathColumnName));
 
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);

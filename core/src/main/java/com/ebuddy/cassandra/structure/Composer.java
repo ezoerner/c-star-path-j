@@ -152,7 +152,7 @@ public class Composer {
     @SuppressWarnings("unchecked")
     private Object transformLists(Map<String,Object> map) {
         // go through nested maps and transform maps into lists where possible
-        if (DefaultPath.isList(map)) {
+        if (DefaultPath.isList(map.keySet())) {
             return transformActualList(map);
         }
         // if not a list, then just recursively transform the structure, and also URL-Decode the keys

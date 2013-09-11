@@ -19,7 +19,8 @@
         <cassandra.version>1.2.9</cassandra.version>
         <cassandra.unit.version>1.2.0.1</cassandra.unit.version>
         <hector.groupId>org.hectorclient</hector.groupId>
-        <guava.version>15.0</guava.version>
+        <guava.version>14.0.1</guava.version>
+        <antlr.version>3.2</antlr.version>
     </properties>
 
     

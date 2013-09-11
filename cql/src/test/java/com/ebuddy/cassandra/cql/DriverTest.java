@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
@@ -41,7 +42,9 @@ public class DriverTest {
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
-        cluster = Cluster.builder().addContactPoint(NODE).build();
+        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+
+        cluster = Cluster.builder().addContactPoint(NODE).withPort(9142).build();
         session = cluster.connect();
         createSchema();
     }

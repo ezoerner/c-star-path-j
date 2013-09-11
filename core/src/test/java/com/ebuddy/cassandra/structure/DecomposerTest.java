@@ -42,10 +42,10 @@ public class DecomposerTest {
     @Test(groups = "unit")
     public void decomposeSimpleObjectsWithSimplePaths() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
-        structures.put(DefaultPath.fromString("x"), "");
-        structures.put(DefaultPath.fromString("y"), 42);
-        structures.put(DefaultPath.fromString("z"), true);
-        structures.put(DefaultPath.fromString("N"), null);
+        structures.put(DefaultPath.fromStrings("x"), "");
+        structures.put(DefaultPath.fromStrings("y"), 42);
+        structures.put(DefaultPath.fromStrings("z"), true);
+        structures.put(DefaultPath.fromStrings("N"), null);
 
         Map<Path,Object> result = decomposer.decompose(structures);
 
@@ -53,17 +53,17 @@ public class DecomposerTest {
 
         // output of only simple objects is still equal to the input
         // with one exception, nulls are replaced by the NULL token
-        structures.put(DefaultPath.fromString("N"), ObjectUtils.NULL);
+        structures.put(DefaultPath.fromStrings("N"), ObjectUtils.NULL);
         assertEquals(result, structures);
     }
 
     @Test(groups = "unit")
     public void decomposeSimpleObjectsWithLongerPaths() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
-        structures.put(DefaultPath.fromString("a/b@/c"), "");
-        structures.put(DefaultPath.fromString("d/e#/f"), 42);
-        structures.put(DefaultPath.fromString("g/h/i"), true);
-        structures.put(DefaultPath.fromString("j/k/l"), null);
+        structures.put(DefaultPath.fromEncodedPathString("a/b@/c"), "");
+        structures.put(DefaultPath.fromEncodedPathString("d/e#/f"), 42);
+        structures.put(DefaultPath.fromEncodedPathString("g/h/i"), true);
+        structures.put(DefaultPath.fromEncodedPathString("j/k/l"), null);
 
         Map<Path,Object> result = decomposer.decompose(structures);
 
@@ -72,14 +72,14 @@ public class DecomposerTest {
         // output of only simple objects is equal to the input
         //  except nulls are replaced by the NULL token.
         //  Note that the special characters are not URL-encoded in input paths  
-        structures.put(DefaultPath.fromString("j/k/l"), ObjectUtils.NULL);
+        structures.put(DefaultPath.fromEncodedPathString("j/k/l"), ObjectUtils.NULL);
         assertEquals(result, structures);
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
     public void decomposeUnsupportedType() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
-        structures.put(DefaultPath.fromString("z"), new Object());
+        structures.put(DefaultPath.fromStrings("z"), new Object());
 
         decomposer.decompose(structures);
     }
@@ -89,10 +89,10 @@ public class DecomposerTest {
         Map<Path,Object> structures = new HashMap<Path,Object>();
         Map<String,Object> nestedMap = new HashMap<String,Object>();
         nestedMap.put("y", "test");
-        structures.put(DefaultPath.fromString("x"), nestedMap);
+        structures.put(DefaultPath.fromStrings("x"), nestedMap);
 
         Map<Path,Object> expected  = new HashMap<Path,Object>();
-        expected.put(DefaultPath.fromString("x/y"), "test");
+        expected.put(DefaultPath.fromEncodedPathString("x/y"), "test");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);
@@ -104,12 +104,12 @@ public class DecomposerTest {
         Map<String,Object> nestedMap = new HashMap<String,Object>();
         nestedMap.put("y", "test");
         nestedMap.put("@##//", "special@#");
-        structures.put(DefaultPath.fromString("a/b/c"), nestedMap);
+        structures.put(DefaultPath.fromEncodedPathString("a/b/c"), nestedMap);
 
         // map keys are URL-encoded, values are not
         Map<Path,Object> expected  = new HashMap<Path,Object>();
-        expected.put(DefaultPath.fromString("a/b/c/y"), "test");
-        expected.put(DefaultPath.fromString("a/b/c/%40%23%23%2F%2F"), "special@#");
+        expected.put(DefaultPath.fromEncodedPathString("a/b/c/y"), "test");
+        expected.put(DefaultPath.fromEncodedPathString("a/b/c/%40%23%23%2F%2F"), "special@#");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertTrue(result.equals(expected));
@@ -118,13 +118,13 @@ public class DecomposerTest {
     @Test(groups = "unit")
     public void decomposeList() throws Exception {
         Map<Path,Object> structures = new HashMap<Path,Object>();
-        structures.put(DefaultPath.fromString("list"), Arrays.asList("java.util.ArrayList", Arrays.asList("x", "y", "z")));
+        structures.put(DefaultPath.fromStrings("list"), Arrays.asList("java.util.ArrayList", Arrays.asList("x", "y", "z")));
 
         Map<Path,Object> expected  = new HashMap<Path,Object>();
-        expected.put(DefaultPath.fromString("list/@0"), "x");
-        expected.put(DefaultPath.fromString("list/@1"), "y");
-        expected.put(DefaultPath.fromString("list/@2"), "z");
-        expected.put(DefaultPath.fromString("list/@3"), "\uFFFF\uFFFF");
+        expected.put(DefaultPath.fromEncodedPathString("list/@0"), "x");
+        expected.put(DefaultPath.fromEncodedPathString("list/@1"), "y");
+        expected.put(DefaultPath.fromEncodedPathString("list/@2"), "z");
+        expected.put(DefaultPath.fromEncodedPathString("list/@3"), "\uFFFF\uFFFF");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);
@@ -141,13 +141,13 @@ public class DecomposerTest {
         Map<String,Object> map3 = new HashMap<String,Object>();
         map3.put("k3", "v3");
 
-        structures.put(DefaultPath.fromString("list"), Arrays.asList("java.util.ArrayList", Arrays.asList(map1, map2, map3)));
+        structures.put(DefaultPath.fromStrings("list"), Arrays.asList("java.util.ArrayList", Arrays.asList(map1, map2, map3)));
 
         Map<Path,Object> expected  = new HashMap<Path,Object>();
-        expected.put(DefaultPath.fromString("list/@0/k1"), "v1");
-        expected.put(DefaultPath.fromString("list/@1/k2"), "v2");
-        expected.put(DefaultPath.fromString("list/@2/k3"), "v3");
-        expected.put(DefaultPath.fromString("list/@3/"), "\uFFFF\uFFFF");
+        expected.put(DefaultPath.fromEncodedPathString("list/@0/k1"), "v1");
+        expected.put(DefaultPath.fromEncodedPathString("list/@1/k2"), "v2");
+        expected.put(DefaultPath.fromEncodedPathString("list/@2/k3"), "v3");
+        expected.put(DefaultPath.fromEncodedPathString("list/@3/"), "\uFFFF\uFFFF");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);
@@ -161,24 +161,24 @@ public class DecomposerTest {
         List<?> list2 = Arrays.asList("java.util.ArrayList", Arrays.asList("d", "e", "f"));
         List<?> list3 = Arrays.asList("java.util.ArrayList", Arrays.asList("g", "h", "i"));
 
-        structures.put(DefaultPath.fromString("1"), list1);
-        structures.put(DefaultPath.fromString("2"), list2);
-        structures.put(DefaultPath.fromString("3"), list3);
+        structures.put(DefaultPath.fromStrings("1"), list1);
+        structures.put(DefaultPath.fromStrings("2"), list2);
+        structures.put(DefaultPath.fromStrings("3"), list3);
 
         Map<Path,Object> expected  = new HashMap<Path,Object>();
 
-        expected.put(DefaultPath.fromString("1/@0"), "a");
-        expected.put(DefaultPath.fromString("1/@1"), "b");
-        expected.put(DefaultPath.fromString("1/@2"), "c");
-        expected.put(DefaultPath.fromString("1/@3"), "\uFFFF\uFFFF");
-        expected.put(DefaultPath.fromString("2/@0"), "d");
-        expected.put(DefaultPath.fromString("2/@1"), "e");
-        expected.put(DefaultPath.fromString("2/@2"), "f");
-        expected.put(DefaultPath.fromString("2/@3"), "\uFFFF\uFFFF");
-        expected.put(DefaultPath.fromString("3/@0"), "g");
-        expected.put(DefaultPath.fromString("3/@1"), "h");
-        expected.put(DefaultPath.fromString("3/@2"), "i");
-        expected.put(DefaultPath.fromString("3/@3"), "\uFFFF\uFFFF");
+        expected.put(DefaultPath.fromEncodedPathString("1/@0"), "a");
+        expected.put(DefaultPath.fromEncodedPathString("1/@1"), "b");
+        expected.put(DefaultPath.fromEncodedPathString("1/@2"), "c");
+        expected.put(DefaultPath.fromEncodedPathString("1/@3"), "\uFFFF\uFFFF");
+        expected.put(DefaultPath.fromEncodedPathString("2/@0"), "d");
+        expected.put(DefaultPath.fromEncodedPathString("2/@1"), "e");
+        expected.put(DefaultPath.fromEncodedPathString("2/@2"), "f");
+        expected.put(DefaultPath.fromEncodedPathString("2/@3"), "\uFFFF\uFFFF");
+        expected.put(DefaultPath.fromEncodedPathString("3/@0"), "g");
+        expected.put(DefaultPath.fromEncodedPathString("3/@1"), "h");
+        expected.put(DefaultPath.fromEncodedPathString("3/@2"), "i");
+        expected.put(DefaultPath.fromEncodedPathString("3/@3"), "\uFFFF\uFFFF");
 
         Map<Path,Object> result = decomposer.decompose(structures);
         assertEquals(result, expected);

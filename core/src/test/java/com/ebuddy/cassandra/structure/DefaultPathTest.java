@@ -16,35 +16,35 @@ public class DefaultPathTest {
 
     @Test(groups = "unit")
     public void convertFromPathStringWithTrailingDelimiter() throws Exception {
-        Path path = DefaultPath.fromString("x/y/");
+        Path path = DefaultPath.fromEncodedPathString("x/y/");
         assertEquals(path.size(), 2);
         assertEquals(path.toString(), "x/y/");
     }
 
     @Test(groups = "unit")
     public void convertFromPathStringWithoutTrailingDelimiter() throws Exception {
-        Path path = DefaultPath.fromString("x/y");
+        Path path = DefaultPath.fromEncodedPathString("x/y");
         assertEquals(path.size(), 2);
         assertEquals(path.toString(), "x/y/");
     }
 
     @Test(groups = "unit")
     public void convertFromPathStringOneElementTrailingDelimiter() throws Exception {
-        Path path = DefaultPath.fromString("x/");
+        Path path = DefaultPath.fromEncodedPathString("x/");
         assertEquals(path.size(), 1);
         assertEquals(path.toString(), "x/");
     }
 
     @Test(groups = "unit")
     public void convertFromPathStringOneElement() throws Exception {
-        Path path = DefaultPath.fromString("x");
+        Path path = DefaultPath.fromStrings("x");
         assertEquals(path.size(), 1);
         assertEquals(path.toString(), "x/");
     }
 
     @Test(groups = "unit")
     public void convertFromEmptyPath() throws Exception {
-        Path path = DefaultPath.fromString("");
+        Path path = DefaultPath.fromEncodedPathString("");
         assertEquals(path.size(), 0);
         assertEquals(path.toString(), "");
         assertTrue(path.isEmpty());
@@ -52,17 +52,9 @@ public class DefaultPathTest {
 
     @Test(groups = "unit")
     public void convertFromPathWithOnlyDelimiter() throws Exception {
-        Path path = DefaultPath.fromString("/");
+        Path path = DefaultPath.fromEncodedPathString("/");
         assertEquals(path.size(), 0);
         assertEquals(path.toString(), "");
         assertTrue(path.isEmpty());
-    }
-
-    @Test(groups = "unit")
-    public void backwardCompatibility() throws Exception {
-        Path path = DefaultPath.fromString("a|b|c|d", '|');
-        assertEquals(path, DefaultPath.fromString("a/b/c/d/"));
-        assertEquals(DefaultPath.fromString("a|b|c|d", '|'),
-                     DefaultPath.fromString("a|b|c|d|", '|'));
     }
 }

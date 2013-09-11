@@ -123,7 +123,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
 
     @Override
     public Path createPath(String... elements) {
-        return DefaultPath.fromElements(elements);
+        return DefaultPath.fromStrings(elements);
     }
 
     private String getFinishString(String start) {
@@ -143,7 +143,7 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     private Map<Path,Object> getTerminalPathMap(Path inputPath, Map<String,Object> columnsMap) {
         Map<Path,Object> pathMap = new HashMap<Path,Object>(columnsMap.size());
         for (Map.Entry<String,Object> entry : columnsMap.entrySet()) {
-            Path path = DefaultPath.fromString(entry.getKey());
+            Path path = DefaultPath.fromEncodedPathString(entry.getKey());
             if (!path.startsWith(inputPath)) {
                 throw new IllegalStateException("unexpected path found in database:" + path);
             }
