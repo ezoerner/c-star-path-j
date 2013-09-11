@@ -148,7 +148,7 @@ public class CqlStructuredDataSupportSystemTest {
         assertNotSame(resultShortList, shortList);
         assertEquals(resultShortList, shortList);
 
-        Path indexPath = daoSupport.createPath("x","@4");
+        Path indexPath = daoSupport.createPath("x").withListIndexes(4);
         String s = daoSupport.readFromPath(rowKey,indexPath, new TypeReference<String>() {});
         assertEquals(s, "5"); // cruft
 

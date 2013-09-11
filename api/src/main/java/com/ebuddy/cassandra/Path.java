@@ -8,9 +8,14 @@ import java.util.List;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public interface Path {
-    boolean isEmpty();
 
-    Path concatenate(Path other);
+    Path concat(Path other);
+
+    List<String> getElements();
+
+    Path withListIndexes(int... listIndex);
+
+    Path withElements(String... elements);
 
     String head();
 
@@ -22,5 +27,5 @@ public interface Path {
 
     int size();
 
-    List<String> getPathElements();
+    boolean isEmpty();
 }

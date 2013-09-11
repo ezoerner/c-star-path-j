@@ -59,7 +59,7 @@ public class Decomposer {
             Map<Path,Object> decomposedMap = decomposeStructure(structure);
 
             for (Map.Entry<Path,Object> decomposedEntry : decomposedMap.entrySet()) {
-                decomposed.put(path.concatenate(decomposedEntry.getKey()), decomposedEntry.getValue());
+                decomposed.put(path.concat(decomposedEntry.getKey()), decomposedEntry.getValue());
             }
         }
         return decomposed;

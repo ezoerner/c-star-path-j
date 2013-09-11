@@ -1,5 +1,6 @@
 package com.ebuddy.cassandra.structure;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -31,10 +32,10 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     }
 
     @Override
-    public Path concatenate(Path other) {
+    public Path concat(Path other) {
         List<String> newPathElements = new LinkedList<String>();
         newPathElements.addAll(pathElements);
-        newPathElements.addAll(other.getPathElements());
+        newPathElements.addAll(other.getElements());
         return new DefaultPath(newPathElements);
     }
 
@@ -75,19 +76,6 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     }
 
     /**
-     * Return true if all the keys in decomposedObjects are list indexes.
-     * @throws IllegalArgumentException if an empty path is found
-     */
-    public static boolean isList(Map<String,Object> decomposedObjects) {
-        for (String key : decomposedObjects.keySet())  {
-            if (!isListIndex(key)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Returns the first element in this path.
      * If this is an empty path, return null, otherwise return the first element in the path.
      */
@@ -123,29 +111,12 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
         return pathElements.size() == 0;
     }
 
-    public static int getListIndex(String pathElement) {
-        if (pathElement.isEmpty()) {
-            throw new IllegalStateException("empty path");
-        }
-
-        if (!pathElement.startsWith(LIST_INDEX_PREFIX)) {
-            throw new IllegalStateException("not a list index");
-        }
-
-        String rest = pathElement.substring(LIST_INDEX_PREFIX.length());
-        try {
-            return Integer.parseInt(rest);
-        } catch (NumberFormatException ignored) {
-            throw new IllegalStateException("bad format for list index");
-        }
-    }
-
     /**
      * Return true if this path starts with the specified path.
      */
     @Override
     public boolean startsWith(Path path) {
-        return pathElements.subList(0, path.size()).equals(path.getPathElements());
+        return pathElements.subList(0, path.size()).equals(path.getElements());
     }
 
     @Override
@@ -172,9 +143,59 @@ public class DefaultPath implements Path, Comparable<DefaultPath> {
     }
 
     @Override
-    public List<String> getPathElements() {
+    public List<String> getElements() {
         return Collections.unmodifiableList(pathElements);
     }
+
+    @Override
+    public Path withListIndexes(int... listIndexes) {
+        List<String> newPathElements = new ArrayList<String>(pathElements.size() + listIndexes.length);
+        newPathElements.addAll(pathElements);
+        for (int index : listIndexes) {
+            newPathElements.add(LIST_INDEX_PREFIX + index);
+        }
+        return new DefaultPath(newPathElements);
+    }
+
+    @Override
+    public Path withElements(String... elements) {
+        List<String> newPathElements = new ArrayList<String>(pathElements.size() + elements.length);
+        newPathElements.addAll(pathElements);
+        Collections.addAll(newPathElements, elements);
+        return new DefaultPath(newPathElements);
+    }
+
+    public static int getListIndex(String pathElement) {
+        if (pathElement.isEmpty()) {
+            throw new IllegalStateException("empty path");
+        }
+
+        if (!pathElement.startsWith(LIST_INDEX_PREFIX)) {
+            throw new IllegalStateException("not a list index");
+        }
+
+        String rest = pathElement.substring(LIST_INDEX_PREFIX.length());
+        try {
+            return Integer.parseInt(rest);
+        } catch (NumberFormatException ignored) {
+            throw new IllegalStateException("bad format for list index");
+        }
+    }
+
+    /**
+     * Return true if all the keys in decomposedObjects are list indexes.
+     * @throws IllegalArgumentException if an empty path is found
+     */
+    public static boolean isList(Map<String,Object> decomposedObjects) {
+        for (String key : decomposedObjects.keySet())  {
+            if (!isListIndex(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 
     /**
      * Return true if the first element in this path is a list index.
