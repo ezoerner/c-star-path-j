@@ -46,6 +46,8 @@ In the meantime sets can be modeled as maps.
 
 Maven Dependency
 ----------------
+
+The artifacts are published at Maven Central.
 To include C* Path in your project, use one of the following dependencies. Generally either the CQL or thrift dependency
 is used, but not both.
 
