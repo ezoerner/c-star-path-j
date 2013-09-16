@@ -71,23 +71,6 @@
         </plugins>
     </reporting>
 
-    <distributionManagement>
-        <repository>
-            <id>artifactory.releases</id>
-            <name>Artifactory Repository - Releases</name>
-            <url>http://svn.ebuddy.net/artifactory/libs-releases-local</url>
-            <layout>default</layout>
-        </repository>
-
-        <snapshotRepository>
-            <id>artifactory.snapshots</id>
-            <name>Artifactory Repository - Snapshots</name>
-            <url>http://svn.ebuddy.net/artifactory/libs-snapshots-local</url>
-            <layout>default</layout>
-            <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-    </distributionManagement>
-
     <modules>
         <module>thrift</module>
         <module>cql</module>
