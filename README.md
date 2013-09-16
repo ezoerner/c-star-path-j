@@ -49,11 +49,16 @@ Maven Dependency
 To include C* Path in your project, use one of the following dependencies. Generally either the CQL or thrift dependency
 is used, but not both.
 
+To include CQL module:
+
     <dependency>
         <groupId>com.ebuddy.cassandra</groupId>
         <artifactId>cql-data-access</artifactId>
         <version>2.2.1</version>
     </dependency>
+
+
+Or include the Thrift module:
 
     <dependency>
         <groupId>com.ebuddy.cassandra</groupId>
