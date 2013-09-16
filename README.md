@@ -2,12 +2,7 @@ C* Path
 =======
 
 Support for reading and writing structured objects in Cassandra.
-Structured objects can be accessed *in toto* or in part by a hierarchical path delimited by forward slashes.
-
-Some special characters are used internally in the implementation, so paths should not contain any of the special
-characters '@#', and, as you would expect, a path element cannot contain a forward slash '/' since this character
-separates path elements. In order to represent map keys that may contain such characters, the caller should URL-encode
-the individual path elements. Paths elements are automatically URL-decoded by the implementation when recomposing maps.
+Structured objects can be accessed whole or in part by a hierarchical path delimited by forward slashes.
 
 On `writeToPath`, the object is first converted into maps, lists, and simple objects with the help of
 [Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome) (the fasterxml.com version).
