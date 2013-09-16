@@ -11,8 +11,8 @@ decomposed into key-value pairs where the keys are paths.
 
 On `readFromPath`, the reverse process is used to recompose the key-value pairs back into a structured object or POJO.
 
-Paths can be used to access structured data at different levels within the structure. Lists have a specidal encoding
-in a path using '@' followed by a integer index encoded into the path.  
+Paths can be used to access structured data at different levels within the structure. A Path can also contain a special
+element that refers to an index within a list (or array or collection).
 
 **Note:** Special support for Sets of simple values is also planned but not yet implemented.
 In the meantime sets can be modeled as maps.
