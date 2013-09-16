@@ -1,11 +1,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.ebuddy.cassandra</groupId>
-    <artifactId>cassandra-data-access</artifactId>
+    <artifactId>c-star-path</artifactId>
     <version>2.2.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <url>https://github.com/ebuddy/cassandra-data-access</url>
+    <name>C* Path</name>
+    <description>Structured data access for Cassandra by hierarchical paths with support for both CQL3 and Thrift</description>
+    <url>https://github.com/ebuddy/c-star-path</url>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <developers>
+        <developer>
+            <id>ezoerner</id>
+            <name>Eric Zoerner</name>
+            <email>ezoerner@ebuddy.com</email>
+            <organization>eBuddy B.V.</organization>
+            <organizationUrl>http://www.ebuddy.com/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+    </developers>
 
     <properties>
         <testng.version>6.8.5</testng.version>
@@ -21,32 +50,26 @@
         <hector.groupId>org.hectorclient</hector.groupId>
         <guava.version>14.0.1</guava.version>
         <antlr.version>3.2</antlr.version>
+        <javadoc.plugin.version>2.9.1</javadoc.plugin.version>
     </properties>
 
     
     <scm>
-        <connection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</developerConnection>
-        <url>scm:git:ssh://git@github.com/ebuddy/cassandra-data-access.git</url>
+        <connection>scm:git:ssh://git@github.com/ebuddy/c-star-path.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/ebuddy/c-star-path.git</developerConnection>
+        <url>scm:git:ssh://git@github.com/ebuddy/c-star-path.git</url>
         <tag>master</tag>
     </scm>
 
-    <distributionManagement>
-        <repository>
-            <id>artifactory.releases</id>
-            <name>Artifactory Repository - Releases</name>
-            <url>http://svn.ebuddy.net/artifactory/libs-releases-local</url>
-            <layout>default</layout>
-        </repository>
-
-        <snapshotRepository>
-            <id>artifactory.snapshots</id>
-            <name>Artifactory Repository - Snapshots</name>
-            <url>http://svn.ebuddy.net/artifactory/libs-snapshots-local</url>
-            <layout>default</layout>
-            <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-    </distributionManagement>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${javadoc.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <modules>
         <module>thrift</module>
@@ -56,6 +79,52 @@
     </modules>
 
     <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>system</id>
             <build>
@@ -221,6 +290,12 @@
             <artifactId>mockito-all</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.4</version>
         </dependency>
     </dependencies>
 
