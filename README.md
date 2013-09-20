@@ -60,7 +60,7 @@ Or include the Thrift module:
     <dependency>
         <groupId>com.ebuddy.cassandra</groupId>
         <artifactId>thrift-data-access</artifactId>
-        <version>2.2.1</version>
+        <version>2.2.2</version>
     </dependency>
 
 api module
