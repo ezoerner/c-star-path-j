@@ -2,7 +2,7 @@ C* Path
 =======
 
 Support for reading and writing structured objects in Cassandra.
-Structured objects can be accessed whole or in part by a hierarchical path delimited by forward slashes.
+Structured objects can be accessed whole or in part by hierarchical paths.
 
 On `writeToPath`, the object is first converted into maps, lists, and simple objects with the help of
 [Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome) (the fasterxml.com version).
