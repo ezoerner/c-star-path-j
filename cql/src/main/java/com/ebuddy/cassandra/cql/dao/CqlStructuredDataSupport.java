@@ -87,7 +87,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final String partitionKeyColumnName;
 
     /**
-     * Used for tables that are upgraded from a thrift dynamic column family that still has the default column names.
+     * Used for tables that are upgraded from a thrift dynamic column family that still have the default column names.
      * @param session a Session configured with the keyspace
      */
     public CqlStructuredDataSupport(String tableName, Session session) {
