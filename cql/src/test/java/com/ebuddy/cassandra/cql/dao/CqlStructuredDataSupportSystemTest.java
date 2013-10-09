@@ -16,6 +16,9 @@
 
 package com.ebuddy.cassandra.cql.dao;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertNull;
@@ -31,11 +34,16 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Query;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ebuddy.cassandra.BatchContext;
@@ -59,9 +67,13 @@ public class CqlStructuredDataSupportSystemTest {
     private final String tableName = "testpojo";
 
     private StructuredDataSupport<UUID> daoSupport;
+    private Session session;
+    @Captor
+    private ArgumentCaptor<Query> queryCaptor;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
 
         // default to using cassandra on localhost, but can be overridden with a system property
@@ -75,8 +87,9 @@ public class CqlStructuredDataSupportSystemTest {
         dropAndCreateSchema();
 
         // get new session using a default keyspace that we now know exists
-        Session session = cluster.connect(TEST_KEYSPACE);
-        daoSupport = new CqlStructuredDataSupport<UUID>(tableName, session);
+        session = cluster.connect(TEST_KEYSPACE);
+        session = spy(session);
+        daoSupport = new CqlStructuredDataSupport<UUID>(tableName, ConsistencyLevel.QUORUM, session);
     }
 
     @AfterMethod(alwaysRun = true)
@@ -93,6 +106,7 @@ public class CqlStructuredDataSupportSystemTest {
         TypeReference<TestPojo> typeReference = new TypeReference<TestPojo>() { };
 
         daoSupport.writeToPath(rowKey, path, testObject);
+
         TestPojo result = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(result, testObject);
         assertEquals(result, testObject);
@@ -100,6 +114,8 @@ public class CqlStructuredDataSupportSystemTest {
         daoSupport.deletePath(rowKey, path);
         TestPojo result2 = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNull(result2);
+
+        verifyConsistency(5);
     }
 
     @Test(groups = {"system"})
@@ -124,6 +140,8 @@ public class CqlStructuredDataSupportSystemTest {
         TestPojo result2 = daoSupport.readFromPath(rowKey2, path, typeReference);
         assertNotSame(result2, testObject2);
         assertEquals(result2, testObject2);
+
+        verifyConsistency(3);
     }
 
     @Test(groups = {"system"})
@@ -145,6 +163,8 @@ public class CqlStructuredDataSupportSystemTest {
         List<String> resultShortList = daoSupport.readFromPath(rowKey, path, typeReference);
         assertNotSame(resultShortList, shortList);
         assertEquals(resultShortList, shortList);
+
+        verifyConsistency(4);
     }
 
     @Test(groups = {"system"})
@@ -175,6 +195,8 @@ public class CqlStructuredDataSupportSystemTest {
 
         s = daoSupport.readFromPath(rowKey,indexPath, new TypeReference<String>() {});
         assertNull(s); // cruft gone
+
+        verifyConsistency(8);
     }
 
 
@@ -212,6 +234,13 @@ public class CqlStructuredDataSupportSystemTest {
             localSession.execute("drop keyspace " + TEST_KEYSPACE);
         } catch (InvalidQueryException ignored) {
             // doesn't exist
+        }
+    }
+
+    private void verifyConsistency(int numberOfInvocations) {
+        verify(session, times(numberOfInvocations)).execute(queryCaptor.capture());
+        for (Query q : queryCaptor.getAllValues()) {
+            assertEquals(q.getConsistencyLevel(), ConsistencyLevel.QUORUM);
         }
     }
 }

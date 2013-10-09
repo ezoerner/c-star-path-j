@@ -26,7 +26,7 @@
     </parent>
 
     <properties>
-        <cassandra.java.driver.version>1.0.2</cassandra.java.driver.version>
+        <cassandra.java.driver.version>1.0.4</cassandra.java.driver.version>
     </properties>
 
     <dependencies>
@@ -51,12 +51,14 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!-- commons-logging is used directly in apache httpcomponents in thrift in cassandra-all -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

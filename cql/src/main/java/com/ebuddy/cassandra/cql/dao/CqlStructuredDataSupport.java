@@ -33,10 +33,14 @@ import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Query;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
@@ -86,12 +90,21 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final String tableName;
     private final String partitionKeyColumnName;
 
+    /** The default consistency level for all operations.
+     * TODO: provide ability to overrided consistency level per operation. */
+    private final ConsistencyLevel defaultConsistencyLevel;
+
     /**
      * Used for tables that are upgraded from a thrift dynamic column family that still have the default column names.
      * @param session a Session configured with the keyspace
      */
-    public CqlStructuredDataSupport(String tableName, Session session) {
-        this(tableName, DEFAULT_PARTITION_KEY_COLUMN, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, session);
+    public CqlStructuredDataSupport(String tableName, ConsistencyLevel defaultConsistencyLevel, Session session) {
+        this(tableName,
+             DEFAULT_PARTITION_KEY_COLUMN,
+             DEFAULT_PATH_COLUMN,
+             DEFAULT_VALUE_COLUMN,
+             defaultConsistencyLevel,
+             session);
     }
 
     /**
@@ -102,11 +115,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                                     String partitionKeyColumnName,
                                     String pathColumnName,
                                     String valueColumnName,
+                                    ConsistencyLevel defaultConsistencyLevel,
                                     Session session) {
         Validate.notEmpty(tableName);
         this.session = session;
         this.pathColumnName = pathColumnName;
         this.valueColumnName = valueColumnName;
+        this.defaultConsistencyLevel = defaultConsistencyLevel;
 
         writeMapper = new ObjectMapper();
         writeMapper.setDefaultTyping(new CustomTypeResolverBuilder());
@@ -120,6 +135,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                     .and(gte(pathColumnName, bindMarker()))
                     .and(lte(pathColumnName, bindMarker()))
                 .getQueryString());
+        readPathQuery.setConsistencyLevel(defaultConsistencyLevel);
 
         readForDeleteQuery = session.prepare(select(pathColumnName)
                                                      .from(tableName)
@@ -127,11 +143,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                                                         .and(gte(pathColumnName, bindMarker()))
                                                         .and(lte(pathColumnName, bindMarker()))
                                                      .getQueryString());
+        readForDeleteQuery.setConsistencyLevel(defaultConsistencyLevel);
 
         insertStatement = insertInto(tableName)
                 .value(partitionKeyColumnName, bindMarker())
                 .value(pathColumnName, bindMarker())
                 .value(valueColumnName, bindMarker());
+        insertStatement.setConsistencyLevel(defaultConsistencyLevel);
     }
 
     @Override
@@ -143,11 +161,14 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     public void applyBatch(BatchContext batchContext) {
         Batch batch = validateAndGetBatch(batchContext);
         List<Object> bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
+        Query query;
         if (bindArguments.isEmpty()) {
-            session.execute(batch.getQueryString());
+            query = new SimpleStatement(batch.getQueryString());
         } else {
-            session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
+            query = session.prepare(batch.getQueryString()).bind(bindArguments.toArray());
         }
+        query.setConsistencyLevel(defaultConsistencyLevel);
+        session.execute(query);
         ((CqlBatchContext)batchContext).reset();
     }
 
@@ -210,7 +231,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
 
         if (batchContext == null) {
-            session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
+            Query boundStatement = session.prepare(batch.getQueryString()).bind(bindArguments.toArray());
+            boundStatement.setConsistencyLevel(defaultConsistencyLevel);
+            session.execute(boundStatement);
         }
     }
 
@@ -258,7 +281,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
 
         if (batchContext == null) {
-          session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
+            BoundStatement query = session.prepare(batch.getQueryString()).bind(bindArguments.toArray());
+            query.setConsistencyLevel(defaultConsistencyLevel);
+            session.execute(query);
         }
     }
 
