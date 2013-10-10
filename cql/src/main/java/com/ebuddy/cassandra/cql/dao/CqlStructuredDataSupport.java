@@ -23,6 +23,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.gte;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.lte;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.timestamp;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,13 +31,19 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.Validate;
 
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Query;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Delete;
@@ -51,6 +58,7 @@ import com.ebuddy.cassandra.structure.DefaultPath;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
 import com.ebuddy.cassandra.structure.StructureConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 
 /**
  * Implementation of StructuredDataSupport for CQL.
@@ -73,6 +81,8 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
     private static final int MAX_CODE_POINT = 0x10FFFF;
 
+    private static final AtomicLong lastTime = new AtomicLong();
+
     private final Session session;
     private final String pathColumnName;
     private final String valueColumnName;
@@ -80,18 +90,25 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final ObjectMapper readMapper;
 
     private final PreparedStatement readPathQuery;
-    private final Statement insertStatement;
     private final PreparedStatement readForDeleteQuery;
 
     private final String tableName;
     private final String partitionKeyColumnName;
 
+    /** The default consistency level for all operations. */
+    private final ConsistencyLevel defaultConsistencyLevel;
+
     /**
      * Used for tables that are upgraded from a thrift dynamic column family that still have the default column names.
      * @param session a Session configured with the keyspace
      */
-    public CqlStructuredDataSupport(String tableName, Session session) {
-        this(tableName, DEFAULT_PARTITION_KEY_COLUMN, DEFAULT_PATH_COLUMN, DEFAULT_VALUE_COLUMN, session);
+    public CqlStructuredDataSupport(String tableName, ConsistencyLevel defaultConsistencyLevel, Session session) {
+        this(tableName,
+             DEFAULT_PARTITION_KEY_COLUMN,
+             DEFAULT_PATH_COLUMN,
+             DEFAULT_VALUE_COLUMN,
+             defaultConsistencyLevel,
+             session);
     }
 
     /**
@@ -102,11 +119,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                                     String partitionKeyColumnName,
                                     String pathColumnName,
                                     String valueColumnName,
+                                    ConsistencyLevel defaultConsistencyLevel,
                                     Session session) {
         Validate.notEmpty(tableName);
         this.session = session;
         this.pathColumnName = pathColumnName;
         this.valueColumnName = valueColumnName;
+        this.defaultConsistencyLevel = defaultConsistencyLevel;
 
         writeMapper = new ObjectMapper();
         writeMapper.setDefaultTyping(new CustomTypeResolverBuilder());
@@ -120,6 +139,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                     .and(gte(pathColumnName, bindMarker()))
                     .and(lte(pathColumnName, bindMarker()))
                 .getQueryString());
+        readPathQuery.setConsistencyLevel(defaultConsistencyLevel);
 
         readForDeleteQuery = session.prepare(select(pathColumnName)
                                                      .from(tableName)
@@ -127,11 +147,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                                                         .and(gte(pathColumnName, bindMarker()))
                                                         .and(lte(pathColumnName, bindMarker()))
                                                      .getQueryString());
-
-        insertStatement = insertInto(tableName)
-                .value(partitionKeyColumnName, bindMarker())
-                .value(pathColumnName, bindMarker())
-                .value(valueColumnName, bindMarker());
+        readForDeleteQuery.setConsistencyLevel(defaultConsistencyLevel);
     }
 
     @Override
@@ -143,11 +159,14 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     public void applyBatch(BatchContext batchContext) {
         Batch batch = validateAndGetBatch(batchContext);
         List<Object> bindArguments = ((CqlBatchContext)batchContext).getBindArguments();
+        Query query;
         if (bindArguments.isEmpty()) {
-            session.execute(batch.getQueryString());
+            query = new SimpleStatement(batch.getQueryString());
         } else {
-            session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
+            query = session.prepare(batch.getQueryString()).bind(bindArguments.toArray());
         }
+        query.setConsistencyLevel(defaultConsistencyLevel);
+        session.execute(query);
         ((CqlBatchContext)batchContext).reset();
     }
 
@@ -198,6 +217,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         List<Object> bindArguments = batchContext == null ?
                                         new ArrayList<Object>() :
                                         ((CqlBatchContext)batchContext).getBindArguments();
+        Statement insertStatement = insertInto(tableName)
+                .value(partitionKeyColumnName, bindMarker())
+                .value(pathColumnName, bindMarker())
+                .value(valueColumnName, bindMarker())
+                .using(timestamp(getCurrentMicros()));
+        insertStatement.setConsistencyLevel(defaultConsistencyLevel);
+
 
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
             batch.add(insertStatement);
@@ -210,7 +236,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
 
         if (batchContext == null) {
-            session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
+            Query boundStatement = session.prepare(batch.getQueryString()).bind(bindArguments.toArray());
+            boundStatement.setConsistencyLevel(defaultConsistencyLevel);
+            session.execute(boundStatement);
         }
     }
 
@@ -243,6 +271,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         Delete deleteStatement = delete().from(tableName);
         deleteStatement
+                .using(timestamp(getCurrentMicros()))
                 .where(eq(partitionKeyColumnName, rowKey))
                 .and(eq(pathColumnName, bindMarker()));
 
@@ -258,7 +287,9 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         }
 
         if (batchContext == null) {
-          session.execute(session.prepare(batch.getQueryString()).bind(bindArguments.toArray()));
+            BoundStatement query = session.prepare(batch.getQueryString()).bind(bindArguments.toArray());
+            query.setConsistencyLevel(defaultConsistencyLevel);
+            session.execute(query);
         }
     }
 
@@ -310,6 +341,40 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             pathMap.put(path, value);
         }
         return pathMap;
+    }
+
+    /**
+     * Get current value of a pseudo-microsecond clock based on
+     * System.currentTimeMillis(). The value of resolving conflicts on two threads calling this during
+     * the same millisecond is dubious, but could have value on systems where the system clock has limited resolution.
+     *
+     * @return the difference, measured in microseconds, between the current time and midnight, January 1, 1970 UTC.
+     */
+    public static long getCurrentMicros() {
+        Optional<Long> currentMicros;
+        do {
+            currentMicros = tryGetCurrentMicros();
+        } while (!currentMicros.isPresent());
+        return currentMicros.get();
+    }
+
+    private static Optional<Long> tryGetCurrentMicros() {
+        long nowMicros = TimeUnit.MICROSECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        long lastMicros = lastTime.get();
+        boolean success = true;
+        if (nowMicros > lastMicros) {
+            success = lastTime.compareAndSet(lastMicros, nowMicros);
+        } else {
+            // add a pseudo-microsecond to whatever current lastTime is.
+            // Note that if in the unlikely event that we have incremented the counter
+            // past the actual system clock, then use an incremented lastTime instead of the system clock.
+            // The implication of this is that if we have over a thousand requests on this
+            // method within the same millisecond, then the timestamp we use can get out of sync
+            // with other client VMs. This is deemed highly unlikely.
+            nowMicros = lastTime.incrementAndGet();
+        }
+
+        return success ? Optional.of(nowMicros) : Optional.<Long>absent();
     }
 
     private static class CqlBatchContext implements BatchContext {
