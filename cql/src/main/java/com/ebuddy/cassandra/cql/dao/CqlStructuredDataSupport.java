@@ -91,9 +91,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final String tableName;
     private final String partitionKeyColumnName;
 
-    /** The default consistency level for all operations.
-     * TODO: provide ability to override consistency level per operation.
-     */
+    /** The default consistency level for all operations. */
     private final ConsistencyLevel defaultConsistencyLevel;
 
     /**

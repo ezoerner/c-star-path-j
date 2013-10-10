@@ -37,8 +37,9 @@ import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 
 /**
- * // TODO: Add class description here.
  *
+ * Test to try to reproduce the problem with delete consistency in Cassandra in CQL
+ * but using Thrift (doesn't reproduce).
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class ThriftConsistencyLevelBugSystemTest {
