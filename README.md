@@ -51,7 +51,7 @@ To include CQL module:
     <dependency>
         <groupId>com.ebuddy.cassandra</groupId>
         <artifactId>cql-data-access</artifactId>
-        <version>2.2.3</version>
+        <version>2.2.4</version>
     </dependency>
 
 
