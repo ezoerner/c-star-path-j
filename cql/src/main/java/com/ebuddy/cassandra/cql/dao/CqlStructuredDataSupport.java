@@ -23,6 +23,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.gte;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.lte;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.timestamp;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.Validate;
 
@@ -84,14 +86,14 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private final ObjectMapper readMapper;
 
     private final PreparedStatement readPathQuery;
-    private final Statement insertStatement;
     private final PreparedStatement readForDeleteQuery;
 
     private final String tableName;
     private final String partitionKeyColumnName;
 
     /** The default consistency level for all operations.
-     * TODO: provide ability to overrided consistency level per operation. */
+     * TODO: provide ability to override consistency level per operation.
+     */
     private final ConsistencyLevel defaultConsistencyLevel;
 
     /**
@@ -144,12 +146,6 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
                                                         .and(lte(pathColumnName, bindMarker()))
                                                      .getQueryString());
         readForDeleteQuery.setConsistencyLevel(defaultConsistencyLevel);
-
-        insertStatement = insertInto(tableName)
-                .value(partitionKeyColumnName, bindMarker())
-                .value(pathColumnName, bindMarker())
-                .value(valueColumnName, bindMarker());
-        insertStatement.setConsistencyLevel(defaultConsistencyLevel);
     }
 
     @Override
@@ -219,6 +215,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         List<Object> bindArguments = batchContext == null ?
                                         new ArrayList<Object>() :
                                         ((CqlBatchContext)batchContext).getBindArguments();
+        Statement insertStatement = insertInto(tableName)
+                .value(partitionKeyColumnName, bindMarker())
+                .value(pathColumnName, bindMarker())
+                .value(valueColumnName, bindMarker())
+                .using(timestamp(getCurrentMicros()));
+        insertStatement.setConsistencyLevel(defaultConsistencyLevel);
+
 
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
             batch.add(insertStatement);
@@ -266,6 +269,7 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
 
         Delete deleteStatement = delete().from(tableName);
         deleteStatement
+                .using(timestamp(getCurrentMicros()))
                 .where(eq(partitionKeyColumnName, rowKey))
                 .and(eq(pathColumnName, bindMarker()));
 
@@ -335,6 +339,10 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
             pathMap.put(path, value);
         }
         return pathMap;
+    }
+
+    private long getCurrentMicros() {
+        return TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
     }
 
     private static class CqlBatchContext implements BatchContext {

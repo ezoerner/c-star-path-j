@@ -43,10 +43,6 @@ import me.prettyprint.hector.api.query.QueryResult;
  */
 public class ThriftConsistencyLevelBugSystemTest {
     private static final String CASSANDRA_HOSTS = "cass-uds001.dev.ebuddy-office.net,cass-uds002.dev.ebuddy-office.net,cass-uds003.dev.ebuddy-office.net,cass-uds004.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds001.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds002.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds003.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds004.dev.ebuddy-office.net";
     private static final int REPLICATION_FACTOR = 3;
     private static final String TEST_KEYSPACE = "consistencylevelbugsystemtest";
     private static final UUID KEY = UUID.randomUUID();
@@ -67,7 +63,7 @@ public class ThriftConsistencyLevelBugSystemTest {
     }
 
 
-    @Test(groups="system")
+    @Test(groups="system", enabled = false)
     public void testDeleteConsistency() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
             System.out.println("i=" + i);
@@ -106,7 +102,7 @@ public class ThriftConsistencyLevelBugSystemTest {
     }
 
 
-    @Test(groups="system")
+    @Test(groups="system", enabled = false)
     public void testWriteConsistency() throws Exception {
 
         for (int i = 0; i < REPETITIONS; i++) {

@@ -1,10 +1,27 @@
 
+/*
+ * Copyright 2013 eBuddy B.V.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package com.ebuddy.cassandra.cql;
 
 import static org.testng.Assert.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.BeforeMethod;
@@ -20,20 +37,18 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 /**
  * Test to reproduce the problem with delete consistency in Cassandra using CQL.
+ * Seems the tests fail only if "USING TIMESTAMP" is not used.
+ * See <a href="https://datastax-oss.atlassian.net/browse/JAVA-164">JAVA-164</a>
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class ConsistencyLevelBugSystemTest {
     private static final String CASSANDRA_HOSTS = "cass-uds001.dev.ebuddy-office.net,cass-uds002.dev.ebuddy-office.net,cass-uds003.dev.ebuddy-office.net,cass-uds004.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds001.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds002.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds003.dev.ebuddy-office.net";
-    //private static final String CASSANDRA_HOSTS = "cass-uds004.dev.ebuddy-office.net";
     private static final int REPLICATION_FACTOR = 3;
     private static final String TEST_KEYSPACE = "consistencylevelbugsystemtest";
     private static final UUID KEY = UUID.randomUUID();
-    private static final ConsistencyLevel CONSISTENCY_LEVEL = ConsistencyLevel.ALL;
+    private static final ConsistencyLevel CONSISTENCY_LEVEL = ConsistencyLevel.ONE;
     private static final long SLEEP_MS = 0L;
     private static final int REPETITIONS = 30;
 
@@ -50,16 +65,18 @@ public class ConsistencyLevelBugSystemTest {
         session = cluster.connect(TEST_KEYSPACE);
     }
 
-    @Test(groups="system")
+    @Test(groups="system", enabled = false)
     public void testDeleteConsistency() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
             System.out.println("i=" + i);
-            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?);");
+            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?) USING TIMESTAMP " + TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS));
             statement.setConsistencyLevel(CONSISTENCY_LEVEL);
             session.execute(statement.bind(KEY, "column", i));
             sleep();
 
-            statement = session.prepare("DELETE FROM test where key=? and column = ?");
+            statement = session.prepare("DELETE FROM test USING TIMESTAMP " +
+                                                TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS) +
+                                                " where key=? and column = ?");
             statement.setConsistencyLevel(CONSISTENCY_LEVEL);
             session.execute(statement.bind(KEY, "column"));
             sleep();
@@ -70,7 +87,7 @@ public class ConsistencyLevelBugSystemTest {
 
             if (!results.isExhausted()) {
                 // try waiting and then trying again
-                Thread.sleep(2000L);
+                Thread.sleep(10000L);
 
                 statement = session.prepare("SELECT * FROM test where key=? and column=?");
                 statement.setConsistencyLevel(CONSISTENCY_LEVEL);
@@ -83,14 +100,14 @@ public class ConsistencyLevelBugSystemTest {
         }
     }
 
-    @Test(groups="system")
+    @Test(groups="system", enabled = false)
     public void testWriteConsistency() throws Exception {
 
         for (int i = 0; i < REPETITIONS; i++) {
             System.out.println("i=" + i);
-            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?);");
+            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?) USING TIMESTAMP " + TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS));
             statement.setConsistencyLevel(CONSISTENCY_LEVEL);
-            session.execute(statement.bind(KEY,  "column", i));
+            session.execute(statement.bind(KEY, "column", i));
             sleep();
 
 
@@ -101,7 +118,7 @@ public class ConsistencyLevelBugSystemTest {
             assertEquals(rows.size(), 1);
             if (rows.get(0).getInt("value") !=  i) {
                 // try waiting and then trying again
-                Thread.sleep(2000L);
+                Thread.sleep(10000L);
 
                 statement = session.prepare("SELECT * FROM test where key=? and column=?");
                 statement.setConsistencyLevel(CONSISTENCY_LEVEL);
