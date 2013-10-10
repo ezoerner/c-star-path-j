@@ -71,7 +71,7 @@ public class CqlStructuredDataSupportSystemTest {
     @Captor
     private ArgumentCaptor<Query> queryCaptor;
 
-    @BeforeMethod(alwaysRun = true)
+    @BeforeMethod(groups = {"system"})
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();

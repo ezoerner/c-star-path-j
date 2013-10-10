@@ -343,6 +343,13 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         return pathMap;
     }
 
+    /**
+     * Get current value of a pseudo-microsecond clock based on
+     * System.currentTimeMillis(). The value of resolving conflicts on two threads calling this during
+     * the same millisecond is dubious, but could have value on systems where the system clock has limited resolution.
+     *
+     * @return the difference, measured in microseconds, between the current time and midnight, January 1, 1970 UTC.
+     */
     public static long getCurrentMicros() {
         Optional<Long> currentMicros;
         do {
@@ -352,23 +359,22 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     }
 
     private static Optional<Long> tryGetCurrentMicros() {
-        Optional<Long> result;
         long nowMicros = TimeUnit.MICROSECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long lastMicros = lastTime.get();
-        boolean success;
+        boolean success = true;
         if (nowMicros > lastMicros) {
             success = lastTime.compareAndSet(lastMicros, nowMicros);
         } else {
-            // add a pseudo-microsecond to whatever current lastTime is
-            // Note that if in the unlikely event that the system clock went backwards,
-            // then use an incremented lastTime instead of the system clock.
-            return Optional.of(lastTime.incrementAndGet());
+            // add a pseudo-microsecond to whatever current lastTime is.
+            // Note that if in the unlikely event that we have incremented the counter
+            // past the actual system clock, then use an incremented lastTime instead of the system clock.
+            // The implication of this is that if we have over a thousand requests on this
+            // method within the same millisecond, then the timestamp we use can get out of sync
+            // with other client VMs. This is deemed highly unlikely.
+            nowMicros = lastTime.incrementAndGet();
         }
 
-        if (success) {
-            return Optional.of(nowMicros);
-        }
-        return Optional.absent();
+        return success ? Optional.of(nowMicros) : Optional.<Long>absent();
     }
 
     private static class CqlBatchContext implements BatchContext {
