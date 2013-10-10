@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.Validate;
 
@@ -57,6 +58,7 @@ import com.ebuddy.cassandra.structure.DefaultPath;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
 import com.ebuddy.cassandra.structure.StructureConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 
 /**
  * Implementation of StructuredDataSupport for CQL.
@@ -78,6 +80,8 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
     private static final String DEFAULT_PARTITION_KEY_COLUMN = "key";
 
     private static final int MAX_CODE_POINT = 0x10FFFF;
+
+    private static final AtomicLong lastTime = new AtomicLong();
 
     private final Session session;
     private final String pathColumnName;
@@ -339,8 +343,32 @@ public class CqlStructuredDataSupport<K> implements StructuredDataSupport<K> {
         return pathMap;
     }
 
-    private long getCurrentMicros() {
-        return TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
+    public static long getCurrentMicros() {
+        Optional<Long> currentMicros;
+        do {
+            currentMicros = tryGetCurrentMicros();
+        } while (!currentMicros.isPresent());
+        return currentMicros.get();
+    }
+
+    private static Optional<Long> tryGetCurrentMicros() {
+        Optional<Long> result;
+        long nowMicros = TimeUnit.MICROSECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        long lastMicros = lastTime.get();
+        boolean success;
+        if (nowMicros > lastMicros) {
+            success = lastTime.compareAndSet(lastMicros, nowMicros);
+        } else {
+            // add a pseudo-microsecond to whatever current lastTime is
+            // Note that if in the unlikely event that the system clock went backwards,
+            // then use an incremented lastTime instead of the system clock.
+            return Optional.of(lastTime.incrementAndGet());
+        }
+
+        if (success) {
+            return Optional.of(nowMicros);
+        }
+        return Optional.absent();
     }
 
     private static class CqlBatchContext implements BatchContext {

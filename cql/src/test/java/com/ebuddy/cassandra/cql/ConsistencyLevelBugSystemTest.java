@@ -21,7 +21,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.BeforeMethod;
@@ -34,6 +33,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.ebuddy.cassandra.cql.dao.CqlStructuredDataSupport;
 
 /**
  * Test to reproduce the problem with delete consistency in Cassandra using CQL.
@@ -69,13 +69,14 @@ public class ConsistencyLevelBugSystemTest {
     public void testDeleteConsistency() throws Exception {
         for (int i = 0; i < REPETITIONS; i++) {
             System.out.println("i=" + i);
-            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?) USING TIMESTAMP " + TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS));
+            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?) " +
+                "USING TIMESTAMP " + CqlStructuredDataSupport.getCurrentMicros());
             statement.setConsistencyLevel(CONSISTENCY_LEVEL);
             session.execute(statement.bind(KEY, "column", i));
             sleep();
 
             statement = session.prepare("DELETE FROM test USING TIMESTAMP " +
-                                                TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS) +
+                                                CqlStructuredDataSupport.getCurrentMicros() +
                                                 " where key=? and column = ?");
             statement.setConsistencyLevel(CONSISTENCY_LEVEL);
             session.execute(statement.bind(KEY, "column"));
@@ -105,7 +106,8 @@ public class ConsistencyLevelBugSystemTest {
 
         for (int i = 0; i < REPETITIONS; i++) {
             System.out.println("i=" + i);
-            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?) USING TIMESTAMP " + TimeUnit.MICROSECONDS.convert(System.nanoTime(), TimeUnit.NANOSECONDS));
+            PreparedStatement statement = session.prepare("INSERT INTO test (key, column, value) VALUES (?,?,?) " +
+                "USING TIMESTAMP " + CqlStructuredDataSupport.getCurrentMicros());
             statement.setConsistencyLevel(CONSISTENCY_LEVEL);
             session.execute(statement.bind(KEY, "column", i));
             sleep();

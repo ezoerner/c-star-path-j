@@ -216,20 +216,6 @@
                 </exclusions>
             </dependency>
 
-            <!-- log4j is used directly in cassandra-all library -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>log4j-over-slf4j</artifactId>
-                <version>1.7.5</version>
-            </dependency>
-
-            <!-- commons-logging is used directly in apache httpcomponents in thrift in cassandra-all -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jcl-over-slf4j</artifactId>
-                <version>1.7.5</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.cassandraunit</groupId>
                 <artifactId>cassandra-unit</artifactId>
@@ -271,6 +257,22 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+
+        <!-- log4j is used directly in cassandra-all library -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>1.7.5</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- commons-logging is used directly in apache httpcomponents in thrift in cassandra-all -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+
 
         <!-- For testing we use logback, consumers of these libraries should plug in their Slf4j bridge of choice -->
         <dependency>
