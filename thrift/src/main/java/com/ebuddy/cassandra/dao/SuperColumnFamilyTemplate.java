@@ -33,6 +33,7 @@ import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
+import com.ebuddy.cassandra.dao.visitor.ColumnVisitor;
 
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
@@ -193,6 +194,49 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         }
         // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return resultList;
+    }
+
+    /**
+     * Get a column from a super column based on the {@link Visitor) implementation passed. The Visitor will go through all the columns and based 
+     * on the some logic return one value from the {@link ColumnVisitor#getResult()} method.
+     *
+     * @param rowKey            the row key
+     * @param superColumnName   restricts query to this supercolumn.
+     * @param start             the start column name to read
+     * @param finish            the last column name to read
+     * @param count             the number of columns to read
+     * @param reverse           order in which the columns should be read
+     * @param columnVisitor           a provided visitor to visit all the columns and retrieve the needed one.
+     * @return                  the column returned by visitor                                  
+     */
+    @Override
+    public <T> T retrieveColumns(K rowKey,
+                                SN superColumnName,
+                                N start,
+                                N finish,
+                                int count,
+                                boolean reversed,
+                                ColumnVisitor<T, N, V> columnVisitor) {
+
+        SubSliceQuery<K, SN, N, V> query = HFactory.createSubSliceQuery(getKeyspace(),
+                                                                        getKeySerializer(),
+                                                                        getSuperColumnNameSerializer(),
+                                                                        getSubcolumnNameSerializer(),
+                                                                        getValueSerializer());
+        query.setKey(rowKey)
+             .setColumnFamily(getColumnFamily())
+             .setSuperColumn(superColumnName)
+             .setRange(start, finish, reversed, count);
+
+        QueryResult<ColumnSlice<N, V>> result = query.execute();
+        ColumnSlice<N, V> slice = result.get();
+
+        for (HColumn<N, V> column : slice.getColumns()) {
+            V value = column.getValue();
+            columnVisitor.visit(column.getName(), value, column.getClock(), column.getTtl());
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
+        return columnVisitor.getResult();
     }
 
     /**

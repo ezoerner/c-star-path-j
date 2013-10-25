@@ -26,6 +26,7 @@ import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
+import com.ebuddy.cassandra.dao.visitor.ColumnVisitor;
 
 /**
  * Operations for a super column family.
@@ -64,7 +65,15 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
                             N finish,
                             int count,
                             boolean reversed,
-                            ColumnMapper<T,N,V> columnMapper);
+                            ColumnMapper<T, N, V> columnMapper);
+
+    <T> T retrieveColumns(K rowKey,
+                         SN superColumnName,
+                         N start,
+                         N finish,
+                         int count,
+                         boolean reversed,
+                         ColumnVisitor<T, N, V> columnVisitor);
 
     Map<K,Map<N,V>> multiGetAsMap(Collection<K> rowKeys, SN superColumnName);
 
