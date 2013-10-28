@@ -4,7 +4,8 @@ C* Path
 Support for reading and writing structured objects in Cassandra.
 Structured objects can be accessed whole or in part by hierarchical paths.
 
-There is a presentation about C* Path from the Cassandra Summit Europe 2013 [here](http://www.slideshare.net/techblog/c-path).
+For more information see the blog post at the [eBuddy Tech Blog](http://tech.ebuddy.com/2013/10/28/overview-of-c-path/).
+There is also a presentation about C* Path from [Cassandra Summit Europe 2013](http://www.slideshare.net/techblog/c-path).
 
 On `writeToPath`, the object is first converted into maps, lists, and simple objects with the help of
 [Jackson JSON Processor](http://wiki.fasterxml.com/JacksonHome) (the fasterxml.com version).
