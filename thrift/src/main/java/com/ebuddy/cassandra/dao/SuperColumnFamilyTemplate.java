@@ -197,8 +197,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     }
 
     /**
-     * Get a column from a super column based on the {@link Visitor) implementation passed. The Visitor will go through all the columns and based 
-     * on the some logic return one value from the {@link ColumnVisitor#getResult()} method.
+     * Get a column from a super column based on the {@link Visitor) implementation passed. The Visitor will go through all the columns and perform some internal operation based on the column data
      *
      * @param rowKey            the row key
      * @param superColumnName   restricts query to this supercolumn.
@@ -206,17 +205,16 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      * @param finish            the last column name to read
      * @param count             the number of columns to read
      * @param reverse           order in which the columns should be read
-     * @param columnVisitor           a provided visitor to visit all the columns and retrieve the needed one.
-     * @return                  the column returned by visitor                                  
+     * @param columnVisitor     a provided visitor to visit all the columns and retrieve the needed one.
      */
     @Override
-    public <T> T retrieveColumns(K rowKey,
+    public void visitColumns(K rowKey,
                                 SN superColumnName,
                                 N start,
                                 N finish,
                                 int count,
                                 boolean reversed,
-                                ColumnVisitor<T, N, V> columnVisitor) {
+                                ColumnVisitor<N, V> columnVisitor) {
 
         SubSliceQuery<K, SN, N, V> query = HFactory.createSubSliceQuery(getKeyspace(),
                                                                         getKeySerializer(),
@@ -236,7 +234,6 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
             columnVisitor.visit(column.getName(), value, column.getClock(), column.getTtl());
         }
         // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
-        return columnVisitor.getResult();
     }
 
     /**

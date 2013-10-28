@@ -87,7 +87,7 @@ public class SuperColumnFamilyTemplateTest {
     private SuperColumnFamilyOperations<String,String,String,PropertyValue<?>> superColumnFamilyTestDao;
     
     @Mock
-    ColumnVisitor<String, String, PropertyValue<?>> columnVisitor;
+    ColumnVisitor<String, PropertyValue<?>> columnVisitor;
 
     @BeforeMethod(alwaysRun = true)
     private void setUp() {
@@ -376,7 +376,7 @@ public class SuperColumnFamilyTemplateTest {
     
     
     @Test(groups = {"unit"})
-    public void testRetrieveColumn() {
+    public void testVisitColumn() {
         Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
         PropertyValueFactory valueFactory = PropertyValueFactory.get();
         testResultMap.put("testPropKey1", valueFactory.createPropertyValue("testPropValue1"));
@@ -391,23 +391,15 @@ public class SuperColumnFamilyTemplateTest {
         
         when(columnSlice.getColumns()).thenReturn(Arrays.asList(column1, column2));
         when(executionResult.get()).thenReturn(columnSlice);
-        when(columnVisitor.getResult()).thenReturn(propertyValue2.getValue());
         
         //=========================
         //Map actualResult = superColumnFamilyTestDao.readColumnsAsMap(rowKey, superColumnName);
-        String retrieveColumn = superColumnFamilyTestDao.retrieveColumns(rowKey,
-                                                                        superColumnName,
-                                                                        null,
-                                                                        null,
-                                                                        ALL,
-                                                                        false,
-                                                                        columnVisitor);
+        superColumnFamilyTestDao.visitColumns(rowKey, superColumnName, null, null, ALL, false, columnVisitor);
         
         //=========================
 
         verify(columnVisitor).visit(eq("testPropKey1"), eq(propertyValue1), any(Long.class), any(Integer.class));
         verify(columnVisitor).visit(eq("testPropKey2"), eq(propertyValue2), any(Long.class), any(Integer.class));
-        assertEquals(retrieveColumn, propertyValue2.getValue());
     }
 
     private PropertyValue<String> setupHColumn(HColumn column1, String columnKey, String columndValue) {

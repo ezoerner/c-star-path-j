@@ -67,13 +67,13 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
                             boolean reversed,
                             ColumnMapper<T, N, V> columnMapper);
 
-    <T> T retrieveColumns(K rowKey,
+    void visitColumns(K rowKey,
                          SN superColumnName,
                          N start,
                          N finish,
                          int count,
                          boolean reversed,
-                         ColumnVisitor<T, N, V> columnVisitor);
+                         ColumnVisitor<N, V> columnVisitor);
 
     Map<K,Map<N,V>> multiGetAsMap(Collection<K> rowKeys, SN superColumnName);
 
