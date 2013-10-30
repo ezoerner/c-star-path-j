@@ -16,6 +16,7 @@
 
 package com.ebuddy.cassandra.dao;
 
+import static com.ebuddy.cassandra.dao.AbstractColumnFamilyTemplate.ALL;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
@@ -36,10 +37,12 @@ import java.util.Map;
 import org.apache.commons.lang3.ObjectUtils;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.ebuddy.cassandra.dao.visitor.ColumnVisitor;
 import com.ebuddy.cassandra.property.PropertyValue;
 import com.ebuddy.cassandra.property.PropertyValueFactory;
 import com.ebuddy.cassandra.property.PropertyValueSerializer;
@@ -82,6 +85,9 @@ public class SuperColumnFamilyTemplateTest {
     @Mock
     private Mutator<String> mutator;
     private SuperColumnFamilyOperations<String,String,String,PropertyValue<?>> superColumnFamilyTestDao;
+    
+    @Mock
+    ColumnVisitor<String, PropertyValue<?>> columnVisitor;
 
     @BeforeMethod(alwaysRun = true)
     private void setUp() {
@@ -129,12 +135,9 @@ public class SuperColumnFamilyTemplateTest {
         HColumn column1 = mock(HColumn.class);
         HColumn column2 = mock(HColumn.class);
 
-        when(column1.getName()).thenReturn("testPropKey1");
-        when(column1.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue("testPropValue1"));
-        
-        when(column2.getName()).thenReturn("testPropKey2");
-        when(column2.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue("testPropValue2"));
-        
+        setupHColumn(column1, "testPropKey1", "testPropValue1");
+        setupHColumn(column2, "testPropKey2" , "testPropValue2");
+
         when(columnSlice.getColumns()).thenReturn(Arrays.asList(column1, column2));
         when(executionResult.get()).thenReturn(columnSlice);
 
@@ -369,6 +372,41 @@ public class SuperColumnFamilyTemplateTest {
         //=========================
         superColumnFamilyTestDao.deleteColumns(rowKey, superColumnName, columnNames, txnContext);
         //=========================
+    }
+    
+    
+    @Test(groups = {"unit"})
+    public void testVisitColumn() {
+        Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
+        PropertyValueFactory valueFactory = PropertyValueFactory.get();
+        testResultMap.put("testPropKey1", valueFactory.createPropertyValue("testPropValue1"));
+        testResultMap.put("testPropKey2", valueFactory.createPropertyValue("testPropValue2"));
+
+        ColumnSlice columnSlice = mock(ColumnSlice.class);
+        HColumn column1 = mock(HColumn.class);
+        HColumn column2 = mock(HColumn.class);
+
+        PropertyValue<String> propertyValue1 = setupHColumn(column1, "testPropKey1", "testPropValue1");
+        PropertyValue<String> propertyValue2 = setupHColumn(column2, "testPropKey2", "testPropValue1");
+        
+        when(columnSlice.getColumns()).thenReturn(Arrays.asList(column1, column2));
+        when(executionResult.get()).thenReturn(columnSlice);
+        
+        //=========================
+        //Map actualResult = superColumnFamilyTestDao.readColumnsAsMap(rowKey, superColumnName);
+        superColumnFamilyTestDao.visitColumns(rowKey, superColumnName, null, null, ALL, false, columnVisitor);
+        
+        //=========================
+
+        verify(columnVisitor).visit(eq("testPropKey1"), eq(propertyValue1), any(Long.class), any(Integer.class));
+        verify(columnVisitor).visit(eq("testPropKey2"), eq(propertyValue2), any(Long.class), any(Integer.class));
+    }
+
+    private PropertyValue<String> setupHColumn(HColumn column1, String columnKey, String columndValue) {
+        when(column1.getName()).thenReturn(columnKey);
+        PropertyValue<String> propertyValue = PropertyValueFactory.get().createPropertyValue(columndValue);
+        when(column1.getValue()).thenReturn(propertyValue);
+        return propertyValue;
     }
 
     @SuppressWarnings({"ControlFlowStatementWithoutBraces"})
