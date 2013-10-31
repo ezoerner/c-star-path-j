@@ -73,6 +73,14 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
      */
     private final Serializer<N> subSerializer;
 
+    private final ColumnMapper<N,N,V> columnMapperToGetColumnNames = new ColumnMapper<N,N,V>() {
+        @Override
+        public N mapColumn(N columnName, V columnValue) {
+            return columnName;
+        }
+    };
+
+
     public SuperColumnFamilyTemplate(Keyspace keyspace,
                                      @Nullable String columnFamily,
                                      Serializer<K> keySerializer,
@@ -133,13 +141,42 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                                      getValueSerializer());
         query.setKey(rowKey).
                 setColumnFamily(getColumnFamily()).
-                setSuperColumn(superColumnName).
-                setRange(null, null, false, ALL);
+                setSuperColumn(superColumnName);
         if (columnNames.length == 0) {
             query.setRange(null, null, false, ALL);
         } else {
             query.setColumnNames(columnNames);
         }
+
+        QueryResult<ColumnSlice<N,V>> result = query.execute();
+        ColumnSlice<N,V> slice = result.get();
+
+        for (HColumn<N,V> column : slice.getColumns()) {
+            V value = column.getValue();
+            columns.put(column.getName(), value);
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
+        return columns;
+    }
+
+    @Override
+    public Map<N,V> readColumnsAsMap(K rowKey,
+                                     SN superColumnName,
+                                     N start,
+                                     N finish,
+                                     int count,
+                                     boolean reversed) {
+        Map<N,V> columns = new HashMap<N,V>();
+
+        SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
+                                                                     getKeySerializer(),
+                                                                     getSuperColumnNameSerializer(),
+                                                                     getSubcolumnNameSerializer(),
+                                                                     getValueSerializer());
+        query.setKey(rowKey).
+                setColumnFamily(getColumnFamily()).
+                setSuperColumn(superColumnName).
+                setRange(start, finish, reversed, count);
 
         QueryResult<ColumnSlice<N,V>> result = query.execute();
         ColumnSlice<N,V> slice = result.get();
@@ -197,7 +234,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     }
 
     /**
-     * Get a column from a super column based on the {@link Visitor) implementation passed. The Visitor will go through all the columns and perform some internal operation based on the column data
+     * Get a column from a super column based on the {@link ColumnVisitor) implementation passed. The Visitor will go through all the columns and perform some internal operation based on the column data
      *
      * @param rowKey            the row key
      * @param superColumnName   restricts query to this supercolumn.
@@ -493,6 +530,43 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                  subcolumn,
                                  getSuperColumnNameSerializer(),
                                  getSubcolumnNameSerializer());
+        }
+        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
+    }
+
+    @Override
+    public void deleteColumns(K rowKey, SN superColumnName, N start, N finish) {
+        deleteColumns(rowKey, superColumnName, start, finish, null);
+    }
+
+    @Override
+    public void deleteColumns(K rowKey, SN superColumnName, N start, N finish, @Nullable BatchContext batchContext) {
+        Mutator<K> mutator;
+        boolean shouldExecute;
+        if (batchContext == null) {
+            shouldExecute = true;
+            mutator = createMutator();
+        } else {
+            shouldExecute = false;
+            mutator = validateAndGetMutator(batchContext);
+        }
+
+        // unfortunately the thrift API to Cassandra does not support deleting with a SliceRange.
+        // !! We have read before delete -- performance and thread safety issue
+        // get column names to delete using a slice query
+        List<N> columnNamesToDelete = readColumns(rowKey,
+                                                  superColumnName,
+                                                  start,
+                                                  finish,
+                                                  ALL,
+                                                  false,
+                                                  columnMapperToGetColumnNames);
+        for (N columnName : columnNamesToDelete) {
+            mutator.addDeletion(rowKey, getColumnFamily(), columnName, getSubcolumnNameSerializer());
+        }
+
+        if (shouldExecute) {
+            mutator.execute();
         }
         // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
     }

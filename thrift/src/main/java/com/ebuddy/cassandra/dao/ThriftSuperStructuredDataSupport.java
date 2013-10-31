@@ -1,51 +1,31 @@
-/*
- * Copyright 2013 eBuddy B.V.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-
 package com.ebuddy.cassandra.dao;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.Path;
+import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
+import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
 
 /**
- * Implementation of StructuredDataSupport for the Thrift API access to a standard ColumnFamily.
+ * Implementation of StructuredDataSupport for a Thrift SuperColumnFamily.
  *
- * @param <K> the type of the row key
+ * @param<K> type of row key
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class ThriftStructuredDataSupport<K> extends AbstractThriftStructuredDataSupport<K> {
+public class ThriftSuperStructuredDataSupport<K> extends AbstractThriftStructuredDataSupport<K> {
 
-    private final ColumnFamilyOperations<K,String,Object> operations;
+    private final SuperColumnFamilyOperations<K,String,String,Object> operations;
 
-    /**
-     * Create and configure an instance with a ColumnFamilyOperations.
-     * @param operations a ColumnFamilyOperations that has a String column name and a StructureSerializer for the
-     *                   valueSerializer.
-     */
-    public ThriftStructuredDataSupport(ColumnFamilyOperations<K,String,Object> operations) {
+
+    public ThriftSuperStructuredDataSupport(SuperColumnFamilyOperations<K,String,String,Object> operations) {
         this.operations = operations;
     }
 
@@ -66,9 +46,15 @@ public class ThriftStructuredDataSupport<K> extends AbstractThriftStructuredData
         boolean reversed = false;
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
-        String start = path.toString();
+        String superColumnName = path.head();
+        String start = path.tail().toString();
         String finish = getFinishString(start);
-        Map<String,Object> columnsMap = operations.readColumnsAsMap(rowKey, start, finish, count, reversed);
+        Map<String,Object> columnsMap = operations.readColumnsAsMap(rowKey,
+                                                                    superColumnName,
+                                                                    start,
+                                                                    finish,
+                                                                    count,
+                                                                    reversed);
         if (columnsMap.isEmpty()) {
             return null;
         }
@@ -81,37 +67,40 @@ public class ThriftStructuredDataSupport<K> extends AbstractThriftStructuredData
     }
 
     @Override
-    public void writeToPath(K rowKey,
-                            Path path,
-                            Object value,
-                            @Nullable BatchContext batchContext) {
+    public void writeToPath(K rowKey, Path path, Object value, BatchContext batchContext) {
         validateArgs(rowKey, path);
 
         Object structure = writeMapper.convertValue(value, Object.class);
 
-        Map<Path,Object> pathMap = Collections.singletonMap(path, structure);
+        String superColumnName = path.head();
+        Path rest = path.tail();
+
+        Map<Path,Object> pathMap = Collections.singletonMap(rest, structure);
         Map<Path,Object> objectMap = Decomposer.get().decompose(pathMap);
 
         Map<String,Object> stringMap = new HashMap<String,Object>();
         for (Map.Entry<Path,Object> entry : objectMap.entrySet()) {
             stringMap.put(entry.getKey().toString(), entry.getValue());
         }
+
         if (batchContext == null) {
-            operations.writeColumns(rowKey, stringMap);
+            operations.writeColumns(rowKey, superColumnName, stringMap);
         } else {
-            operations.writeColumns(rowKey, stringMap, batchContext);
+            operations.writeColumns(rowKey, superColumnName, stringMap, batchContext);
         }
     }
 
     @Override
-    public void deletePath(K rowKey, Path path, @Nullable BatchContext batchContext) {
+    public void deletePath(K rowKey, Path path, BatchContext batchContext) {
+        String superColumnName = path.head();
+
         // normalize path
-        String start = path.toString();
+        String start = path.tail().toString();
         String finish = getFinishString(start);
         if (batchContext == null) {
-            operations.deleteColumns(rowKey, start, finish);
+            operations.deleteColumns(rowKey, superColumnName, start, finish);
         } else {
-            operations.deleteColumns(rowKey, start, finish, batchContext);
+            operations.deleteColumns(rowKey, superColumnName, start, finish, batchContext);
         }
     }
 }
