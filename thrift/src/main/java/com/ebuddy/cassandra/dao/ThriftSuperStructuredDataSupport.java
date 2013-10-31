@@ -24,7 +24,11 @@ public class ThriftSuperStructuredDataSupport<K> extends AbstractThriftStructure
 
     private final SuperColumnFamilyOperations<K,String,String,Object> operations;
 
-
+    /**
+     * Create and configure an instance with a SuperColumnFamilyOperations.
+     * @param operations a SuperColumnFamilyOperations that has String column and supercolumn names and a
+     *                   StructureSerializer for the valueSerializer.
+     */
     public ThriftSuperStructuredDataSupport(SuperColumnFamilyOperations<K,String,String,Object> operations) {
         this.operations = operations;
     }
