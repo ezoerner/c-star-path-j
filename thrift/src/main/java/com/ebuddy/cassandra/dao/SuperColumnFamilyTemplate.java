@@ -562,7 +562,12 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                   false,
                                                   columnMapperToGetColumnNames);
         for (N columnName : columnNamesToDelete) {
-            mutator.addDeletion(rowKey, getColumnFamily(), columnName, getSubcolumnNameSerializer());
+            mutator.addSubDelete(rowKey,
+                                 getColumnFamily(),
+                                 superColumnName,
+                                 columnName,
+                                 getSuperColumnNameSerializer(),
+                                 getSubcolumnNameSerializer());
         }
 
         if (shouldExecute) {

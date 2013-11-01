@@ -51,7 +51,8 @@ public class ThriftSuperStructuredDataSupport<K> extends AbstractThriftStructure
 
         // converting from a string and back normalizes the path, e.g. makes sure ends with the delimiter character
         String superColumnName = path.head();
-        String start = path.tail().toString();
+        Path rest = path.tail();
+        String start = rest.toString();
         String finish = getFinishString(start);
         Map<String,Object> columnsMap = operations.readColumnsAsMap(rowKey,
                                                                     superColumnName,
@@ -63,7 +64,7 @@ public class ThriftSuperStructuredDataSupport<K> extends AbstractThriftStructure
             return null;
         }
 
-        Map<Path,Object> pathMap = getTerminalPathMap(path, columnsMap);
+        Map<Path,Object> pathMap = getTerminalPathMap(rest, columnsMap);
         Object structure = Composer.get().compose(pathMap);
 
         // convert object structure into POJO of type referred to by TypeReference
