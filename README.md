@@ -54,7 +54,7 @@ To include CQL module:
     <dependency>
         <groupId>com.ebuddy.cassandra</groupId>
         <artifactId>cql-data-access</artifactId>
-        <version>2.2.5</version>
+        <version>2.4.0</version>
     </dependency>
 
 
@@ -63,7 +63,7 @@ Or include the Thrift module:
     <dependency>
         <groupId>com.ebuddy.cassandra</groupId>
         <artifactId>thrift-data-access</artifactId>
-        <version>2.2.5</version>
+        <version>2.4.0</version>
     </dependency>
 
 api module
