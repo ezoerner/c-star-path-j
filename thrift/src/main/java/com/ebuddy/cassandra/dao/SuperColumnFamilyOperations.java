@@ -57,6 +57,13 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
 
     Map<N,V> readColumnsAsMap(K rowKey, SN superColumnName, N... columnNames);
 
+    Map<N,V> readColumnsAsMap(K rowKey,
+                              SN superColumnName,
+                              N start,
+                              N finish,
+                              int count,
+                              boolean reversed);
+
     <T> List<T> readColumns(K rowKey, SN superColumnName, ColumnMapper<T,N,V> columnMapper);
 
     <T> List<T> readColumns(K rowKey,
@@ -109,6 +116,9 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
                        SN superColumnName,
                        Iterable<N> subcolumnNames,
                        @Nonnull BatchContext batchContext);
+
+    void deleteColumns(K rowKey, SN superColumnName, N start, N finish);
+    void deleteColumns(K rowKey, SN superColumnName, N start, N finish, BatchContext batchContext);
 
     /**
      * Remove the named super column as part of a larger transaction.

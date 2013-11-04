@@ -35,6 +35,7 @@ import com.ebuddy.cassandra.test.AbstractCassandraThriftSystemTest;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
+import me.prettyprint.hector.api.ddl.ColumnType;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.factory.HFactory;
 
@@ -44,7 +45,7 @@ import me.prettyprint.hector.api.factory.HFactory;
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class ThriftStructuredDataSupportSystemTest extends AbstractCassandraThriftSystemTest {
+public class ThriftSuperStructuredDataSupportSystemTest extends AbstractCassandraThriftSystemTest {
 
     private final String columnFamily = "testpojo";
     private StructuredDataSupport<String> dao;
@@ -54,16 +55,18 @@ public class ThriftStructuredDataSupportSystemTest extends AbstractCassandraThri
     public void setUp() throws Exception {
         super.setUp();
         Serializer<String> keySerializer = StringSerializer.get();
+        Serializer<String> supercolumnSerializer = StringSerializer.get();
         Serializer<String> columnNameSerializer = StringSerializer.get();
         Serializer<Object> valueSerializer = StructureSerializer.get();
-        ColumnFamilyOperations<String,String,Object> operations = new ColumnFamilyTemplate<String,String,Object>(
+        SuperColumnFamilyOperations<String,String,String,Object> operations = new SuperColumnFamilyTemplate<String,String,String,Object>(
                 keyspace,
                 columnFamily,
                 keySerializer,
+                supercolumnSerializer,
                 columnNameSerializer,
                 valueSerializer);
 
-        dao = new ThriftStructuredDataSupport<String>(operations);
+        dao = new ThriftSuperStructuredDataSupport<String>(operations);
     }
 
     @Test(groups = {"system"})
@@ -105,14 +108,14 @@ public class ThriftStructuredDataSupportSystemTest extends AbstractCassandraThri
     @Override
     protected void dropAndCreateSchema() throws InterruptedException {
         super.dropAndCreateSchema();
-
         ColumnFamilyDefinition columnFamilyDefinition = HFactory.createColumnFamilyDefinition(keyspace.getKeyspaceName(),
                                                                                               columnFamily,
                                                                                               ComparatorType.UTF8TYPE);
+        columnFamilyDefinition.setColumnType(ColumnType.SUPER);
         columnFamilyDefinition.setDefaultValidationClass("UTF8Type");
+        columnFamilyDefinition.setSubComparatorType(ComparatorType.UTF8TYPE);
         cluster.addColumnFamily(columnFamilyDefinition);
     }
-
 
     @SuppressWarnings("CloneableClassWithoutClone")
     private TestPojoWithSet getTestPojoWithSubclassedSets() {

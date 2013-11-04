@@ -22,18 +22,12 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.Validate;
-
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.Path;
-import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
-import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
-import com.ebuddy.cassandra.structure.DefaultPath;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Implementation of StructuredDataSupport for the Thrift API access to a standard ColumnFamily.
@@ -42,12 +36,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
-public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> {
-    private static final int MAX_CODE_POINT = 0x10FFFF;
+public class ThriftStructuredDataSupport<K> extends AbstractThriftStructuredDataSupport<K> {
 
     private final ColumnFamilyOperations<K,String,Object> operations;
-    private final ObjectMapper writeMapper;
-    private final ObjectMapper readMapper;
 
     /**
      * Create and configure an instance with a ColumnFamilyOperations.
@@ -56,9 +47,6 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
      */
     public ThriftStructuredDataSupport(ColumnFamilyOperations<K,String,Object> operations) {
         this.operations = operations;
-        writeMapper = new ObjectMapper();
-        writeMapper.setDefaultTyping(new CustomTypeResolverBuilder());
-        readMapper = new ObjectMapper();
     }
 
     @Override
@@ -93,11 +81,6 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public void writeToPath(K rowKey, Path path, Object value) {
-        writeToPath(rowKey, path, value, null);
-    }
-
-    @Override
     public void writeToPath(K rowKey,
                             Path path,
                             Object value,
@@ -121,11 +104,6 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
     }
 
     @Override
-    public void deletePath(K rowKey, Path path) {
-        deletePath(rowKey, path, null);
-    }
-
-    @Override
     public void deletePath(K rowKey, Path path, @Nullable BatchContext batchContext) {
         // normalize path
         String start = path.toString();
@@ -135,42 +113,5 @@ public class ThriftStructuredDataSupport<K> implements StructuredDataSupport<K> 
         } else {
             operations.deleteColumns(rowKey, start, finish, batchContext);
         }
-    }
-
-    @Override
-    public Path createPath(String... elements) {
-        return DefaultPath.fromStrings(elements);
-    }
-
-    private String getFinishString(String start) {
-        int startCodePointCount = start.codePointCount(0, start.length());
-        int finishCodePointCount = startCodePointCount + 1;
-        int[] finishCodePoints = new int[finishCodePointCount];
-        for (int i = 0; i < startCodePointCount; i++) {
-            finishCodePoints[i] = start.codePointAt(i);
-        }
-        finishCodePoints[finishCodePointCount - 1] = MAX_CODE_POINT;
-        return new String(finishCodePoints, 0, finishCodePointCount);
-    }
-
-    /**
-     * Convert strings to paths and remove the start of the paths that match the inputPath.
-     */
-    private Map<Path,Object> getTerminalPathMap(Path inputPath, Map<String,Object> columnsMap) {
-        Map<Path,Object> pathMap = new HashMap<Path,Object>(columnsMap.size());
-        for (Map.Entry<String,Object> entry : columnsMap.entrySet()) {
-            Path path = DefaultPath.fromEncodedPathString(entry.getKey());
-            if (!path.startsWith(inputPath)) {
-                throw new IllegalStateException("unexpected path found in database:" + path);
-            }
-            path = path.tail(inputPath.size());
-            pathMap.put(path, entry.getValue());
-        }
-        return pathMap;
-    }
-
-    private void validateArgs(K rowKey, Path path) {
-        Validate.isTrue(!path.isEmpty(), "Path must not be empty");
-        Validate.notNull(rowKey, "Row key must not be empty");
     }
 }
