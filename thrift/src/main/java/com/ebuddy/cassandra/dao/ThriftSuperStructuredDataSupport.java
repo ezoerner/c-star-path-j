@@ -99,7 +99,6 @@ public class ThriftSuperStructuredDataSupport<K> extends AbstractThriftStructure
     public void deletePath(K rowKey, Path path, BatchContext batchContext) {
         String superColumnName = path.head();
 
-        // normalize path
         String start = path.tail().toString();
         String finish = getFinishString(start);
         if (batchContext == null) {

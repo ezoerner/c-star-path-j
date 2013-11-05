@@ -105,7 +105,6 @@ public class ThriftStructuredDataSupport<K> extends AbstractThriftStructuredData
 
     @Override
     public void deletePath(K rowKey, Path path, @Nullable BatchContext batchContext) {
-        // normalize path
         String start = path.toString();
         String finish = getFinishString(start);
         if (batchContext == null) {
