@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
+import com.ebuddy.cassandra.dao.mapper.ColumnMapperWithTimestamps;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 import com.ebuddy.cassandra.dao.visitor.ColumnVisitor;
@@ -73,6 +74,14 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
                             int count,
                             boolean reversed,
                             ColumnMapper<T, N, V> columnMapper);
+
+    <T> List<T> readColumnsWithTimestamps(K rowKey,
+                                          SN superColumnName,
+                                          N start,
+                                          N finish,
+                                          int count,
+                                          boolean reversed,
+                                          ColumnMapperWithTimestamps<T,N,V> columnMapper);
 
     void visitColumns(K rowKey,
                          SN superColumnName,

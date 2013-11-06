@@ -65,6 +65,7 @@
         <cassandra.unit.version>1.2.0.1</cassandra.unit.version>
         <hector.groupId>org.hectorclient</hector.groupId>
         <guava.version>14.0.1</guava.version>
+        <fugue.version>1.2.0</fugue.version>
         <antlr.version>3.2</antlr.version>
         <javadoc.plugin.version>2.9.1</javadoc.plugin.version>
     </properties>
@@ -249,6 +250,18 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.atlassian.fugue</groupId>
+            <artifactId>fugue</artifactId>
+            <version>${fugue.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- All logging libraries in dependencies have been unified to use Slf4j -->

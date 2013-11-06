@@ -29,8 +29,10 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.Validate;
 
+import com.atlassian.fugue.Either;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
+import com.ebuddy.cassandra.dao.mapper.ColumnMapperWithTimestamps;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 import com.ebuddy.cassandra.dao.visitor.ColumnVisitor;
@@ -202,6 +204,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         return readColumns(rowKey, superColumnName, null, null, ALL, false, columnMapper);
     }
 
+
     @Override
     public <T> List<T> readColumns(K rowKey,
                                    SN superColumnName,
@@ -210,6 +213,40 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                    int count,
                                    boolean reversed,
                                    ColumnMapper<T,N,V> columnMapper) {
+        return basicReadColumns(rowKey,
+                                superColumnName,
+                                start,
+                                finish,
+                                count,
+                                reversed,
+                                Either.<ColumnMapper<T,N,V>,ColumnMapperWithTimestamps<T,N,V>>left(columnMapper));
+    }
+
+    @Override
+    public <T> List<T> readColumnsWithTimestamps(K rowKey,
+                                                 SN superColumnName,
+                                                 N start,
+                                                 N finish,
+                                                 int count,
+                                                 boolean reversed,
+                                                 ColumnMapperWithTimestamps<T,N,V> columnMapper) {
+        return basicReadColumns(rowKey,
+                                superColumnName,
+                                start,
+                                finish,
+                                count,
+                                reversed,
+                                Either.<ColumnMapper<T,N,V>,ColumnMapperWithTimestamps<T,N,V>>right(columnMapper));
+    }
+
+
+    private <T> List<T> basicReadColumns(K rowKey,
+                                                 SN superColumnName,
+                                                 N start,
+                                                 N finish,
+                                                 int count,
+                                                 boolean reversed,
+                                                 Either<ColumnMapper<T,N,V>,ColumnMapperWithTimestamps<T,N,V>> mapper) {
         List<T> resultList = new ArrayList<T>();
 
         SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
@@ -226,10 +263,12 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         ColumnSlice<N,V> slice = result.get();
 
         for (HColumn<N,V> column : slice.getColumns()) {
-            V value = column.getValue();
-            resultList.add(columnMapper.mapColumn(column.getName(), value));
+            if (mapper.isLeft()) {
+                resultList.add(mapper.left().get().mapColumn(column.getName(), column.getValue()));
+            } else {
+                resultList.add(mapper.right().get().mapColumn(column.getName(), column.getValue(), column.getClock()));
+            }
         }
-        // we used to translate hector exceptions into spring exceptions here, but spring dependency was removed
         return resultList;
     }
 
