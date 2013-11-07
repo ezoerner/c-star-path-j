@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.Validate;
 
-import com.atlassian.fugue.Either;
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
 import com.ebuddy.cassandra.dao.mapper.ColumnMapperWithTimestamps;
@@ -213,13 +212,13 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                    int count,
                                    boolean reversed,
                                    ColumnMapper<T,N,V> columnMapper) {
-        return basicReadColumns(rowKey,
-                                superColumnName,
-                                start,
-                                finish,
-                                count,
-                                reversed,
-                                Either.<ColumnMapper<T,N,V>,ColumnMapperWithTimestamps<T,N,V>>left(columnMapper));
+        return readColumnsWithTimestamps(rowKey,
+                                         superColumnName,
+                                         start,
+                                         finish,
+                                         count,
+                                         reversed,
+                                         new ColumnMapperWrapper<T,N,V>(columnMapper));
     }
 
     @Override
@@ -230,23 +229,6 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
                                                  int count,
                                                  boolean reversed,
                                                  ColumnMapperWithTimestamps<T,N,V> columnMapper) {
-        return basicReadColumns(rowKey,
-                                superColumnName,
-                                start,
-                                finish,
-                                count,
-                                reversed,
-                                Either.<ColumnMapper<T,N,V>,ColumnMapperWithTimestamps<T,N,V>>right(columnMapper));
-    }
-
-
-    private <T> List<T> basicReadColumns(K rowKey,
-                                                 SN superColumnName,
-                                                 N start,
-                                                 N finish,
-                                                 int count,
-                                                 boolean reversed,
-                                                 Either<ColumnMapper<T,N,V>,ColumnMapperWithTimestamps<T,N,V>> mapper) {
         List<T> resultList = new ArrayList<T>();
 
         SubSliceQuery<K,SN,N,V> query = HFactory.createSubSliceQuery(getKeyspace(),
@@ -263,11 +245,7 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
         ColumnSlice<N,V> slice = result.get();
 
         for (HColumn<N,V> column : slice.getColumns()) {
-            if (mapper.isLeft()) {
-                resultList.add(mapper.left().get().mapColumn(column.getName(), column.getValue()));
-            } else {
-                resultList.add(mapper.right().get().mapColumn(column.getName(), column.getValue(), column.getClock()));
-            }
+            resultList.add(columnMapper.mapColumn(column.getName(), column.getValue(), column.getClock()));
         }
         return resultList;
     }
@@ -798,5 +776,19 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
 
     private Serializer<N> getSubcolumnNameSerializer() {
         return subSerializer;
+    }
+
+    private static class ColumnMapperWrapper<T,N,V> implements ColumnMapperWithTimestamps<T,N,V> {
+        private final ColumnMapper<T,N,V> columnMapper;
+
+        private ColumnMapperWrapper(ColumnMapper<T,N,V> columnMapper) {
+            this.columnMapper = columnMapper;
+        }
+
+        @Override
+        public T mapColumn(N columnName, V columnValue, long timestamp) {
+            return columnMapper.mapColumn(columnName, columnValue);
+        }
+
     }
 }
