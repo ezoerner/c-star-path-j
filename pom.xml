@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ebuddy.cassandra</groupId>
     <artifactId>c-star-path</artifactId>
-    <version>2.4.1</version>
+    <version>2.4.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>C* Path</name>
     <description>Structured data access for Cassandra by hierarchical paths with support for both CQL3 and Thrift</description>
@@ -75,7 +75,7 @@
         <connection>scm:git:ssh://git@github.com/ebuddy/c-star-path.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/ebuddy/c-star-path.git</developerConnection>
         <url>scm:git:ssh://git@github.com/ebuddy/c-star-path.git</url>
-        <tag>v2.4.1</tag>
+        <tag>master</tag>
     </scm>
 
     <reporting>
