@@ -23,7 +23,7 @@ import com.ebuddy.cassandra.structure.StructureConverter;
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
 
 /**
- * Serializer for legacy format of property values without using PropertyValue itself.
+ * Serializer that uses the StructureConverter to serialize structured data.
 
 
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
