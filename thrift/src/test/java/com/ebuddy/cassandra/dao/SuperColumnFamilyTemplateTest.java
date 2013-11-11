@@ -72,7 +72,7 @@ public class SuperColumnFamilyTemplateTest {
     private final String columnValue = "testColumnValue";
     private final List<String> columnValues = Arrays.asList("columnValue1", "columnValue2");
     private final List<String> superColumnNames = Arrays.asList("superColumnName1", "superColumnName2");
-    private final List<String> rowKeys = Arrays.asList("rowKey1","rowKey2");
+    private final List<String> rowKeys = Arrays.asList("rowKey1", "rowKey2");
     @Mock
     private ExecutionResult executionResult;
     @Mock
@@ -370,10 +370,6 @@ public class SuperColumnFamilyTemplateTest {
     
     @Test(groups = {"unit"})
     public void testVisitColumn() {
-        Map<String, String> testResultMap = new HashMap<String,String>();
-        testResultMap.put("testPropKey1", "testPropValue1");
-        testResultMap.put("testPropKey2", "testPropValue2");
-
         ColumnSlice columnSlice = mock(ColumnSlice.class);
         HColumn column1 = mock(HColumn.class);
         HColumn column2 = mock(HColumn.class);
@@ -394,11 +390,10 @@ public class SuperColumnFamilyTemplateTest {
         verify(columnVisitor).visit(eq("testPropKey2"), eq(propertyValue2), any(Long.class), any(Integer.class));
     }
 
-    private String setupHColumn(HColumn column1, String columnKey, String columndValue) {
+    private String setupHColumn(HColumn column1, String columnKey, String columnValue) {
         when(column1.getName()).thenReturn(columnKey);
-        String propertyValue = columndValue;
-        when(column1.getValue()).thenReturn(propertyValue);
-        return propertyValue;
+        when(column1.getValue()).thenReturn(columnValue);
+        return columnValue;
     }
 
     @SuppressWarnings({"ControlFlowStatementWithoutBraces"})
