@@ -114,7 +114,7 @@ public class Decomposer {
     private Map<Path,Object> normalizeList(List<?> list) {
         // get type info for list
         // TODO: if this is a set of simple types, then encode the set into the keys using #
-        String type = (String)list.get(0);
+        // String type = (String)list.get(0);
         /// get list itself
         List<?> listItself = (List<?>)list.get(1);
 
