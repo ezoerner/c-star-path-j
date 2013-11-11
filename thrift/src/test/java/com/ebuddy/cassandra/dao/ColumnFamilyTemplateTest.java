@@ -46,9 +46,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.ebuddy.cassandra.dao.mapper.ColumnMapper;
-import com.ebuddy.cassandra.property.PropertyValue;
-import com.ebuddy.cassandra.property.PropertyValueFactory;
-import com.ebuddy.cassandra.property.PropertyValueSerializer;
 
 import me.prettyprint.cassandra.model.ExecutingKeyspace;
 import me.prettyprint.cassandra.model.ExecutionResult;
@@ -82,34 +79,34 @@ public class ColumnFamilyTemplateTest {
     private Mutator<String> mutator;
 
     @Captor
-    private ArgumentCaptor<ColumnMapper<String,String,PropertyValue<?>>> mapperCaptor;
+    private ArgumentCaptor<ColumnMapper<String,String,String>> mapperCaptor;
 
-    private ColumnFamilyOperations<String,String,PropertyValue<?>> columnFamilyTestDao;
+    private ColumnFamilyOperations<String,String,String> columnFamilyTestDao;
 
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         ExecutingKeyspace keyspace = mock(ExecutingKeyspace.class);
         when(keyspace.doExecute(any(KeyspaceOperationCallback.class))).thenReturn(executionResult);
-        columnFamilyTestDao = new ColumnFamilyTemplate<String,String,PropertyValue<?>>(keyspace,
-                                                                                          columnFamily,
-                                                                                          StringSerializer.get(),
-                                                                                          StringSerializer.get(),
-                                                                                          PropertyValueSerializer.get());
+        columnFamilyTestDao = new ColumnFamilyTemplate<String,String,String>(keyspace,
+                                                                             columnFamily,
+                                                                             StringSerializer.get(),
+                                                                             StringSerializer.get(),
+                                                                             StringSerializer.get());
         when(txnContext.getMutator()).thenReturn(mutator);
     }
 
     @Test(groups = {"unit"})
     public void testReadColumnValue() throws Exception {
-        HColumn<String,PropertyValue<String>> column = mock(HColumn.class);
+        HColumn<String,String> column = mock(HColumn.class);
         String columnValue = "testColumnValue";
-        when(column.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValue));
+        when(column.getValue()).thenReturn(columnValue);
         when(executionResult.get()).thenReturn(column);
 
         //=========================
-        PropertyValue<?> value = columnFamilyTestDao.readColumnValue(rowKey, columnName);
+        String value = columnFamilyTestDao.readColumnValue(rowKey, columnName);
         //=========================
-        assertEquals(value.getValue(), columnValue);
+        assertEquals(value, columnValue);
     }
 
     @Test(groups = {"unit"}, expectedExceptions = HectorTransportException.class)
@@ -120,19 +117,18 @@ public class ColumnFamilyTemplateTest {
 
     @Test(groups = {"unit"})
     public void testReadColumnsAsMap() throws Exception {
-        Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
-        PropertyValueFactory valueFactory = PropertyValueFactory.get();
-        testResultMap.put(columnNames.get(0), valueFactory.createPropertyValue(columnValues.get(0)));
-        testResultMap.put(columnNames.get(1), valueFactory.createPropertyValue(columnValues.get(1)));
+        Map<String, String> testResultMap = new HashMap<String,String>();
+        testResultMap.put(columnNames.get(0), columnValues.get(0));
+        testResultMap.put(columnNames.get(1), columnValues.get(1));
 
         ColumnSlice columnSlice = mock(ColumnSlice.class);
         HColumn column1 = mock(HColumn.class);
         HColumn column2 = mock(HColumn.class);
 
         when(column1.getName()).thenReturn(columnNames.get(0));
-        when(column1.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValues.get(0)));
+        when(column1.getValue()).thenReturn(columnValues.get(0));
         when(column2.getName()).thenReturn(columnNames.get(1));
-        when(column2.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValues.get(1)));
+        when(column2.getValue()).thenReturn(columnValues.get(1));
 
         when(columnSlice.getColumns()).thenReturn(Arrays.asList(column1, column2));
         when(executionResult.get()).thenReturn(columnSlice);
@@ -145,36 +141,35 @@ public class ColumnFamilyTemplateTest {
 
     @Test(groups = {"unit"})
     public void testReadColumns() throws Exception {
-        Map<String, PropertyValue<?>> testResultMap = new HashMap<String,PropertyValue<?>>();
-        PropertyValueFactory valueFactory = PropertyValueFactory.get();
-        testResultMap.put(columnNames.get(0), valueFactory.createPropertyValue(columnValues.get(0)));
-        testResultMap.put(columnNames.get(1), valueFactory.createPropertyValue(columnValues.get(1)));
+        Map<String, String> testResultMap = new HashMap<String,String>();
+        testResultMap.put(columnNames.get(0), columnValues.get(0));
+        testResultMap.put(columnNames.get(1), columnValues.get(1));
 
         ColumnSlice columnSlice = mock(ColumnSlice.class);
         HColumn column1 = mock(HColumn.class);
         HColumn column2 = mock(HColumn.class);
 
         when(column1.getName()).thenReturn(columnNames.get(0));
-        when(column1.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValues.get(0)));
+        when(column1.getValue()).thenReturn(columnValues.get(0));
         when(column2.getName()).thenReturn(columnNames.get(1));
-        when(column2.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValues.get(1)));
+        when(column2.getValue()).thenReturn(columnValues.get(1));
 
         when(columnSlice.getColumns()).thenReturn(Arrays.asList(column1, column2));
         when(executionResult.get()).thenReturn(columnSlice);
 
         //=========================
         List<KeyValue> actualResult = columnFamilyTestDao.readColumns(rowKey,
-                                                                      new ColumnMapper<KeyValue,String,PropertyValue<?>>() {
+                                                                      new ColumnMapper<KeyValue,String,String>() {
             @Override
-            public KeyValue mapColumn(String columnName, PropertyValue<?> columnValue) {
+            public KeyValue mapColumn(String columnName, String columnValue) {
                 return new DefaultKeyValue(columnName, columnValue);
             }
         });
         //=========================
 
-        Map<String, PropertyValue<?>> resultMap = new HashMap<String,PropertyValue<?>>();
+        Map<String,String> resultMap = new HashMap<String,String>();
         for (KeyValue kv : actualResult) {
-            resultMap.put((String)kv.getKey(), (PropertyValue<?>)kv.getValue());
+            resultMap.put((String)kv.getKey(), (String)kv.getValue());
         }
 
         assertEquals(resultMap, testResultMap);
@@ -183,9 +178,9 @@ public class ColumnFamilyTemplateTest {
     @Test(groups = {"unit"})
     public void testBasicMultiGetAsMap() throws Exception {
 
-        Rows<String,String,PropertyValue<?>> resultRows = mock(Rows.class);
-        Row<String,String,PropertyValue<?>> row1 = mock(Row.class);
-        Row<String,String,PropertyValue<?>> row2 = mock(Row.class);
+        Rows<String,String,String> resultRows = mock(Rows.class);
+        Row<String,String,String> row1 = mock(Row.class);
+        Row<String,String,String> row2 = mock(Row.class);
         when(row1.getKey()).thenReturn("row1Key");
         when(row2.getKey()).thenReturn("row2Key");
 
@@ -194,28 +189,28 @@ public class ColumnFamilyTemplateTest {
         HColumn column2 = mock(HColumn.class);
 
         when(column1.getName()).thenReturn(columnNames.get(0));
-        when(column1.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValues.get(0)));
+        when(column1.getValue()).thenReturn(columnValues.get(0));
         when(column2.getName()).thenReturn(columnNames.get(1));
-        when(column2.getValue()).thenReturn(PropertyValueFactory.get().createPropertyValue(columnValues.get(1)));
+        when(column2.getValue()).thenReturn(columnValues.get(1));
         when(columnSlice1.getColumns()).thenReturn(Arrays.asList(column1, column2));
 
         when(row1.getColumnSlice()).thenReturn(columnSlice1);
         when(row2.getColumnSlice()).thenReturn(columnSlice1);
-        Iterator<Row<String,String,PropertyValue<?>>> iterator = Arrays.asList(row1,row2).iterator();
+        Iterator<Row<String,String,String>> iterator = Arrays.asList(row1,row2).iterator();
         when(resultRows.iterator()).thenReturn(iterator);
         when(executionResult.get()).thenReturn(resultRows);
 
         Iterable<String> rowKeys = Arrays.asList("key1", "key2");
 
-        Map<String,PropertyValue<?>> oneRowMap = new HashMap<String,PropertyValue<?>>();
-        oneRowMap.put("columnName1", PropertyValueFactory.get().createPropertyValue("columnValue1"));
-        oneRowMap.put("columnName2", PropertyValueFactory.get().createPropertyValue("columnValue2"));
-        Map<String,Map<String,PropertyValue<?>>> expectedResultMap = new HashMap<String,Map<String,PropertyValue<?>>>();
+        Map<String,String> oneRowMap = new HashMap<String,String>();
+        oneRowMap.put("columnName1", "columnValue1");
+        oneRowMap.put("columnName2", "columnValue2");
+        Map<String,Map<String,String>> expectedResultMap = new HashMap<String,Map<String,String>>();
         expectedResultMap.put("row1Key", oneRowMap);
         expectedResultMap.put("row2Key", oneRowMap);
 
         //=========================
-        Map<String,Map<String,PropertyValue<?>>> resultMap = columnFamilyTestDao.multiGetAsMap(rowKeys);
+        Map<String,Map<String,String>> resultMap = columnFamilyTestDao.multiGetAsMap(rowKeys);
         //=========================
 
         assertNotNull(resultMap);
@@ -230,17 +225,16 @@ public class ColumnFamilyTemplateTest {
 
     @Test(groups = {"unit"})
     public void testWriteColumn() throws Exception {
-        PropertyValue<?> propertyValue = PropertyValueFactory.get().createPropertyValue(columnValue);
+        String propertyValue = columnValue;
 
         //=========================
         columnFamilyTestDao.writeColumn(rowKey, columnName, propertyValue, txnContext);
         //=========================
 
-        HColumn<String,PropertyValue<?>> column = HFactory.createColumn(columnName,
-                                                                        PropertyValueFactory.get().createPropertyValue(
-                                                                                columnValue),
+        HColumn<String,String> column = HFactory.createColumn(columnName,
+                                                                        columnValue,
                                                                         StringSerializer.get(),
-                                                                        PropertyValueSerializer.get());
+                                                                        StringSerializer.get());
 
         ArgumentCaptor<HColumn> columnCaptor = ArgumentCaptor.forClass(HColumn.class);
         verify(mutator).addInsertion(eq(rowKey), eq(columnFamily), columnCaptor.capture());
@@ -253,7 +247,7 @@ public class ColumnFamilyTemplateTest {
         when(mutator.addInsertion(eq(rowKey), eq(columnFamily), any(HColumn.class))).
                 thenThrow(new HectorTransportException("test hector exception"));
 
-        PropertyValue<?> propertyValue = PropertyValueFactory.get().createPropertyValue(columnValue);
+        String propertyValue = columnValue;
 
         //=========================
         columnFamilyTestDao.writeColumn(rowKey, columnName, propertyValue, txnContext);
@@ -262,10 +256,10 @@ public class ColumnFamilyTemplateTest {
 
     @Test(groups = {"unit"})
     public void testWriteColumns() throws Exception {
-        Map<String,PropertyValue<?>> properties = new HashMap<String,PropertyValue<?>>();
+        Map<String,String> properties = new HashMap<String,String>();
         Iterator<String> itr = columnValues.iterator();
         for (String columnName : columnNames) {
-            properties.put(columnName, PropertyValueFactory.get().createPropertyValue(itr.next()));
+            properties.put(columnName, itr.next());
         }
 
         //=========================
@@ -273,13 +267,13 @@ public class ColumnFamilyTemplateTest {
         //=========================
 
         HColumn column1 = HFactory.createColumn(columnNames.get(0),
-                                              PropertyValueFactory.get().createPropertyValue(columnValues.get(0)),
+                                              columnValues.get(0),
                                               StringSerializer.get(),
-                                              PropertyValueSerializer.get());
+                                              StringSerializer.get());
         HColumn column2 = HFactory.createColumn(columnNames.get(1),
-                                                PropertyValueFactory.get().createPropertyValue(columnValues.get(1)),
+                                                columnValues.get(1),
                                                 StringSerializer.get(),
-                                                PropertyValueSerializer.get());
+                                                StringSerializer.get());
         ArgumentCaptor<HColumn> columnCaptor =  ArgumentCaptor.forClass(HColumn.class);
         verify(mutator, times(2)).addInsertion(eq(rowKey), eq(columnFamily), columnCaptor.capture());
         List<HColumn> actualColumns = columnCaptor.getAllValues();
@@ -294,10 +288,10 @@ public class ColumnFamilyTemplateTest {
                                   any(HColumn.class))).thenThrow(new HectorTransportException(
                 "test hector exception"));
 
-        Map<String,PropertyValue<?>> properties = new HashMap<String,PropertyValue<?>>();
+        Map<String,String> properties = new HashMap<String,String>();
         Iterator<String> itr = columnValues.iterator();
         for (String columnName : columnNames) {
-            properties.put(columnName, PropertyValueFactory.get().createPropertyValue(itr.next()));
+            properties.put(columnName, itr.next());
         }
 
         //=========================
@@ -307,7 +301,7 @@ public class ColumnFamilyTemplateTest {
 
     @Test(groups = {"unit"})
     public void shouldDeleteColumnSlice() throws Exception {
-        ColumnFamilyOperations<String,String,PropertyValue<?>> spy = spy(columnFamilyTestDao);
+        ColumnFamilyOperations<String,String,String> spy = spy(columnFamilyTestDao);
         doReturn(Arrays.asList("a", "b", "c")).when(spy).readColumns(eq(rowKey), eq("start"), eq(
                 "finish"), eq(Integer.MAX_VALUE), eq(false), mapperCaptor.capture());
 
