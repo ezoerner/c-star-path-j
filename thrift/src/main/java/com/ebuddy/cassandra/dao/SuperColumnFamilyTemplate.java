@@ -35,6 +35,7 @@ import com.ebuddy.cassandra.dao.mapper.ColumnMapperWithTimestamps;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnFamilyRowMapper;
 import com.ebuddy.cassandra.dao.mapper.SuperColumnMapper;
 import com.ebuddy.cassandra.dao.visitor.ColumnVisitor;
+import com.google.common.collect.Lists;
 
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
@@ -316,6 +317,40 @@ public final class SuperColumnFamilyTemplate<K,SN,N,V> extends AbstractColumnFam
     public Map<K,Map<N,V>> multiGetColumnsAsMap(Collection<K> rowKeys, SN superColumnName, N... columnNames) {
         return basicMultiGetAsMap(rowKeys, superColumnName, columnNames);
     }
+
+    @Override
+    public <T> Map<K,List<T>> multiGetColumnRange(Iterable<K> rowKeys,
+                                                   SN supercolumnName,
+                                                   N start,
+                                                   N finish,
+                                                   int count,
+                                                   boolean reversed,
+                                                   ColumnMapper<T,N,V> columnMapper) {
+
+        Map<K,List<T>> resultMap = new HashMap<K,List<T>>();
+        MultigetSubSliceQuery<K,SN,N,V> query = HFactory.createMultigetSubSliceQuery(getKeyspace(),
+                                                                                     getKeySerializer(),
+                                                                                     getSuperColumnNameSerializer(),
+                                                                                     getSubcolumnNameSerializer(),
+                                                                                     getValueSerializer());
+        query.setKeys(Lists.newArrayList(rowKeys)).
+                setSuperColumn(supercolumnName).
+                setColumnFamily(getColumnFamily()).
+                setRange(start, finish, reversed, count);
+        QueryResult<Rows<K,N,V>> result = query.execute();
+
+        for (Row<K,N,V> row : result.get()) {
+            List<T> resultList = new ArrayList<T>();
+            K key = row.getKey();
+            ColumnSlice<N,V> slice = row.getColumnSlice();
+            for (HColumn<N,V> column : slice.getColumns()) {
+                resultList.add(columnMapper.mapColumn(column.getName(), column.getValue()));
+            }
+            resultMap.put(key, resultList);
+        }
+        return resultMap;
+    }
+
 
     /**
      * Read all columns from multiple rows from a single super column in each row,
