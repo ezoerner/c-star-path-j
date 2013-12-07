@@ -107,6 +107,14 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
                                 SuperColumnMapper<T,K,SN,N,V> superColumnMapper,
                                 N... columnNames);
 
+    <T> Map<K,List<T>> multiGetColumnRange(Iterable<K> rowKeys,
+                                           SN supercolumnName,
+                                           N start,
+                                           N finish,
+                                           int count,
+                                           boolean reversed,
+                                           ColumnMapper<T,N,V> columnMapper);
+
     Map<SN,Map<N,V>> readRowAsMap(K key);
 
     <T> List<T> readRow(K key, SuperColumnMapper<T,K,SN,N,V> superColumnMapper);
@@ -149,4 +157,5 @@ public interface SuperColumnFamilyOperations<K,SN,N,V>  {
     void removeRow(K rowKey);
 
     void removeRow(K rowKey, BatchContext batchContext);
+
 }
