@@ -34,15 +34,15 @@
 public interface StructuredDataSupport<K> {
 
     /**
-     * Begin a batch operation. Returns a BatchContext object which must be passed to all methods that participate
-     * in this batch operation, and then is passed to applyBatch to execute the batch.
+     * Begin a batch operation. Returns a BatchContext object which must be passed to all mutating methods that
+     * participate in this batch operation, and then is passed to applyBatch to execute the batch.
      * @return the BatchContext
      */
     BatchContext beginBatch();
 
     /**
      * Execute the batch.
-     * @param batchContext
+     * @param batchContext The BatchContext for this set of mutating operations to execute
      */
     void applyBatch(BatchContext batchContext);
 
@@ -57,16 +57,40 @@ public interface StructuredDataSupport<K> {
      */
     <T> T readFromPath(K rowKey, Path path, TypeReference<T> type);
 
+    /**
+     * Write an object to a path in the database.
+     * @param rowKey the row key for the object to be written
+     * @param path the path to the object to be written
+     * @param value the Object to be written
+     */
     void writeToPath(K rowKey, Path path, Object value);
 
+    /**
+     * Write an object to a path in the database as part of a batch operation.
+     * @param rowKey the row key for the object to be written
+     * @param path the path to the object to be written
+     * @param value the Object to be written
+     * @param batchContext the BatchContext that this write operation should participate in
+     */
     void writeToPath(K rowKey, Path path, Object value, BatchContext batchContext);
 
+    /**
+     * Delete the values found at the specified path.
+     * @param rowKey the row key for the object to be deleted
+     * @param path the path to the object to be deleted
+     */
     void deletePath(K rowKey, Path path);
 
+    /**
+     * Delete the values found at the specified path as part of a batch operation.
+     * @param rowKey the row key for the object to be deleted
+     * @param path the path to the object to be deleted
+     * @param batchContext the BatchContext that this delete operation should participate in
+     */
     void deletePath(K rowKey, Path path, BatchContext batchContext);
 
     /**
-     * Utility method for creating a path string from individual string elements.
+     * Utility method for creating a Path from individual string elements.
      */
     Path createPath(String... elements);
 }
