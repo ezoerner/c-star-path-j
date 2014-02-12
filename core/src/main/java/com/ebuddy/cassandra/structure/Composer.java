@@ -57,7 +57,7 @@ import com.ebuddy.cassandra.Path;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class Composer {
-    private static Logger log = LoggerFactory.getLogger(Composer.class);
+    private static final Logger log = LoggerFactory.getLogger(Composer.class);
 
     private static final String INCONSISTENT_ROOT = "@ROOT";
     private static final Composer INSTANCE = new Composer();

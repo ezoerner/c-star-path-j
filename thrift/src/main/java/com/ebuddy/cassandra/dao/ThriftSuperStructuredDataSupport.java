@@ -6,9 +6,7 @@ import java.util.Map;
 
 import com.ebuddy.cassandra.BatchContext;
 import com.ebuddy.cassandra.Path;
-import com.ebuddy.cassandra.StructuredDataSupport;
 import com.ebuddy.cassandra.TypeReference;
-import com.ebuddy.cassandra.databind.CustomTypeResolverBuilder;
 import com.ebuddy.cassandra.structure.Composer;
 import com.ebuddy.cassandra.structure.Decomposer;
 import com.ebuddy.cassandra.structure.JacksonTypeReference;
