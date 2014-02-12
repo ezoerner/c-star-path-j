@@ -16,20 +16,23 @@
 
 package com.ebuddy.cassandra.structure;
 
+import static com.google.common.collect.Iterables.elementsEqual;
+import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.limit;
+import static com.google.common.collect.Iterables.skip;
+import static com.google.common.collect.Iterables.unmodifiableIterable;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.ebuddy.cassandra.Path;
 import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /**
@@ -44,17 +47,12 @@ public class DefaultPath implements Path {
 
     private static final Function<String,String> urlEncodeFunction = new UrlEncode();
 
-    private final List<String> pathElements;
+    private final Iterable<String> pathElements;
 
 
-    /** Create a DefaultPath from a list of encoded path element strings. */
-    private DefaultPath(List<String> encodedPathElements) {
+    /** Create a DefaultPath from an iterable of encoded path element strings. */
+    private DefaultPath(Iterable<String> encodedPathElements) {
         pathElements = encodedPathElements;
-    }
-
-    /** Create a DefaultPath from an array of encoded path element strings. */
-    private DefaultPath(String... encodedPathElements) {
-        this(Arrays.asList(encodedPathElements));
     }
 
     /** Create a DefaultPath from un-encoded string elements. */
@@ -64,9 +62,7 @@ public class DefaultPath implements Path {
 
     @Override
     public Path concat(Path other) {
-        List<String> newPathElements = new LinkedList<String>();
-        newPathElements.addAll(pathElements);
-        newPathElements.addAll(other.getElements());
+        Iterable<String> newPathElements = Iterables.concat(pathElements, other.getElements());
         return new DefaultPath(newPathElements);
     }
 
@@ -91,7 +87,7 @@ public class DefaultPath implements Path {
 
     @Override
     public String head() {
-        return pathElements.size() == 0 ? null : pathElements.get(0);
+        return getFirst(pathElements, null);
     }
 
     @Override
@@ -101,17 +97,18 @@ public class DefaultPath implements Path {
 
     @Override
     public DefaultPath tail(int startIndex) {
-        return new DefaultPath(pathElements.subList(startIndex, pathElements.size()));
+        return new DefaultPath(skip(pathElements, startIndex));
     }
 
     @Override
     public boolean isEmpty() {
-        return pathElements.size() == 0;
+        return Iterables.isEmpty(pathElements);
     }
 
     @Override
     public boolean startsWith(Path path) {
-        return pathElements.subList(0, path.size()).equals(path.getElements());
+        return elementsEqual(limit(pathElements, path.size()),
+                             path.getElements());
     }
 
     @Override
@@ -123,29 +120,27 @@ public class DefaultPath implements Path {
             return false;
         }
 
-        return pathElements.equals(((DefaultPath)o).pathElements);
-
+        return elementsEqual(pathElements, ((DefaultPath)o).pathElements);
     }
 
     @Override
     public int hashCode() {
-        return pathElements.hashCode();
+        return Lists.newArrayList(pathElements).hashCode();
     }
 
     @Override
     public int size() {
-        return pathElements.size();
+        return Iterables.size(pathElements);
     }
 
     @Override
-    public List<String> getElements() {
-        return Collections.unmodifiableList(pathElements);
+    public Iterable<String> getElements() {
+        return unmodifiableIterable(pathElements);
     }
 
     @Override
     public Path withIndices(int... indices) {
-        List<String> newPathElements = new ArrayList<String>(pathElements.size() + indices.length);
-        newPathElements.addAll(pathElements);
+        List<String> newPathElements = Lists.newArrayList(pathElements);
         for (int index : indices) {
             newPathElements.add(LIST_INDEX_PREFIX + index);
         }
@@ -154,8 +149,7 @@ public class DefaultPath implements Path {
 
     @Override
     public Path withElements(String... elements) {
-        List<String> newPathElements = new ArrayList<String>(pathElements.size() + elements.length);
-        newPathElements.addAll(pathElements);
+        List<String> newPathElements = Lists.newArrayList(pathElements);
         newPathElements.addAll(Lists.transform(Arrays.asList(elements), urlEncodeFunction));
         return new DefaultPath(newPathElements);
     }
@@ -163,7 +157,7 @@ public class DefaultPath implements Path {
     /** Create a Path object from a String produced by the Path#toString method. */
 
     public static Path fromEncodedPathString(String pathString) {
-        String[] parts = StringUtils.split(pathString, PATH_DELIMITER_CHAR);
+        Iterable<String> parts = Splitter.on(PATH_DELIMITER_CHAR).omitEmptyStrings().split(pathString);
         return new DefaultPath(parts);
     }
 

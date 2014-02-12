@@ -16,8 +16,6 @@
 
 package com.ebuddy.cassandra;
 
-import java.util.List;
-
 /**
  * A path used as for accessing and querying elements of a structured object.
  *
@@ -35,7 +33,7 @@ public interface Path {
     Path withElements(String... elements);
 
     /** Get the encoded elements of this Path. */
-    List<String> getElements();
+    Iterable<String> getElements();
 
     /**
      * Returns the first element in this path, or null if this is an empty path.
