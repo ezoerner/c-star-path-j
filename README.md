@@ -82,15 +82,11 @@ To use structured data in a CQL3 table, the following data modeling rules apply:
 * There should be one other column for the values.
 * The path and value columns should be typed as a textual type.
 
-Note: The tests include system tests that require a local Cassandra 1.2+ database to be running.
-These tests are in the "system" TestNG test group.
-
 thrift module
 -------------
 Implementations of `StructuredDataAccessSupport` for standard column family access, using the
 [Hector client](https://github.com/hector-client/hector) library (and therefore Thrift) for transport and
 low level operations.  
-**Note:** Support for super column families is planned but not yet implemented.
 
 core module
 -----------
