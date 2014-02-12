@@ -57,7 +57,7 @@ import com.ebuddy.cassandra.Path;
  * @author Eric Zoerner <a href="mailto:ezoerner@ebuddy.com">ezoerner@ebuddy.com</a>
  */
 public class Composer {
-    private static Logger log = LoggerFactory.getLogger(Composer.class);
+    private static final Logger log = LoggerFactory.getLogger(Composer.class);
 
     private static final String INCONSISTENT_ROOT = "@ROOT";
     private static final Composer INSTANCE = new Composer();
@@ -72,10 +72,9 @@ public class Composer {
      * Compose a map of simple objects keyed by paths into a single complex object, e.g. a map or list
      *
      * @param simpleObjects input map of decomposed objects, paths mapped to simple values (i.e. strings, numbers, or booleans)
-     * @return a complex object such as a map or list decoded from the paths in decomposedObjects,
-     *         or null if decomposedObjects is empty.
-     * @throws IllegalArgumentException if there are unsupported objects types in decomposedObjects, or
-     * if there is a key that is an empty path
+     * @return a complex object such as a map or list decoded from the paths in decomposedObjects
+     * @throws IllegalArgumentException if there are unsupported objects types in simpleObjects, or
+     *                                  if there is a key that is an empty path
      */
     public Object compose(Map<Path,Object> simpleObjects) {
         if (simpleObjects == null) {
@@ -86,7 +85,7 @@ public class Composer {
             return Collections.emptyMap();
         }
 
-        // if this is a singleton map with and empty path as the key, then this represents itself a
+        // if this is a singleton map with an empty path as the key, then this represents itself a
         // simple object, so just return the value
         if (simpleObjects.size() == 1 && simpleObjects.keySet().iterator().next().size() == 0) {
             return simpleObjects.values().iterator().next();

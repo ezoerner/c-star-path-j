@@ -45,8 +45,8 @@ public class Decomposer {
      *
      * @param structures the input map of paths to objects
      * @return a map of simple object keyed by paths
-     * @throws IllegalArgumentException if there is an object of unsupported type in the structures
-     * or if structures is null
+     * @throws IllegalArgumentException if there is an object of unsupported type in structures
+     *                                  or if structures is null
      */
     public Map<Path,Object> decompose(Map<Path,Object> structures) {
         if (structures == null) {
