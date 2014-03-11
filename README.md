@@ -1,3 +1,6 @@
+This repository is the original C* Path project written in Java.
+It is also in the process of being ported to Scala at [C* Path](https://bitbucket.org/ezoerner/c-star-path).
+
 C* Path
 =======
 
